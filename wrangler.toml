@@ -1,8 +1,4 @@
-name = "followthrough"
-compatibility_date = "2025-12-15"
-
 [[d1_databases]]
 binding = "DB"
 database_name = "followthrough-db"
-database_id = "REPLACE_ME_LATER"
-migrations_dir = "migrations"
+database_id = "e5c51d7d-4c43-4a35-bd78-72a8eb5dc10e"
