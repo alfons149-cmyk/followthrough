@@ -1,6 +1,7 @@
 name = "followthrough"
 compatibility_date = "2025-12-15"
-account_id = "3YMwhfOYBQYvob3ZOwGHgmr_8CE-QKZkFfUXardE"
+account_id = "947c23ef26891789f59af93c859f9dde"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "followthrough-db"
