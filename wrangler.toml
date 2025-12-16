@@ -4,5 +4,6 @@ compatibility_date = "2025-12-15"
 [[d1_databases]]
 binding = "DB"
 database_name = "followthrough-db"
-account_id = "ACCOUNT_ID_FROM_JSON"
+database_id = "e5c51d7d-4c43-4a35-bd78-72a8eb5dc10e"
 migrations_dir = "migrations"
+
