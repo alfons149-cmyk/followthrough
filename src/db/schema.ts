@@ -99,3 +99,80 @@ export const events = sqliteTable(
     ),
   })
 );
+// src/db/schema.ts
+import { sql } from "drizzle-orm";
+import { index, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+
+// --- workspaces ---
+export const workspaces = sqliteTable("workspaces", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+
+  // Matches: TEXT NOT NULL DEFAULT (datetime('now'))
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export type Workspace = InferSelectModel<typeof workspaces>;
+export type NewWorkspace = InferInsertModel<typeof workspaces>;
+
+// --- users ---
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+
+  workspaceId: text("workspace_id")
+    .notNull()
+    .references(() => workspaces.id, { onDelete: "cascade" }),
+
+  email: text("email").notNull(),
+  displayName: text("display_name").notNull(),
+
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export type User = InferSelectModel<typeof users>;
+export type NewUser = InferInsertModel<typeof users>;
+
+// --- followups ---
+export const followups = sqliteTable(
+  "followups",
+  {
+    id: text("id").primaryKey(),
+
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+
+    contactName: text("contact_name").notNull(),
+    companyName: text("company_name").notNull(),
+    nextStep: text("next_step").notNull(),
+
+    // Stored as TEXT in your SQL migration (e.g. ISO string)
+    dueAt: text("due_at").notNull(),
+
+    // Keep as TEXT to match migration; you can enforce allowed values in app code
+    status: text("status").notNull(),
+
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (t) => ({
+    idxFollowupsDue: index("idx_followups_due").on(t.workspaceId, t.dueAt),
+    idxFollowupsStatus: index("idx_followups_status").on(
+      t.workspaceId,
+      t.status
+    ),
+  })
+);
+
+export type Followup = InferSelectModel<typeof followups>;
+export type NewFollowup = InferInsertModel<typeof followups>;
