@@ -1,6 +1,6 @@
 // src/db/schema.ts
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
-import { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 
 /**
