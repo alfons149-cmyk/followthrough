@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 export const workspaces = sqliteTable("workspaces", {
   id: text("id").primaryKey(),
@@ -99,10 +100,6 @@ export const events = sqliteTable(
     ),
   })
 );
-// src/db/schema.ts
-import { sql } from "drizzle-orm";
-import { index, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 // --- workspaces ---
 export const workspaces = sqliteTable("workspaces", {
