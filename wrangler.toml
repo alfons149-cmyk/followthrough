@@ -7,3 +7,4 @@ binding = "DB"
 database_name = "followthrough-db2"
 database_id = "50b3612a-3e32-4190-acd4-f8a6dbbecfa3"
 migrations_dir = "migrations"
+
