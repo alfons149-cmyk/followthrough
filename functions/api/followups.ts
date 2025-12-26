@@ -1,16 +1,18 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { getDb } from "./_db";
+import { getDb, type Env } from "./_db";
 import { followups } from "../../src/db/schema";
-import { and, eq, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
-export const onRequestGet: PagesFunction = async ({ env, request }) => {
-  const db = getDb(env as any);
-
-  // For now: single demo workspace
-  const workspaceId = "ws_demo";
+export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
+  const db = getDb(env);
 
   const url = new URL(request.url);
-  const status = url.searchParams.get("status"); // optional
+
+  // Use ?workspaceId=... if provided, otherwise default to the one you created in D1
+  const workspaceId = url.searchParams.get("workspaceId") ?? "ws_1";
+
+  // Optional filter: ?status=open
+  const status = url.searchParams.get("status");
 
   const where = status
     ? and(eq(followups.workspaceId, workspaceId), eq(followups.status, status))
