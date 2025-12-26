@@ -1,53 +1,46 @@
 // src/db/schema.ts
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, index } from "drizzle-orm/sqlite-core";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 /**
- * WORKSPACES
+ * WORKSPACES (matches 0001_init.sql)
  */
 export const workspaces = sqliteTable("workspaces", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+  createdAt: text("created_at").notNull(), // DB default: datetime('now')
 });
 
 /**
- * USERS
+ * USERS (matches 0001_init.sql)
  */
-export const users = sqliteTable(
-  "users",
-  {
-    id: text("id").primaryKey(),
-    workspaceId: text("workspace_id").notNull(),
-    email: text("email").notNull(),
-    displayName: text("display_name").notNull(),
-    role: text("role").notNull(),
-    createdAt: text("created_at").notNull(),
-    updatedAt: text("updated_at").notNull(),
-  },
-  (t) => ({
-    emailIdx: index("users_email_idx").on(t.email),
-    workspaceIdx: index("users_workspace_idx").on(t.workspaceId),
-  })
-);
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  email: text("email").notNull(),
+  displayName: text("display_name").notNull(),
+  createdAt: text("created_at").notNull(), // DB default: datetime('now')
+});
 
 /**
- * FOLLOWUPS (example — keep only if you actually have this table)
+ * FOLLOWUPS (matches 0001_init.sql)
  */
 export const followups = sqliteTable(
   "followups",
   {
     id: text("id").primaryKey(),
     workspaceId: text("workspace_id").notNull(),
-    title: text("title").notNull(),
+    ownerId: text("owner_id").notNull(),
+    contactName: text("contact_name").notNull(),
+    companyName: text("company_name").notNull(),
+    nextStep: text("next_step").notNull(),
+    dueAt: text("due_at").notNull(), // TEXT in migration
     status: text("status").notNull(),
-    dueAt: integer("due_at").notNull(), // choose integer or text; match your migration!
-    createdAt: text("created_at").notNull(),
+    createdAt: text("created_at").notNull(), // DB default: datetime('now')
   },
   (t) => ({
-    workspaceDueIdx: index("followups_workspace_due_idx").on(t.workspaceId, t.dueAt),
-    workspaceStatusIdx: index("followups_workspace_status_idx").on(t.workspaceId, t.status),
+    idxFollowupsDue: index("idx_followups_due").on(t.workspaceId, t.dueAt),
+    idxFollowupsStatus: index("idx_followups_status").on(t.workspaceId, t.status),
   })
 );
 
