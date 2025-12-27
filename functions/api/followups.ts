@@ -7,7 +7,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
 
   const url = new URL(request.url);
+
+  // Use ?workspaceId=... if provided, default to ws_1
   const workspaceId = url.searchParams.get("workspaceId") ?? "ws_1";
+
+  // Optional: ?status=open
   const status = url.searchParams.get("status");
 
   const where = status
