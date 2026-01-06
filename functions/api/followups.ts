@@ -5,13 +5,9 @@ import { and, desc, eq } from "drizzle-orm";
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
-
   const url = new URL(request.url);
 
-  // Use ?workspaceId=... if provided, default to ws_1
   const workspaceId = url.searchParams.get("workspaceId") ?? "ws_1";
-
-  // Optional: ?status=open
   const status = url.searchParams.get("status");
 
   const where = status
@@ -31,7 +27,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
 
-  const body = await request.json();
+  const body = (await request.json()) as {
+    workspaceId: string;
+    ownerId: string;
+    contactName: string;
+    companyName: string;
+    nextStep: string;
+    dueAt: string;
+    status?: string;
+  };
+
+  // mini-validatie
+  if (!body.workspaceId || !body.ownerId) {
+    return new Response("workspaceId en ownerId zijn verplicht", { status: 400 });
+  }
 
   const id = `f_${crypto.randomUUID()}`;
 
@@ -43,8 +52,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     companyName: body.companyName,
     nextStep: body.nextStep,
     dueAt: body.dueAt,
-    status: body.status,
-    // createdAt: let DB default handle it (recommended)
+    status: body.status ?? "open",
   });
 
   return Response.json({ ok: true, id });
