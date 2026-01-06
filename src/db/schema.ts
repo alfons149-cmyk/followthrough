@@ -8,7 +8,8 @@ import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 export const workspaces = sqliteTable("workspaces", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  createdAt: text("created_at").notNull(), // DB default: datetime('now')
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`) // DB default: datetime('now')
+  import { sql } from "drizzle-orm";
 });
 
 /**
