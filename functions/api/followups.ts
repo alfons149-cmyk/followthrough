@@ -23,3 +23,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
   return Response.json({ items: rows });
 };
+{
+  "workspaceId": "ws_1",
+  "ownerId": "u_1",
+  "contactName": "Bob Example",
+  "companyName": "ACME BV",
+  "nextStep": "Call back",
+  "dueAt": "2026-01-10",
+  "status": "open"
+}
