@@ -50,6 +50,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     nextStep: body.nextStep,
     dueAt: body.dueAt,
     status: body.status,
+    // createdAt laat je weg → DB default vult dit
   });
 
   return Response.json({ ok: true, id });
