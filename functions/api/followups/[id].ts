@@ -1,3 +1,7 @@
+export const onRequestGet: PagesFunction<Env> = async ({ params }) => {
+  return Response.json({ route: "followups/[id]", id: params.id });
+};
+
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { getDb, type Env } from "../_db";
 import { followups } from "../../../src/db/schema";
