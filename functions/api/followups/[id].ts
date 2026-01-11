@@ -9,25 +9,35 @@ type PatchBody = Partial<{
   nextStep: string;
 }>;
 
-export const onRequestOptions: PagesFunction<Env> = async () =>
-  new Response(null, { status: 204, headers: corsHeaders() });
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
 
-// Handig: GET /api/followups/f_1 → JSON (zodat je dit in de browser kunt zien)
+export const onRequestOptions: PagesFunction<Env> = async () => {
+  return new Response(null, { status: 204, headers: cors });
+};
+
+// Handig om te testen of /api/followups/:id écht gematcht wordt
 export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
-  const db = getDb(env);
   const id = String(params.id || "");
+  const db = getDb(env);
+
   const row = await db.select().from(followups).where(eq(followups.id, id)).get();
 
   if (!row) {
-    return Response.json({ ok: false, error: "Not found" }, { status: 404, headers: corsHeaders() });
+    return Response.json({ ok: false, error: "Not found" }, { status: 404, headers: cors });
   }
-  return Response.json({ ok: true, item: row }, { headers: corsHeaders() });
+
+  return Response.json({ ok: true, item: row }, { headers: cors });
 };
 
 export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params }) => {
-  const db = getDb(env);
   const id = String(params.id || "");
-  if (!id) return Response.json({ ok: false, error: "Missing id" }, { status: 400, headers: corsHeaders() });
+  if (!id) {
+    return Response.json({ ok: false, error: "Missing id" }, { status: 400, headers: cors });
+  }
 
   const body = (await request.json().catch(() => ({}))) as PatchBody;
 
@@ -39,20 +49,19 @@ export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params 
   if (Object.keys(toSet).length === 0) {
     return Response.json(
       { ok: false, error: "No valid fields to update (status, dueAt, nextStep)" },
-      { status: 400, headers: corsHeaders() }
+      { status: 400, headers: cors }
     );
   }
+
+  const db = getDb(env);
 
   await db.update(followups).set(toSet).where(eq(followups.id, id));
 
   const row = await db.select().from(followups).where(eq(followups.id, id)).get();
-  return Response.json({ ok: true, item: row }, { headers: corsHeaders() });
-};
 
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
-}
+  if (!row) {
+    return Response.json({ ok: false, error: "Not found" }, { status: 404, headers: cors });
+  }
+
+  return Response.json({ ok: true, item: row }, { headers: cors });
+};
