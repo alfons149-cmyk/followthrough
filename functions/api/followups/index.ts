@@ -1,16 +1,8 @@
-// functions/api/followups/index.ts
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { getDb, type Env } from "../_db";
 import { followups } from "../../../src/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
-
-// GET /api/followups?workspaceId=ws_1&status=open
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
   const url = new URL(request.url);
@@ -22,17 +14,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     ? and(eq(followups.workspaceId, workspaceId), eq(followups.status, status))
     : eq(followups.workspaceId, workspaceId);
 
-  const rows = await db
-    .select()
-    .from(followups)
-    .where(where)
-    .orderBy(desc(followups.dueAt))
-    .limit(100);
+  const rows = await db.select().from(followups).where(where).orderBy(desc(followups.dueAt)).limit(100);
 
-  return Response.json({ items: rows }, { headers: cors });
+  return Response.json({ items: rows });
 };
 
-// POST /api/followups
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
 
@@ -57,11 +43,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     nextStep: body.nextStep,
     dueAt: body.dueAt,
     status: body.status,
-    // createdAt -> DB default
   });
 
-  return Response.json({ ok: true, id }, { headers: cors });
+  return Response.json({ ok: true, id });
 };
-
-export const onRequestOptions: PagesFunction = async () =>
-  new Response(null, { status: 204, headers: cors });
