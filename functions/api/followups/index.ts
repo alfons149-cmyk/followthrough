@@ -1,3 +1,13 @@
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export const onRequestOptions: PagesFunction<Env> = async () => {
+  return new Response(null, { status: 204, headers: cors });
+};
+
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { getDb, type Env } from "../_db";
 import { followups } from "../../../src/db/schema";
