@@ -26,7 +26,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
   const rows = await db.select().from(followups).where(where).orderBy(desc(followups.dueAt)).limit(100);
 
-  return Response.json({ items: rows });
+  return Response.json({ items: rows }, { headers: cors });
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
@@ -55,5 +55,5 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     status: body.status,
   });
 
-  return Response.json({ ok: true, id });
+  return Response.json({ ok: true, id }, { headers: cors });
 };
