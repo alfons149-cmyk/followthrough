@@ -1,3 +1,7 @@
+export default function App() {
+  return <h1>FOLLOWTHROUGH LIVE TEST ✅</h1>;
+}
+
 import { useEffect, useState } from "react";
 
 type Followup = {
