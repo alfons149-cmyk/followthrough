@@ -8,122 +8,190 @@ type Followup = {
   contactName: string;
   companyName: string;
   nextStep: string;
-  dueAt: string;   // TEXT in DB
-  status: string;  // "open" | "done" etc
+  dueAt: string;   // TEXT
+  status: string;  // "open" | "done" (of wat jij gebruikt)
   createdAt: string;
 };
 
-type ListResponse = { items: Followup[] };
-type OneResponse = { ok: boolean; item?: Followup; error?: string };
+function formatDate(s: string) {
+  // verwacht: "YYYY-MM-DD" of ISO string; toon gewoon leesbaar
+  return s?.slice(0, 10) || "";
+}
 
 function App() {
-  // In productie is dit dezelfde origin (""), in dev kun je hem zetten via .env.local (zie stap 4)
-  const API_BASE = import.meta.env.VITE_API_BASE ?? "";
-  const api = useMemo(() => API_BASE.replace(/\/+$/, ""), [API_BASE]);
+  const workspaceId = "ws_1";
 
-  const [workspaceId, setWorkspaceId] = useState("ws_1");
   const [items, setItems] = useState<Followup[]>([]);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [error, setError] = useState<string>("");
 
-  async function load() {
+  // simpele create form
+  const [contactName, setContactName] = useState("Alice Example");
+  const [companyName, setCompanyName] = useState("Example GmbH");
+  const [nextStep, setNextStep] = useState("Send intro email");
+  const [dueAt, setDueAt] = useState("2026-01-10");
+
+  // Belangrijk:
+  // - In productie: "/api/..." werkt op dezelfde domain (followthrough.pages.dev)
+  // - In lokaal dev: we zetten zo meteen een proxy in vite.config.ts zodat "/api" ook werkt.
+  const API_BASE = "";
+
+  const api = useMemo(() => ({
+    async list() {
+      const res = await fetch(`${API_BASE}/api/followups?workspaceId=${encodeURIComponent(workspaceId)}`, {
+        headers: { "Accept": "application/json" },
+      });
+      if (!res.ok) throw new Error(`List failed (${res.status})`);
+      const data = await res.json();
+      return (data.items || []) as Followup[];
+    },
+
+    async create() {
+      const res = await fetch(`${API_BASE}/api/followups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceId,
+          ownerId: "u_1",
+          contactName,
+          companyName,
+          nextStep,
+          dueAt,
+          status: "open",
+        }),
+      });
+      if (!res.ok) throw new Error(`Create failed (${res.status})`);
+      return res.json() as Promise<{ ok: boolean; id: string }>;
+    },
+
+    async patch(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
+      const res = await fetch(`${API_BASE}/api/followups/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`Patch failed (${res.status})`);
+      const data = await res.json();
+      return data.item as Followup;
+    },
+  }), [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
+
+  async function refresh() {
     setLoading(true);
-    setErr(null);
+    setError("");
     try {
-      const res = await fetch(`${api}/api/followups?workspaceId=${encodeURIComponent(workspaceId)}`);
-      if (!res.ok) throw new Error(`GET failed: ${res.status}`);
-      const data = (await res.json()) as ListResponse;
-      setItems(data.items ?? []);
+      const list = await api.list();
+      setItems(list);
     } catch (e: any) {
-      setErr(e?.message ?? "Unknown error");
+      setError(e?.message || "Unknown error");
     } finally {
       setLoading(false);
     }
   }
 
-  async function toggleStatus(f: Followup) {
-    const next = f.status === "done" ? "open" : "done";
-
-    // Optimistic update
-    setItems((prev) => prev.map((x) => (x.id === f.id ? { ...x, status: next } : x)));
-
-    try {
-      const res = await fetch(`${api}/api/followups/${encodeURIComponent(f.id)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
-      });
-      if (!res.ok) throw new Error(`PATCH failed: ${res.status}`);
-
-      const data = (await res.json()) as OneResponse;
-      if (!data.ok || !data.item) throw new Error(data.error || "PATCH returned not ok");
-
-      // sync with DB response
-      setItems((prev) => prev.map((x) => (x.id === f.id ? data.item! : x)));
-    } catch (e: any) {
-      // rollback on error
-      setItems((prev) => prev.map((x) => (x.id === f.id ? { ...x, status: f.status } : x)));
-      alert(e?.message ?? "PATCH error");
-    }
-  }
-
   useEffect(() => {
-    load();
+    refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function toggleStatus(f: Followup) {
+    const nextStatus = f.status === "done" ? "open" : "done";
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(f.id, { status: nextStatus });
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onCreate() {
+    setLoading(true);
+    setError("");
+    try {
+      await api.create();
+      await refresh();
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="page">
-      <header className="topbar">
-        <h1>Followthrough</h1>
+    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, textAlign: "left" }}>
+      <h1 style={{ marginBottom: 6 }}>FollowThrough</h1>
+      <div style={{ opacity: 0.8, marginBottom: 16 }}>
+        Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+      </div>
 
-        <div className="controls">
-          <label>
-            Workspace&nbsp;
-            <input
-              value={workspaceId}
-              onChange={(e) => setWorkspaceId(e.target.value)}
-              placeholder="ws_1"
-            />
-          </label>
-          <button onClick={load} disabled={loading}>
-            {loading ? "Loading..." : "Refresh"}
-          </button>
+      {error && (
+        <div style={{ background: "#ffe9e9", padding: 12, borderRadius: 8, marginBottom: 12 }}>
+          <b>Error:</b> {error}
         </div>
-      </header>
+      )}
 
-      {err && <div className="error">Error: {err}</div>}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <div>
+          <label>Contact name</label>
+          <input value={contactName} onChange={(e) => setContactName(e.target.value)} style={{ width: "100%" }} />
+        </div>
+        <div>
+          <label>Company</label>
+          <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} style={{ width: "100%" }} />
+        </div>
+        <div>
+          <label>Next step</label>
+          <input value={nextStep} onChange={(e) => setNextStep(e.target.value)} style={{ width: "100%" }} />
+        </div>
+        <div>
+          <label>Due at (YYYY-MM-DD)</label>
+          <input value={dueAt} onChange={(e) => setDueAt(e.target.value)} style={{ width: "100%" }} />
+        </div>
+      </div>
 
-      <main className="list">
-        {items.length === 0 && !loading ? (
-          <div className="empty">Nog geen followups. (Tip: seed of POST er eentje.)</div>
-        ) : (
-          items.map((f) => (
-            <div key={f.id} className={`card ${f.status === "done" ? "done" : ""}`}>
-              <div className="row">
-                <div>
-                  <div className="title">
-                    {f.contactName} <span className="muted">— {f.companyName}</span>
-                  </div>
-                  <div className="meta">
-                    <span className="pill">{f.status}</span>
-                    <span className="muted">Due: {f.dueAt}</span>
-                    <span className="muted">ID: {f.id}</span>
-                  </div>
+      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+        <button onClick={onCreate} disabled={loading}>+ Add followup</button>
+        <button onClick={refresh} disabled={loading}>Refresh</button>
+        {loading && <span style={{ opacity: 0.7 }}>Loading…</span>}
+      </div>
+
+      <h2 style={{ marginBottom: 10 }}>Your followups</h2>
+
+      <div style={{ display: "grid", gap: 10 }}>
+        {items.map((f) => (
+          <div key={f.id} style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 700 }}>
+                  {f.contactName} <span style={{ fontWeight: 400, opacity: 0.7 }}>({f.companyName})</span>
                 </div>
+                <div style={{ marginTop: 6 }}>
+                  <b>Next:</b> {f.nextStep}
+                </div>
+                <div style={{ marginTop: 6, opacity: 0.8 }}>
+                  Due: <b>{formatDate(f.dueAt)}</b> · Status: <b>{f.status}</b> · Id: <code>{f.id}</code>
+                </div>
+              </div>
 
-                <button className="btn" onClick={() => toggleStatus(f)}>
-                  Toggle
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 140 }}>
+                <button onClick={() => toggleStatus(f)} disabled={loading}>
+                  Toggle → {f.status === "done" ? "open" : "done"}
                 </button>
               </div>
-
-              <div className="nextStep">
-                <strong>Next step:</strong> {f.nextStep}
-              </div>
             </div>
-          ))
+          </div>
+        ))}
+
+        {!loading && items.length === 0 && (
+          <div style={{ opacity: 0.7 }}>
+            No followups yet. Add one above.
+          </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
