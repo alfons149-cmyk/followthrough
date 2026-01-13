@@ -31,10 +31,8 @@ function App() {
   const [nextStep, setNextStep] = useState("Send intro email");
   const [dueAt, setDueAt] = useState("2026-01-10");
 
-  // Belangrijk:
-  // - In productie: "/api/..." werkt op dezelfde origin als de frontend (Pages Functions)
-  // - In lokaal dev: Vite proxy kan "/api" doorsturen
-  const API_BASE = ""; // leeg = same-origin
+  // Pages Functions: same-origin API
+  const API_BASE = ""; // leeg = dezelfde origin als de frontend
 
   const api = useMemo(() => {
     const base = API_BASE.replace(/\/+$/, ""); // veiligheid: geen trailing slash
@@ -42,9 +40,7 @@ function App() {
     return {
       async list() {
         const url = `${base}/api/followups?workspaceId=${encodeURIComponent(workspaceId)}`;
-        const res = await fetch(url, {
-          headers: { Accept: "application/json" },
-        });
+        const res = await fetch(url, { headers: { Accept: "application/json" } });
         if (!res.ok) throw new Error(`List failed (${res.status})`);
         const data = await res.json();
         return (data.items || []) as Followup[];
@@ -69,10 +65,7 @@ function App() {
         return res.json() as Promise<{ ok: boolean; id: string }>;
       },
 
-      async patch(
-        id: string,
-        body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
-      ) {
+      async patch(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
         const url = `${base}/api/followups/${encodeURIComponent(id)}`;
         const res = await fetch(url, {
           method: "PATCH",
@@ -86,9 +79,6 @@ function App() {
     };
   }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
-  // (rest van je component blijft zoals je het had: useEffect om api.list() te callen, UI, etc.)
-  // ...
-}
   async function refresh() {
     setLoading(true);
     setError("");
@@ -180,7 +170,8 @@ function App() {
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
               <div>
                 <div style={{ fontSize: 18, fontWeight: 700 }}>
-                  {f.contactName} <span style={{ fontWeight: 400, opacity: 0.7 }}>({f.companyName})</span>
+                  {f.contactName}{" "}
+                  <span style={{ fontWeight: 400, opacity: 0.7 }}>({f.companyName})</span>
                 </div>
                 <div style={{ marginTop: 6 }}>
                   <b>Next:</b> {f.nextStep}
@@ -200,9 +191,7 @@ function App() {
         ))}
 
         {!loading && items.length === 0 && (
-          <div style={{ opacity: 0.7 }}>
-            No followups yet. Add one above.
-          </div>
+          <div style={{ opacity: 0.7 }}>No followups yet. Add one above.</div>
         )}
       </div>
     </div>
