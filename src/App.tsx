@@ -85,6 +85,35 @@ function App() {
     };
   }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
+  const visible = useMemo(() => {
+  const needle = q.trim().toLowerCase();
+
+  const filtered = items.filter((f) => {
+    const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
+    const matchesQuery =
+      !needle ||
+      `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
+    return matchesStatus && matchesQuery;
+  });
+
+  const getTime = (s: string) => {
+    const t = Date.parse(s);
+    return Number.isFinite(t) ? t : 0;
+  };
+
+  filtered.sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
+    if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
+    if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
+
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
+  return filtered;
+}, [items, q, statusFilter, sortBy, sortDir]);
+
+
   async function refresh() {
     setLoading(true);
     setError("");
