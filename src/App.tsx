@@ -90,9 +90,11 @@ function App() {
 
   const filtered = items.filter((f) => {
     const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
+
     const matchesQuery =
       !needle ||
       `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
+
     return matchesStatus && matchesQuery;
   });
 
@@ -103,6 +105,7 @@ function App() {
 
   filtered.sort((a, b) => {
     let cmp = 0;
+
     if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
     if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
     if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
@@ -112,7 +115,6 @@ function App() {
 
   return filtered;
 }, [items, q, statusFilter, sortBy, sortDir]);
-
 
   async function refresh() {
     setLoading(true);
