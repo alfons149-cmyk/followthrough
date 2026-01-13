@@ -199,38 +199,116 @@ function App() {
 
       <h2 style={{ marginBottom: 10 }}>Your followups</h2>
 
-      <div style={{ display: "grid", gap: 10 }}>
-        {items.map((f) => (
-          <div key={f.id} style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+      return (
+  <div className="page">
+    <header className="header">
+      <h1 className="title">FollowThrough</h1>
+      <div className="sub">
+        Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+      </div>
+    </header>
+
+    {error && (
+      <div className="alert">
+        <b>Error:</b> {error}
+      </div>
+    )}
+
+    <section className="panel">
+      <div className="grid">
+        <div className="field">
+          <label>Contact name</label>
+          <input
+            className="input"
+            value={contactName}
+            onChange={(e) => setContactName(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label>Company</label>
+          <input
+            className="input"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label>Next step</label>
+          <input
+            className="input"
+            value={nextStep}
+            onChange={(e) => setNextStep(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label>Due at (YYYY-MM-DD)</label>
+          <input
+            className="input"
+            value={dueAt}
+            onChange={(e) => setDueAt(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="toolbar">
+        <div className="toolbarLeft">
+          <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
+            + Add followup
+          </button>
+          <button className="btn" onClick={refresh} disabled={loading}>
+            Refresh
+          </button>
+          {loading && <span className="loading">Loading…</span>}
+        </div>
+      </div>
+    </section>
+
+    <h2 className="sectionTitle">Your followups</h2>
+
+    <div className="list">
+      {(visible ?? items).map((f) => {
+        const chipClass =
+          f.status === "done" ? "chip chipDone" : "chip chipOpen";
+
+        return (
+          <div key={f.id} className="card">
+            <div className="cardTop">
               <div>
-                <div style={{ fontSize: 18, fontWeight: 700 }}>
+                <div className="cardTitle">
                   {f.contactName}{" "}
-                  <span style={{ fontWeight: 400, opacity: 0.7 }}>({f.companyName})</span>
+                  <span>({f.companyName})</span>
                 </div>
-                <div style={{ marginTop: 6 }}>
+
+                <div className="cardLine">
                   <b>Next:</b> {f.nextStep}
                 </div>
-                <div style={{ marginTop: 6, opacity: 0.8 }}>
-                  Due: <b>{formatDate(f.dueAt)}</b> · Status: <b>{f.status}</b> · Id: <code>{f.id}</code>
+
+                <div className="cardMeta">
+                  Due: <b>{formatDate(f.dueAt)}</b> ·{" "}
+                  <span className={chipClass}>{f.status}</span>{" "}
+                  · Id: <code>{f.id}</code>
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 140 }}>
-                <button onClick={() => toggleStatus(f)} disabled={loading}>
+              <div className="cardActions">
+                <button className="btn" onClick={() => toggleStatus(f)} disabled={loading}>
                   Toggle → {f.status === "done" ? "open" : "done"}
                 </button>
               </div>
             </div>
           </div>
-        ))}
+        );
+      })}
 
-        {!loading && items.length === 0 && (
-          <div style={{ opacity: 0.7 }}>No followups yet. Add one above.</div>
-        )}
-      </div>
+      {!loading && (visible ?? items).length === 0 && (
+        <div className="empty">No followups yet. Add one above.</div>
+      )}
     </div>
-  );
+  </div>
+);
 }
 
 export default App;
