@@ -34,7 +34,7 @@ function App() {
   // Belangrijk:
   // - In productie: "/api/..." werkt op dezelfde domain (followthrough.pages.dev)
   // - In lokaal dev: we zetten zo meteen een proxy in vite.config.ts zodat "/api" ook werkt.
-  const API_BASE = "";
+  const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/+$/, "");
 
   const api = useMemo(() => ({
     async list() {
