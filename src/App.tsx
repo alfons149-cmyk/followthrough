@@ -268,45 +268,48 @@ function App() {
 
     <h2 className="sectionTitle">Your followups</h2>
 
-    <div className="list">
-      {(visible ?? items).map((f) => {
-        const chipClass =
-          f.status === "done" ? "chip chipDone" : "chip chipOpen";
+   <div className="list">
+  {(visible ?? items).map((f) => {
+    const chipClass =
+      f.status === "done" ? "chip chipDone" : "chip chipOpen";
 
-        return (
-          <div key={f.id} className="card">
-            <div className="cardTop">
-              <div>
-                <div className="cardTitle">
-                  {f.contactName}{" "}
-                  <span>({f.companyName})</span>
-                </div>
+    return (
+      <div key={f.id} className="card">
+        <div className="cardTop">
+          <div>
+            <div className="cardTitle">
+              {f.contactName} <span>({f.companyName})</span>
+            </div>
 
-                <div className="cardLine">
-                  <b>Next:</b> {f.nextStep}
-                </div>
+            <div className="cardLine">
+              <b>Next:</b> {f.nextStep}
+            </div>
 
-                <div className="cardMeta">
-                  Due: <b>{formatDate(f.dueAt)}</b> ·{" "}
-                  <span className={chipClass}>{f.status}</span>{" "}
-                  · Id: <code>{f.id}</code>
-                </div>
-              </div>
-
-              <div className="cardActions">
-                <button className="btn" onClick={() => toggleStatus(f)} disabled={loading}>
-                  Toggle → {f.status === "done" ? "open" : "done"}
-                </button>
-              </div>
+            <div className="cardMeta">
+              Due: <b>{formatDate(f.dueAt)}</b> ·{" "}
+              <span className={chipClass}>{f.status}</span> · Id:{" "}
+              <code>{f.id}</code>
             </div>
           </div>
-        );
-      })}
 
-      {!loading && (visible ?? items).length === 0 && (
-        <div className="empty">No followups yet. Add one above.</div>
-      )}
-    </div>
+          <div className="cardActions">
+            <button
+              className="btn"
+              onClick={() => toggleStatus(f)}
+              disabled={loading}
+            >
+              Toggle → {f.status === "done" ? "open" : "done"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  })}
+
+  {!loading && (visible ?? items).length === 0 && (
+    <div className="empty">No followups yet. Add one above.</div>
+  )}
+</div>
   </div>
 );
 }
