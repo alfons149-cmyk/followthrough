@@ -31,6 +31,12 @@ function App() {
   const [nextStep, setNextStep] = useState("Send intro email");
   const [dueAt, setDueAt] = useState("2026-01-10");
 
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all"|"open"|"done">("all");
+  const [sortBy, setSortBy] = useState<"dueAt"|"createdAt"|"company">("dueAt");
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("asc");
+
+
   // Pages Functions: same-origin API
   const API_BASE = ""; // leeg = dezelfde origin als de frontend
 
