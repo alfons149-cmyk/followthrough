@@ -9,7 +9,7 @@ type Followup = {
   companyName: string;
   nextStep: string;
   dueAt: string;   // TEXT
-  status: string;  // "open" | "done" (of wat jij gebruikt)
+  status: string;  // "open" | "done"
   createdAt: string;
 };
 
@@ -32,51 +32,63 @@ function App() {
   const [dueAt, setDueAt] = useState("2026-01-10");
 
   // Belangrijk:
-  // - In productie: "/api/..." werkt op dezelfde domain (followthrough.pages.dev)
-  // - In lokaal dev: we zetten zo meteen een proxy in vite.config.ts zodat "/api" ook werkt.
-  fetch("/api/followups?workspaceId=...")
+  // - In productie: "/api/..." werkt op dezelfde origin als de frontend (Pages Functions)
+  // - In lokaal dev: Vite proxy kan "/api" doorsturen
+  const API_BASE = ""; // leeg = same-origin
 
+  const api = useMemo(() => {
+    const base = API_BASE.replace(/\/+$/, ""); // veiligheid: geen trailing slash
 
-  const api = useMemo(() => ({
-    async list() {
-      const res = await fetch(`${API_BASE}/api/followups?workspaceId=${encodeURIComponent(workspaceId)}`, {
-        headers: { "Accept": "application/json" },
-      });
-      if (!res.ok) throw new Error(`List failed (${res.status})`);
-      const data = await res.json();
-      return (data.items || []) as Followup[];
-    },
+    return {
+      async list() {
+        const url = `${base}/api/followups?workspaceId=${encodeURIComponent(workspaceId)}`;
+        const res = await fetch(url, {
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) throw new Error(`List failed (${res.status})`);
+        const data = await res.json();
+        return (data.items || []) as Followup[];
+      },
 
-    async create() {
-            fetch("/api/followups", { method: "POST", ... })
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workspaceId,
-          ownerId: "u_1",
-          contactName,
-          companyName,
-          nextStep,
-          dueAt,
-          status: "open",
-        }),
-      });
-      if (!res.ok) throw new Error(`Create failed (${res.status})`);
-      return res.json() as Promise<{ ok: boolean; id: string }>;
-    },
+      async create() {
+        const url = `${base}/api/followups`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workspaceId,
+            ownerId: "u_1",
+            contactName,
+            companyName,
+            nextStep,
+            dueAt,
+            status: "open",
+          }),
+        });
+        if (!res.ok) throw new Error(`Create failed (${res.status})`);
+        return res.json() as Promise<{ ok: boolean; id: string }>;
+      },
 
-    async patch(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
-      const res = await fetch(`${API_BASE}/api/followups/${encodeURIComponent(id)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`Patch failed (${res.status})`);
-      const data = await res.json();
-      return data.item as Followup;
-    },
-  }), [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
+      async patch(
+        id: string,
+        body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+      ) {
+        const url = `${base}/api/followups/${encodeURIComponent(id)}`;
+        const res = await fetch(url, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(`Patch failed (${res.status})`);
+        const data = await res.json();
+        return data.item as Followup;
+      },
+    };
+  }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
+  // (rest van je component blijft zoals je het had: useEffect om api.list() te callen, UI, etc.)
+  // ...
+}
   async function refresh() {
     setLoading(true);
     setError("");
