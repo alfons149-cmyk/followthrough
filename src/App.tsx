@@ -162,6 +162,76 @@ export default function App() {
       setLoading(false);
     }
   }
+    // --- A) Due-date helpers (overdue / soon / later) ---
+  function dayStart(d: Date) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  }
+
+  function daysFromToday(dateStr: string) {
+    const t = Date.parse(dateStr);
+    if (!Number.isFinite(t)) return null;
+    const today = dayStart(new Date()).getTime();
+    const target = dayStart(new Date(t)).getTime();
+    return Math.round((target - today) / 86400000); // days
+  }
+
+  function dueBadge(dueAt: string) {
+    const d = daysFromToday(dueAt);
+    if (d === null) return { label: "No date", kind: "due" as const };
+
+    if (d < 0) return { label: `Overdue (${Math.abs(d)}d)`, kind: "overdue" as const };
+    if (d === 0) return { label: "Due today", kind: "soon" as const };
+    if (d === 1) return { label: "Due tomorrow", kind: "soon" as const };
+    if (d <= 7) return { label: `Due in ${d}d`, kind: "soon" as const };
+    return { label: `Due in ${d}d`, kind: "due" as const };
+  }
+
+  // --- B) Inline editing state ---
+  const [editNextId, setEditNextId] = useState<string | null>(null);
+  const [editDueId, setEditDueId] = useState<string | null>(null);
+  const [draftNext, setDraftNext] = useState("");
+  const [draftDue, setDraftDue] = useState("");
+
+  async function saveNextStep(id: string) {
+    const value = draftNext.trim();
+    setEditNextId(null);
+
+    // niets aanpassen als leeg
+    if (!value) return;
+
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(id, { nextStep: value });
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveDueAt(id: string) {
+    const value = draftDue.trim();
+    setEditDueId(null);
+
+    // verwacht YYYY-MM-DD
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(id, { dueAt: value });
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
   return (
     <div className="page">
