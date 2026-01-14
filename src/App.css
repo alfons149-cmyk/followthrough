@@ -1,4 +1,9 @@
-body { background: hotpink !important; }
+/* Pagina-achtergrond */
+.page {
+  min-height: 100vh;
+  background: #f6f7fb; /* licht grijs-blauw */
+  padding: 32px 16px 64px;
+}
 
 :root {
   --bg: #ffffff;
