@@ -8,40 +8,39 @@ type Followup = {
   contactName: string;
   companyName: string;
   nextStep: string;
-  dueAt: string;   // TEXT
-  status: string;  // "open" | "done"
+  dueAt: string; // TEXT
+  status: string; // "open" | "done"
   createdAt: string;
 };
 
 function formatDate(s: string) {
-  // verwacht: "YYYY-MM-DD" of ISO string; toon gewoon leesbaar
   return s?.slice(0, 10) || "";
 }
 
-function App() {
+export default function App() {
   const workspaceId = "ws_1";
 
   const [items, setItems] = useState<Followup[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
-  // simpele create form
+  // create form
   const [contactName, setContactName] = useState("Alice Example");
   const [companyName, setCompanyName] = useState("Example GmbH");
   const [nextStep, setNextStep] = useState("Send intro email");
   const [dueAt, setDueAt] = useState("2026-01-10");
 
+  // filter/sort UI state
   const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all"|"open"|"done">("all");
-  const [sortBy, setSortBy] = useState<"dueAt"|"createdAt"|"company">("dueAt");
-  const [sortDir, setSortDir] = useState<"asc"|"desc">("asc");
-
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "done">("all");
+  const [sortBy, setSortBy] = useState<"dueAt" | "createdAt" | "company">("dueAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   // Pages Functions: same-origin API
   const API_BASE = ""; // leeg = dezelfde origin als de frontend
 
   const api = useMemo(() => {
-    const base = API_BASE.replace(/\/+$/, ""); // veiligheid: geen trailing slash
+    const base = API_BASE.replace(/\/+$/, "");
 
     return {
       async list() {
@@ -71,7 +70,10 @@ function App() {
         return res.json() as Promise<{ ok: boolean; id: string }>;
       },
 
-      async patch(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
+      async patch(
+        id: string,
+        body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+      ) {
         const url = `${base}/api/followups/${encodeURIComponent(id)}`;
         const res = await fetch(url, {
           method: "PATCH",
@@ -86,35 +88,35 @@ function App() {
   }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
   const visible = useMemo(() => {
-  const needle = q.trim().toLowerCase();
+    const needle = q.trim().toLowerCase();
 
-  const filtered = items.filter((f) => {
-    const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
+    const filtered = items.filter((f) => {
+      const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
 
-    const matchesQuery =
-      !needle ||
-      `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
+      const matchesQuery =
+        !needle ||
+        `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
 
-    return matchesStatus && matchesQuery;
-  });
+      return matchesStatus && matchesQuery;
+    });
 
-  const getTime = (s: string) => {
-    const t = Date.parse(s);
-    return Number.isFinite(t) ? t : 0;
-  };
+    const getTime = (s: string) => {
+      const t = Date.parse(s);
+      return Number.isFinite(t) ? t : 0;
+    };
 
-  filtered.sort((a, b) => {
-    let cmp = 0;
+    filtered.sort((a, b) => {
+      let cmp = 0;
 
-    if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
-    if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
-    if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
+      if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
+      if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
+      if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
 
-    return sortDir === "asc" ? cmp : -cmp;
-  });
+      return sortDir === "asc" ? cmp : -cmp;
+    });
 
-  return filtered;
-}, [items, q, statusFilter, sortBy, sortDir]);
+    return filtered;
+  }, [items, q, statusFilter, sortBy, sortDir]);
 
   async function refresh() {
     setLoading(true);
@@ -162,227 +164,175 @@ function App() {
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 24, textAlign: "left" }}>
-      <h1 style={{ marginBottom: 6 }}>FollowThrough</h1>
-      <div style={{ opacity: 0.8, marginBottom: 16 }}>
-        Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-      </div>
+    <div className="page">
+      <header className="header">
+        <h1 className="title">FollowThrough</h1>
+        <div className="sub">
+          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+        </div>
+      </header>
 
       {error && (
-        <div style={{ background: "#ffe9e9", padding: 12, borderRadius: 8, marginBottom: 12 }}>
+        <div className="alert">
           <b>Error:</b> {error}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-        <div>
-          <label>Contact name</label>
-          <input value={contactName} onChange={(e) => setContactName(e.target.value)} style={{ width: "100%" }} />
-        </div>
-        <div>
-          <label>Company</label>
-          <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} style={{ width: "100%" }} />
-        </div>
-        <div>
-          <label>Next step</label>
-          <input value={nextStep} onChange={(e) => setNextStep(e.target.value)} style={{ width: "100%" }} />
-        </div>
-        <div>
-          <label>Due at (YYYY-MM-DD)</label>
-          <input value={dueAt} onChange={(e) => setDueAt(e.target.value)} style={{ width: "100%" }} />
-        </div>
-      </div>
+      <section className="panel">
+        <div className="grid">
+          <div className="field">
+            <label>Contact name</label>
+            <input
+              className="input"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+            />
+          </div>
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
-        <button onClick={onCreate} disabled={loading}>+ Add followup</button>
-        <button onClick={refresh} disabled={loading}>Refresh</button>
-        {loading && <span style={{ opacity: 0.7 }}>Loading…</span>}
-      </div>
+          <div className="field">
+            <label>Company</label>
+            <input
+              className="input"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+            />
+          </div>
 
-      <h2 style={{ marginBottom: 10 }}>Your followups</h2>
+          <div className="field">
+            <label>Next step</label>
+            <input
+              className="input"
+              value={nextStep}
+              onChange={(e) => setNextStep(e.target.value)}
+            />
+          </div>
 
-      return (
-  <div className="page">
-    <header className="header">
-      <h1 className="title">FollowThrough</h1>
-      <div className="sub">
-        Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-      </div>
-    </header>
-
-    {error && (
-      <div className="alert">
-        <b>Error:</b> {error}
-      </div>
-    )}
-
-    <section className="panel">
-      <div className="grid">
-        <div className="field">
-          <label>Contact name</label>
-          <input
-            className="input"
-            value={contactName}
-            onChange={(e) => setContactName(e.target.value)}
-          />
+          <div className="field">
+            <label>Due at (YYYY-MM-DD)</label>
+            <input className="input" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
+          </div>
         </div>
 
-        <div className="field">
-          <label>Company</label>
-          <input
-            className="input"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-          />
+        <div className="toolbar">
+          <div className="toolbarLeft">
+            <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
+              + Add followup
+            </button>
+            <button className="btn" onClick={refresh} disabled={loading}>
+              Refresh
+            </button>
+            {loading && <span className="loading">Loading…</span>}
+          </div>
         </div>
+      </section>
 
-        <div className="field">
-          <label>Next step</label>
-          <input
-            className="input"
-            value={nextStep}
-            onChange={(e) => setNextStep(e.target.value)}
-          />
-        </div>
-
-        <div className="field">
-          <label>Due at (YYYY-MM-DD)</label>
-          <input
-            className="input"
-            value={dueAt}
-            onChange={(e) => setDueAt(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="toolbar">
-        <div className="toolbarLeft">
-          <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
-            + Add followup
-          </button>
-          <button className="btn" onClick={refresh} disabled={loading}>
-            Refresh
-          </button>
-          {loading && <span className="loading">Loading…</span>}
-        </div>
-      </div>
-    </section>
-
-    <section className="panel">
-  <div className="toolbar">
-    <div className="toolbarLeft">
-      <div className="field" style={{ minWidth: 260 }}>
-        <label>Search</label>
-        <input
-          className="input"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Alice, Example GmbH, intro…"
-        />
-      </div>
-
-      <div className="field" style={{ minWidth: 160 }}>
-        <label>Status</label>
-        <select
-          className="select"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-        >
-          <option value="all">All</option>
-          <option value="open">Open</option>
-          <option value="done">Done</option>
-        </select>
-      </div>
-    </div>
-
-    <div className="toolbarRight">
-      <div className="field" style={{ minWidth: 170 }}>
-        <label>Sort</label>
-        <select
-          className="select"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
-        >
-          <option value="dueAt">Due date</option>
-          <option value="createdAt">Created</option>
-          <option value="company">Company</option>
-        </select>
-      </div>
-
-      <div className="field" style={{ minWidth: 140 }}>
-        <label>Direction</label>
-        <select
-          className="select"
-          value={sortDir}
-          onChange={(e) => setSortDir(e.target.value as any)}
-        >
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </select>
-      </div>
-
-      <button
-        className="btn"
-        onClick={() => {
-          setQ("");
-          setStatusFilter("all");
-          setSortBy("dueAt");
-          setSortDir("asc");
-        }}
-        disabled={loading}
-      >
-        Reset
-      </button>
-    </div>
-  </div>
-</section>
-
-    <h2 className="sectionTitle">Your followups</h2>
-
-   <div className="list">
-  {(visible ?? items).map((f) => {
-    const chipClass =
-      f.status === "done" ? "chip chipDone" : "chip chipOpen";
-
-    return (
-      <div key={f.id} className="card">
-        <div className="cardTop">
-          <div>
-            <div className="cardTitle">
-              {f.contactName} <span>({f.companyName})</span>
+      <section className="panel">
+        <div className="toolbar">
+          <div className="toolbarLeft">
+            <div className="field" style={{ minWidth: 260 }}>
+              <label>Search</label>
+              <input
+                className="input"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Alice, Example GmbH, intro…"
+              />
             </div>
 
-            <div className="cardLine">
-              <b>Next:</b> {f.nextStep}
-            </div>
-
-            <div className="cardMeta">
-              Due: <b>{formatDate(f.dueAt)}</b> ·{" "}
-              <span className={chipClass}>{f.status}</span> · Id:{" "}
-              <code>{f.id}</code>
+            <div className="field" style={{ minWidth: 160 }}>
+              <label>Status</label>
+              <select
+                className="select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+              >
+                <option value="all">All</option>
+                <option value="open">Open</option>
+                <option value="done">Done</option>
+              </select>
             </div>
           </div>
 
-          <div className="cardActions">
+          <div className="toolbarRight">
+            <div className="field" style={{ minWidth: 170 }}>
+              <label>Sort</label>
+              <select
+                className="select"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+              >
+                <option value="dueAt">Due date</option>
+                <option value="createdAt">Created</option>
+                <option value="company">Company</option>
+              </select>
+            </div>
+
+            <div className="field" style={{ minWidth: 140 }}>
+              <label>Direction</label>
+              <select
+                className="select"
+                value={sortDir}
+                onChange={(e) => setSortDir(e.target.value as any)}
+              >
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+              </select>
+            </div>
+
             <button
               className="btn"
-              onClick={() => toggleStatus(f)}
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+                setSortBy("dueAt");
+                setSortDir("asc");
+              }}
               disabled={loading}
             >
-              Toggle → {f.status === "done" ? "open" : "done"}
+              Reset
             </button>
           </div>
         </div>
+      </section>
+
+      <h2 className="sectionTitle">Your followups</h2>
+
+      <div className="list">
+        {visible.map((f) => {
+          const chipClass = f.status === "done" ? "chip chipDone" : "chip chipOpen";
+
+          return (
+            <div key={f.id} className="card">
+              <div className="cardTop">
+                <div>
+                  <div className="cardTitle">
+                    {f.contactName} <span>({f.companyName})</span>
+                  </div>
+
+                  <div className="cardLine">
+                    <b>Next:</b> {f.nextStep}
+                  </div>
+
+                  <div className="cardMeta">
+                    Due: <b>{formatDate(f.dueAt)}</b> ·{" "}
+                    <span className={chipClass}>{f.status}</span> · Id: <code>{f.id}</code>
+                  </div>
+                </div>
+
+                <div className="cardActions">
+                  <button className="btn" onClick={() => toggleStatus(f)} disabled={loading}>
+                    Toggle → {f.status === "done" ? "open" : "done"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {!loading && visible.length === 0 && (
+          <div className="empty">No followups match your filters.</div>
+        )}
       </div>
-    );
-  })}
-
-  {!loading && (visible ?? items).length === 0 && (
-    <div className="empty">No followups yet. Add one above.</div>
-  )}
-</div>
-  </div>
-);
+    </div>
+  );
 }
-
-export default App;
