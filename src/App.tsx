@@ -232,7 +232,6 @@ export default function App() {
     }
   }
 
-
   return (
     <div className="page">
       <header className="header">
@@ -367,25 +366,94 @@ export default function App() {
 
       <h2 className="sectionTitle">Your followups</h2>
 
-      <div className="list">
+           <div className="list">
         {visible.map((f) => {
           const chipClass = f.status === "done" ? "chip chipDone" : "chip chipOpen";
+          const due = dueBadge(f.dueAt);
+          const dueClass =
+            due.kind === "overdue" ? "chip chipOverdue" :
+            due.kind === "soon" ? "chip chipSoon" :
+            "chip chipDue";
+
+          const cardClass =
+            due.kind === "overdue" && f.status !== "done"
+              ? "card cardOverdue"
+              : "card";
 
           return (
-            <div key={f.id} className="card">
+            <div key={f.id} className={cardClass}>
               <div className="cardTop">
                 <div>
                   <div className="cardTitle">
                     {f.contactName} <span>({f.companyName})</span>
                   </div>
 
+                  {/* Next step: inline edit */}
                   <div className="cardLine">
-                    <b>Next:</b> {f.nextStep}
+                    <b>Next:</b>{" "}
+                    {editNextId === f.id ? (
+                      <input
+                        className="inlineInput"
+                        value={draftNext}
+                        autoFocus
+                        onChange={(e) => setDraftNext(e.target.value)}
+                        onBlur={() => saveNextStep(f.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveNextStep(f.id);
+                          if (e.key === "Escape") setEditNextId(null);
+                        }}
+                      />
+                    ) : (
+                      <span
+                        className="inlineValue"
+                        title="Click to edit"
+                        onClick={() => {
+                          setEditNextId(f.id);
+                          setDraftNext(f.nextStep || "");
+                        }}
+                      >
+                        {f.nextStep}
+                      </span>
+                    )}
                   </div>
 
                   <div className="cardMeta">
-                    Due: <b>{formatDate(f.dueAt)}</b> ·{" "}
-                    <span className={chipClass}>{f.status}</span> · Id: <code>{f.id}</code>
+                    {/* Due date: inline edit */}
+                    <span className="metaItem">
+                      Due:{" "}
+                      {editDueId === f.id ? (
+                        <input
+                          className="inlineInput inlineDate"
+                          value={draftDue}
+                          autoFocus
+                          onChange={(e) => setDraftDue(e.target.value)}
+                          onBlur={() => saveDueAt(f.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveDueAt(f.id);
+                            if (e.key === "Escape") setEditDueId(null);
+                          }}
+                        />
+                      ) : (
+                        <span
+                          className="inlineValue"
+                          title="Click to edit"
+                          onClick={() => {
+                            setEditDueId(f.id);
+                            setDraftDue(formatDate(f.dueAt));
+                          }}
+                        >
+                          <b>{formatDate(f.dueAt)}</b>
+                        </span>
+                      )}
+                    </span>
+
+                    <span className={dueClass}>{due.label}</span>
+
+                    <span className={chipClass}>{f.status}</span>
+
+                    <span className="metaItem">
+                      Id: <code>{f.id}</code>
+                    </span>
                   </div>
                 </div>
 
