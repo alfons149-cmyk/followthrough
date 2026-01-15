@@ -166,11 +166,12 @@ export default function App() {
   }
 
   async function advanceStatus(f: Followup) {
-  const ns = nextStatus(f.status as Status);
+  const plan = transitionPlan(f);
+
   setLoading(true);
   setError("");
   try {
-    const updated = await api.patch(f.id, { status: ns });
+    const updated = await api.patch(f.id, plan);
     setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
   } catch (e: any) {
     setError(e?.message || "Unknown error");
