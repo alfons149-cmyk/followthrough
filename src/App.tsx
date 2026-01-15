@@ -370,9 +370,9 @@ function addDays(yyyyMmDd: string, days: number) {
 
         <div className="toolbar">
           <div className="toolbarLeft">
-            <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
-              + Add followup
-            </button>
+            <button className="btn btnPrimary" onClick={() => advanceStatus(f)} disabled={loading}>
+           Move → {nextStatus(f.status as Status)}
+           </button>
             <button className="btn" onClick={refresh} disabled={loading}>
               Refresh
             </button>
