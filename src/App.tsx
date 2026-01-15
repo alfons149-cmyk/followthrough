@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
+type Status = "open" | "sent" | "waiting" | "done";
+
 type Followup = {
   id: string;
   workspaceId: string;
@@ -8,8 +10,8 @@ type Followup = {
   contactName: string;
   companyName: string;
   nextStep: string;
-  dueAt: string; // TEXT
-  status: string; // "open" | "done"
+  dueAt: string;
+  status: Status;
   createdAt: string;
 };
 
