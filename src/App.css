@@ -345,3 +345,16 @@ code{
 .cardOverdue{
   border-left: 6px solid #fb7185;
 }
+.btnMini{
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.miniRow{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
