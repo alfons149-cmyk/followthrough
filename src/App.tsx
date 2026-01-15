@@ -190,6 +190,24 @@ export default function App() {
     return { label: `Due in ${d}d`, kind: "due" as const };
   }
 
+  function nextStatus(s: Status): Status {
+  if (s === "open") return "sent";
+  if (s === "sent") return "waiting";
+  if (s === "waiting") return "done";
+  return "open"; // done -> open (als je terug wil)
+}
+
+function addDays(yyyyMmDd: string, days: number) {
+  const t = Date.parse(yyyyMmDd);
+  const base = Number.isFinite(t) ? new Date(t) : new Date();
+  base.setHours(0, 0, 0, 0);
+  base.setDate(base.getDate() + days);
+  const y = base.getFullYear();
+  const m = String(base.getMonth() + 1).padStart(2, "0");
+  const d = String(base.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
   // --- B) Inline editing state ---
   const [editNextId, setEditNextId] = useState<string | null>(null);
   const [editDueId, setEditDueId] = useState<string | null>(null);
