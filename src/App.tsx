@@ -507,10 +507,20 @@ function addDays(yyyyMmDd: string, days: number) {
                 </div>
 
                 <div className="cardActions">
-                  <button className="btn" onClick={() => toggleStatus(f)} disabled={loading}>
-                    Toggle → {f.status === "done" ? "open" : "done"}
-                  </button>
-                </div>
+  <button className="btn btnPrimary" onClick={() => advanceStatus(f)} disabled={loading}>
+    Move → {nextStatus(f.status as any)}
+  </button>
+
+  <div className="miniRow">
+    <button className="btn btnMini" onClick={() => snooze(f, 1)} disabled={loading}>Tomorrow</button>
+    <button className="btn btnMini" onClick={() => snooze(f, 3)} disabled={loading}>+3 days</button>
+    <button className="btn btnMini" onClick={() => snooze(f, 7)} disabled={loading}>+1 week</button>
+  </div>
+
+  <button className="btn" onClick={() => toggleStatus(f)} disabled={loading}>
+    Toggle → {f.status === "done" ? "open" : "done"}
+  </button>
+</div>
               </div>
             </div>
           );
