@@ -568,6 +568,10 @@ function addDays(yyyyMmDd: string, days: number) {
                     <span className="metaItem">
                       Id: <code>{f.id}</code>
                     </span>
+                    <span className="metaItem" style={{ opacity: 0.6, fontSize: 12 }}>
+  debug → dueAt: {String(f.dueAt)} · kind: {due.kind} · status: {f.status}
+</span>
+
                   </div>
                 </div>
 
