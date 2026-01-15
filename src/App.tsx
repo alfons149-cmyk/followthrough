@@ -164,6 +164,35 @@ export default function App() {
       setLoading(false);
     }
   }
+
+  async function advanceStatus(f: Followup) {
+  const ns = nextStatus(f.status as Status);
+  setLoading(true);
+  setError("");
+  try {
+    const updated = await api.patch(f.id, { status: ns });
+    setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+  } catch (e: any) {
+    setError(e?.message || "Unknown error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function snooze(f: Followup, days: number) {
+  const nextDue = addDays(formatDate(f.dueAt) || "1970-01-01", days);
+  setLoading(true);
+  setError("");
+  try {
+    const updated = await api.patch(f.id, { dueAt: nextDue });
+    setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+  } catch (e: any) {
+    setError(e?.message || "Unknown error");
+  } finally {
+    setLoading(false);
+  }
+}
+
     // --- A) Due-date helpers (overdue / soon / later) ---
   function dayStart(d: Date) {
     const x = new Date(d);
