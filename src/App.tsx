@@ -219,11 +219,47 @@ async function snooze(f: Followup, days: number) {
     return { label: `Due in ${d}d`, kind: "due" as const };
   }
 
-  function nextStatus(s: Status): Status {
+  type Status = "open" | "sent" | "waiting" | "done";
+
+function nextStatus(s: Status): Status {
   if (s === "open") return "sent";
   if (s === "sent") return "waiting";
   if (s === "waiting") return "done";
-  return "open"; // done -> open (als je terug wil)
+  return "open"; // done -> open (reopen)
+}
+
+/**
+ * Bepaalt wat er moet gebeuren als je "Move" klikt:
+ * - nieuwe status
+ * - eventueel nieuwe dueAt
+ */
+function transitionPlan(f: Followup) {
+  const current = f.status as Status;
+  const ns = nextStatus(current);
+
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, "0");
+  const d = String(today.getDate()).padStart(2, "0");
+  const todayStr = `${y}-${m}-${d}`;
+
+  // baseDate: gebruik bestaande dueAt als die valide is, anders vandaag
+  const base = formatDate(f.dueAt) || todayStr;
+
+  if (current === "open" && ns === "sent") {
+    return { status: ns, dueAt: addDays(base, 3) };   // na 3 dagen checken
+  }
+  if (current === "sent" && ns === "waiting") {
+    return { status: ns, dueAt: addDays(base, 7) };   // 1 week later follow-up
+  }
+  if (current === "waiting" && ns === "done") {
+    return { status: ns };                            // klaar = due maakt niet uit
+  }
+  if (current === "done" && ns === "open") {
+    return { status: ns, dueAt: addDays(todayStr, 1) }; // reopen → morgen
+  }
+
+  return { status: ns };
 }
 
 function addDays(yyyyMmDd: string, days: number) {
