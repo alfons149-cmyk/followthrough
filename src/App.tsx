@@ -201,13 +201,36 @@ async function snooze(f: Followup, days: number) {
     return x;
   }
 
-  function daysFromToday(dateStr: string) {
-    const t = Date.parse(dateStr);
-    if (!Number.isFinite(t)) return null;
-    const today = dayStart(new Date()).getTime();
-    const target = dayStart(new Date(t)).getTime();
-    return Math.round((target - today) / 86400000); // days
-  }
+  function parseYMD(ymd: string) {
+  const s = (ymd || "").slice(0, 10);
+  const [y, m, d] = s.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d); // lokale tijd, geen UTC gedoe
+}
+
+function addDays(ymd: string, days: number) {
+  const dt = parseYMD(ymd) ?? new Date();
+  dt.setDate(dt.getDate() + days);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function dueBadge(dueAt: string) {
+  const dt = parseYMD(dueAt);
+  if (!dt) return { kind: "due" as const, label: "No date" };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  dt.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round((dt.getTime() - today.getTime()) / 86400000);
+
+  if (diffDays < 0) return { kind: "overdue" as const, label: `Overdue (${Math.abs(diffDays)}d)` };
+  if (diffDays <= 1) return { kind: "soon" as const, label: diffDays === 0 ? "Due today" : "Due tomorrow" };
+  return { kind: "due" as const, label: `Due in ${diffDays}d` };
+}
 
   function dueBadge(dueAt: string) {
     const d = daysFromToday(dueAt);
