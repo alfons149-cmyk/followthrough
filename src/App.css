@@ -358,3 +358,45 @@ code{
   gap: 8px;
   flex-wrap: wrap;
 }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+/* OPEN */
+.chipOpen {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+/* SENT */
+.chipSent {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+
+/* WAITING */
+.chipWaiting {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* DONE */
+.chipDone {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+const statusClass =
+  f.status === "done" ? "chip chipDone" :
+  f.status === "waiting" ? "chip chipWaiting" :
+  f.status === "sent" ? "chip chipSent" :
+  "chip chipOpen";
