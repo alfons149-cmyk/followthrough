@@ -367,6 +367,11 @@ function addDays(yyyyMmDd: string, days: number) {
                 <option value="all">All</option>
                 <option value="open">Open</option>
                 <option value="done">Done</option>
+                <option value="open">Open</option>
+                <option value="open">Open</option>
+                <option value="sent">Sent</option>
+                <option value="waiting">Waiting</option>
+                <option value="done">Done</option>
               </select>
             </div>
           </div>
