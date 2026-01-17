@@ -14,19 +14,19 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const id = `f_${crypto.randomUUID()}`;
 
   // SQLite-friendly timestamp: "YYYY-MM-DD HH:MM:SS"
-  const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+  const createdAt = new Date()
+  .toISOString()
+  .slice(0, 19)
+  .replace("T", " ");
 
-  await db.insert(followups).values({
-    id,
-    workspaceId: body.workspaceId,
-    ownerId: body.ownerId,
-    contactName: body.contactName,
-    companyName: body.companyName,
-    nextStep: body.nextStep,
-    dueAt: body.dueAt,
-    status: body.status,
-    createdAt, // ✅ ADD THIS
-  });
-
-  return Response.json({ ok: true, id }, { headers: cors });
-};
+await db.insert(followups).values({
+  id,
+  workspaceId: body.workspaceId,
+  ownerId: body.ownerId,
+  contactName: body.contactName,
+  companyName: body.companyName,
+  nextStep: body.nextStep,
+  dueAt: body.dueAt,
+  status: body.status,
+  createdAt, // 👈 cruciaal
+});
