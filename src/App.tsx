@@ -91,9 +91,13 @@ function transitionPlan(f: Followup) {
   }
 
   // 5) done → done (als je op Move blijft klikken) laten we gewoon status staan
-  if (current === "done") {
-    return { status: "done" as const };
-  }
+ function statusLabel(s: Status) {
+  if (s === "open") return "Open";
+  if (s === "sent") return "Sent";
+  if (s === "waiting") return "Waiting";
+  if (s === "followup") return "Follow-up";
+  return "Done";
+}}
 
   // Fallback: status wijzigen, dueAt laten zoals het is
   return { status: ns, dueAt: baseSafe };
