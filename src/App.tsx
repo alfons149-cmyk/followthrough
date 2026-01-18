@@ -247,13 +247,6 @@ function addDays(ymd: string, days: number) {
     return { label: `Due in ${d}d`, kind: "due" as const };
   }
 
-  function nextStatus(s: Status): Status {
-  if (s === "open") return "sent";
-  if (s === "sent") return "waiting";
-  if (s === "waiting") return "done";
-  return "open"; // done -> open (reopen)
-}
-
 /**
  * Bepaalt wat er moet gebeuren als je "Move" klikt:
  * - nieuwe status
