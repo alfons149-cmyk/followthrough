@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-// ---- Workflow definition (single source of truth) ----
+// ==============================
+// Workflow (single source of truth)
+// ==============================
 const STATUS_ORDER = ["open", "sent", "waiting", "followup", "done"] as const;
 type Status = typeof STATUS_ORDER[number];
 
@@ -10,6 +12,17 @@ function nextStatus(s: Status): Status {
   return STATUS_ORDER[Math.min(i + 1, STATUS_ORDER.length - 1)];
 }
 
+function statusLabel(s: Status) {
+  if (s === "open") return "Open";
+  if (s === "sent") return "Sent";
+  if (s === "waiting") return "Waiting";
+  if (s === "followup") return "Follow-up";
+  return "Done";
+}
+
+// ==============================
+// Types
+// ==============================
 type Followup = {
   id: string;
   workspaceId: string;
@@ -17,21 +30,42 @@ type Followup = {
   contactName: string;
   companyName: string;
   nextStep: string;
-  dueAt: string;
+  dueAt: string;     // "YYYY-MM-DD" or ISO-ish, but we display slice(0,10)
   status: Status;
-  createdAt: string;
+  createdAt: string; // "YYYY-MM-DD HH:MM:SS"
 };
 
 function formatDate(s: string) {
   return s?.slice(0, 10) || "";
 }
 
-// ---- Date helpers (single source of truth) ----
+// ==============================
+// Date helpers (single source of truth)
+// ==============================
 function parseYMD(ymd: string) {
   const s = (ymd || "").slice(0, 10);
   const [y, m, d] = s.split("-").map(Number);
   if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
+  return new Date(y, m - 1, d); // local time
+}
+
+function todayYMD() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+function addDays(ymd: string, days: number) {
+  const dt = parseYMD(ymd) ?? new Date();
+  dt.setHours(0, 0, 0, 0);
+  dt.setDate(dt.getDate() + days);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function dueBadge(dueAt: string) {
@@ -45,86 +79,240 @@ function dueBadge(dueAt: string) {
   const diffDays = Math.round((dt.getTime() - today.getTime()) / 86400000);
 
   if (diffDays < 0) return { kind: "overdue" as const, label: `Overdue (${Math.abs(diffDays)}d)` };
-  if (diffDays <= 1) return { kind: "soon" as const, label: diffDays === 0 ? "Due today" : "Due tomorrow" };
+  if (diffDays === 0) return { kind: "soon" as const, label: "Due today" };
+  if (diffDays === 1) return { kind: "soon" as const, label: "Due tomorrow" };
   if (diffDays <= 7) return { kind: "soon" as const, label: `Due in ${diffDays}d` };
   return { kind: "due" as const, label: `Due in ${diffDays}d` };
 }
 
+// ==============================
+// Workflow planner for Move button
+// ==============================
 function transitionPlan(f: Followup) {
   const current = f.status;
   const ns = nextStatus(current);
 
-  // Vandaag als YYYY-MM-DD (lokale tijd)
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const today = todayYMD();
+  const base = formatDate(f.dueAt) || today;
 
-  // Base: als dueAt leeg/ongeldig → vandaag
-  const base = formatDate(f.dueAt) || todayStr;
-
-  // Handige helper: als base al in het verleden ligt, gebruik vandaag
+  // if base is invalid or in the past → use today
   const baseDt = parseYMD(base);
-  const baseSafe =
-    baseDt && baseDt.getTime() < now.getTime()
-      ? todayStr
-      : base;
+  const todayDt = parseYMD(today)!;
+  const baseSafe = baseDt && baseDt.getTime() < todayDt.getTime() ? today : base;
 
-  // 1) open → sent : je hebt iets verstuurd, check over 3 dagen
-  if (current === "open" && ns === "sent") {
-    return { status: ns, dueAt: addDays(todayStr, 3) };
-  }
+  // open -> sent: check after 3 days
+  if (current === "open" && ns === "sent") return { status: ns, dueAt: addDays(today, 3) };
 
-  // 2) sent → waiting : je wacht op reactie, plan follow-up over 7 dagen
-  if (current === "sent" && ns === "waiting") {
-    return { status: ns, dueAt: addDays(todayStr, 7) };
-  }
+  // sent -> waiting: follow up after 7 days
+  if (current === "sent" && ns === "waiting") return { status: ns, dueAt: addDays(today, 7) };
 
-  // 3) waiting → followup : het is tijd om op te volgen → dueAt = vandaag
-  // (zodat de kaart “actief” wordt in je lijst)
-  if (current === "waiting" && ns === "followup") {
-    return { status: ns, dueAt: todayStr };
-  }
+  // waiting -> followup: action now
+  if (current === "waiting" && ns === "followup") return { status: ns, dueAt: today };
 
-  // 4) followup → done : afronden, dueAt mag blijven staan of leeg (we laten staan)
-  if (current === "followup" && ns === "done") {
-    return { status: ns };
-  }
+  // followup -> done: done, keep dueAt as-is
+  if (current === "followup" && ns === "done") return { status: ns };
 
-  // 5) done → done (als je op Move blijft klikken) laten we gewoon status staan
- function statusLabel(s: Status) {
-  if (s === "open") return "Open";
-  if (s === "sent") return "Sent";
-  if (s === "waiting") return "Waiting";
-  if (s === "followup") return "Follow-up";
-  return "Done";
-}}
+  // if done, keep done
+  if (current === "done") return { status: "done" as const };
 
-  // Fallback: status wijzigen, dueAt laten zoals het is
+  // fallback
   return { status: ns, dueAt: baseSafe };
 }
 
-function addDays(yyyyMmDd: string, days: number) {
-  const t = Date.parse(yyyyMmDd);
-  const base = Number.isFinite(t) ? new Date(t) : new Date();
-  base.setHours(0, 0, 0, 0);
-  base.setDate(base.getDate() + days);
-  const y = base.getFullYear();
-  const m = String(base.getMonth() + 1).padStart(2, "0");
-  const d = String(base.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
+// ==============================
+// Component
+// ==============================
+export default function App() {
+  const workspaceId = "ws_1";
 
-  // --- B) Inline editing state ---
+  const [items, setItems] = useState<Followup[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  // create form
+  const [contactName, setContactName] = useState("Alice Example");
+  const [companyName, setCompanyName] = useState("Example GmbH");
+  const [nextStep, setNextStep] = useState("Send intro email");
+  const [dueAt, setDueAt] = useState("2026-01-10");
+
+  // filter/sort UI state
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
+  const [sortBy, setSortBy] = useState<"dueAt" | "createdAt" | "company">("dueAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  // inline edit
   const [editNextId, setEditNextId] = useState<string | null>(null);
   const [editDueId, setEditDueId] = useState<string | null>(null);
   const [draftNext, setDraftNext] = useState("");
   const [draftDue, setDraftDue] = useState("");
 
+  // Pages Functions: same-origin API
+  const API_BASE = ""; // empty = same origin as frontend
+
+  const api = useMemo(() => {
+    const base = API_BASE.replace(/\/+$/, "");
+
+    return {
+      async list() {
+        const url = `${base}/api/followups?workspaceId=${encodeURIComponent(workspaceId)}`;
+        const res = await fetch(url, { headers: { Accept: "application/json" } });
+        if (!res.ok) throw new Error(`List failed (${res.status})`);
+        const data = await res.json();
+        return (data.items || []) as Followup[];
+      },
+
+      async create() {
+        const url = `${base}/api/followups`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workspaceId,
+            ownerId: "u_1",
+            contactName,
+            companyName,
+            nextStep,
+            dueAt,
+            status: "open",
+          }),
+        });
+        if (!res.ok) throw new Error(`Create failed (${res.status})`);
+        return res.json() as Promise<{ ok: boolean; id: string }>;
+      },
+
+      async patch(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
+        const url = `${base}/api/followups/${encodeURIComponent(id)}`;
+        const res = await fetch(url, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(`Patch failed (${res.status})`);
+        const data = await res.json();
+        return data.item as Followup;
+      },
+    };
+  }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
+
+  const visible = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+
+    const filtered = items.filter((f) => {
+      const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
+      const matchesQuery =
+        !needle || `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
+      return matchesStatus && matchesQuery;
+    });
+
+    const getTime = (s: string) => {
+      // createdAt might be "YYYY-MM-DD HH:MM:SS" (no timezone)
+      // Date.parse can be unreliable; we only need stable sorting, so fallback to string compare if parse fails
+      const t = Date.parse(s);
+      return Number.isFinite(t) ? t : 0;
+    };
+
+    filtered.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
+      if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
+      if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return filtered;
+  }, [items, q, statusFilter, sortBy, sortDir]);
+
+  async function refresh() {
+    setLoading(true);
+    setError("");
+    try {
+      const list = await api.list();
+      setItems(list);
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function onCreate() {
+    setLoading(true);
+    setError("");
+    try {
+      await api.create();
+      await refresh();
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function advanceStatus(f: Followup) {
+    const plan = transitionPlan(f);
+
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(f.id, plan);
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function snooze(f: Followup, days: number) {
+    const nextDue = addDays(formatDate(f.dueAt) || todayYMD(), days);
+
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(f.id, { dueAt: nextDue });
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function markDone(f: Followup) {
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(f.id, { status: "done" });
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function reopen(f: Followup) {
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(f.id, { status: "open" });
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function saveNextStep(id: string) {
     const value = draftNext.trim();
     setEditNextId(null);
-
-    // niets aanpassen als leeg
     if (!value) return;
 
     setLoading(true);
@@ -143,7 +331,6 @@ function addDays(yyyyMmDd: string, days: number) {
     const value = draftDue.trim();
     setEditDueId(null);
 
-    // verwacht YYYY-MM-DD
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
 
     setLoading(true);
@@ -177,29 +364,17 @@ function addDays(yyyyMmDd: string, days: number) {
         <div className="grid">
           <div className="field">
             <label>Contact name</label>
-            <input
-              className="input"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-            />
+            <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
           </div>
 
           <div className="field">
             <label>Company</label>
-            <input
-              className="input"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-            />
+            <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
           </div>
 
           <div className="field">
             <label>Next step</label>
-            <input
-              className="input"
-              value={nextStep}
-              onChange={(e) => setNextStep(e.target.value)}
-            />
+            <input className="input" value={nextStep} onChange={(e) => setNextStep(e.target.value)} />
           </div>
 
           <div className="field">
@@ -209,15 +384,15 @@ function addDays(yyyyMmDd: string, days: number) {
         </div>
 
         <div className="toolbar">
-         <div className="toolbarLeft">
-  <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
-    + Add followup
-  </button>
-  <button className="btn" onClick={refresh} disabled={loading}>
-    Refresh
-  </button>
-  {loading && <span className="loading">Loading…</span>}
-</div>
+          <div className="toolbarLeft">
+            <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
+              + Add followup
+            </button>
+            <button className="btn" onClick={refresh} disabled={loading}>
+              Refresh
+            </button>
+            {loading && <span className="loading">Loading…</span>}
+          </div>
         </div>
       </section>
 
@@ -236,11 +411,7 @@ function addDays(yyyyMmDd: string, days: number) {
 
             <div className="field" style={{ minWidth: 160 }}>
               <label>Status</label>
-              <select
-                className="select"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-              >
+              <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
                 <option value="all">All</option>
                 <option value="open">Open</option>
                 <option value="sent">Sent</option>
@@ -254,11 +425,7 @@ function addDays(yyyyMmDd: string, days: number) {
           <div className="toolbarRight">
             <div className="field" style={{ minWidth: 170 }}>
               <label>Sort</label>
-              <select
-                className="select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-              >
+              <select className="select" value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
                 <option value="dueAt">Due date</option>
                 <option value="createdAt">Created</option>
                 <option value="company">Company</option>
@@ -267,11 +434,7 @@ function addDays(yyyyMmDd: string, days: number) {
 
             <div className="field" style={{ minWidth: 140 }}>
               <label>Direction</label>
-              <select
-                className="select"
-                value={sortDir}
-                onChange={(e) => setSortDir(e.target.value as any)}
-              >
+              <select className="select" value={sortDir} onChange={(e) => setSortDir(e.target.value as any)}>
                 <option value="asc">Ascending</option>
                 <option value="desc">Descending</option>
               </select>
@@ -295,14 +458,20 @@ function addDays(yyyyMmDd: string, days: number) {
 
       <h2 className="sectionTitle">Your followups</h2>
 
-           <div className="list">
+      <div className="list">
         {visible.map((f) => {
-         const chipClass =
-  f.status === "done" ? "chip chipDone" :
-  f.status === "followup" ? "chip chipOverdue" :
-  f.status === "waiting" ? "chip chipSoon" :
-  f.status === "sent" ? "chip chipDue" :
-  "chip chipOpen";
+          const due = dueBadge(f.dueAt);
+          const dueClass =
+            due.kind === "overdue" ? "chip chipOverdue" :
+            due.kind === "soon" ? "chip chipSoon" :
+            "chip chipDue";
+
+          const chipClass =
+            f.status === "done" ? "chip chipDone" :
+            f.status === "followup" ? "chip chipOverdue" :
+            f.status === "waiting" ? "chip chipSoon" :
+            f.status === "sent" ? "chip chipDue" :
+            "chip chipOpen";
 
           const cardClass =
             due.kind === "overdue" && f.status !== "done"
@@ -317,7 +486,6 @@ function addDays(yyyyMmDd: string, days: number) {
                     {f.contactName} <span>({f.companyName})</span>
                   </div>
 
-                  {/* Next step: inline edit */}
                   <div className="cardLine">
                     <b>Next:</b>{" "}
                     {editNextId === f.id ? (
@@ -347,7 +515,6 @@ function addDays(yyyyMmDd: string, days: number) {
                   </div>
 
                   <div className="cardMeta">
-                    {/* Due date: inline edit */}
                     <span className="metaItem">
                       Due:{" "}
                       {editDueId === f.id ? (
@@ -377,71 +544,45 @@ function addDays(yyyyMmDd: string, days: number) {
                     </span>
 
                     <span className={dueClass}>{due.label}</span>
-
-                    <span className={chipClass}>{f.status}</span>
+                    <span className={chipClass}>{statusLabel(f.status)}</span>
 
                     <span className="metaItem">
                       Id: <code>{f.id}</code>
                     </span>
-                    <span className="metaItem" style={{ opacity: 0.6, fontSize: 12 }}>
-  debug → dueAt: {String(f.dueAt)} · kind: {due.kind} · status: {f.status}
-</span>
-
                   </div>
                 </div>
 
                 <div className="cardActions">
-  <button className="btn btnPrimary" onClick={() => advanceStatus(f)} disabled={loading}>
-    Move → {nextStatus(f.status)}
-  </button>
+                  <button className="btn btnPrimary" onClick={() => advanceStatus(f)} disabled={loading}>
+                    Move → {statusLabel(nextStatus(f.status))}
+                  </button>
 
-  <div className="miniRow">
-    <button className="btn btnMini" onClick={() => snooze(f, 1)} disabled={loading}>Tomorrow</button>
-    <button className="btn btnMini" onClick={() => snooze(f, 3)} disabled={loading}>+3 days</button>
-    <button className="btn btnMini" onClick={() => snooze(f, 7)} disabled={loading}>+1 week</button>
-  </div>
+                  <div className="miniRow">
+                    <button className="btn btnMini" onClick={() => snooze(f, 1)} disabled={loading}>
+                      Tomorrow
+                    </button>
+                    <button className="btn btnMini" onClick={() => snooze(f, 3)} disabled={loading}>
+                      +3 days
+                    </button>
+                    <button className="btn btnMini" onClick={() => snooze(f, 7)} disabled={loading}>
+                      +1 week
+                    </button>
+                  </div>
 
-  {f.status !== "done" ? (
-  <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-    Mark done
-  </button>
-) : (
-  <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-    Reopen
-  </button>
-)}
-
-</div>
+                  {f.status !== "done" ? (
+                    <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+                      Mark done
+                    </button>
+                  ) : (
+                    <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+                      Reopen
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );
         })}
-             async function markDone(f: Followup) {
-  setLoading(true);
-  setError("");
-  try {
-    const updated = await api.patch(f.id, { status: "done" });
-    setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-  } catch (e: any) {
-    setError(e?.message || "Unknown error");
-  } finally {
-    setLoading(false);
-  }
-}
-
-async function reopen(f: Followup) {
-  setLoading(true);
-  setError("");
-  try {
-    const updated = await api.patch(f.id, { status: "open" });
-    setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-  } catch (e: any) {
-    setError(e?.message || "Unknown error");
-  } finally {
-    setLoading(false);
-  }
-}
-
 
         {!loading && visible.length === 0 && (
           <div className="empty">No followups match your filters.</div>
