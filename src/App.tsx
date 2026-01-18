@@ -79,19 +79,6 @@ function isOverdue(dueAt: string) {
   return dt.getTime() < today.getTime();
 }
 
-function autoAdvanceIfOverdue(f: Followup) {
-  if (!isOverdue(f.dueAt)) return null;
-
-  if (f.status === "sent" || f.status === "waiting") {
-    return {
-      status: "followup" as const,
-      // dueAt laten staan → badge blijft "overdue"
-    };
-  }
-
-  return null;
-}
-
 function isToday(ymd: string) {
   const dt = parseYMD(ymd);
   if (!dt) return false;
@@ -110,6 +97,19 @@ function needsFollowupToday(f: Followup) {
   const due = dueBadge(f.dueAt);
   // overdue of due today = actie
   return due.kind === "overdue" || isToday(f.dueAt);
+}
+
+function autoAdvanceIfOverdue(f: Followup) {
+  if (!isOverdue(f.dueAt)) return null;
+
+  if (f.status === "sent" || f.status === "waiting") {
+    return {
+      status: "followup" as const,
+      // dueAt laten staan → badge blijft "overdue"
+    };
+  }
+
+  return null;
 }
 
 function dueBadge(dueAt: string) {
