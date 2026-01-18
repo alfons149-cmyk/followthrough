@@ -259,12 +259,12 @@ function addDays(yyyyMmDd: string, days: number) {
 
            <div className="list">
         {visible.map((f) => {
-          const chipClass = f.status === "done" ? "chip chipDone" : "chip chipOpen";
-          const due = dueBadge(f.dueAt);
-          const dueClass =
-            due.kind === "overdue" ? "chip chipOverdue" :
-            due.kind === "soon" ? "chip chipSoon" :
-            "chip chipDue";
+         const chipClass =
+  f.status === "done" ? "chip chipDone" :
+  f.status === "followup" ? "chip chipOverdue" :
+  f.status === "waiting" ? "chip chipSoon" :
+  f.status === "sent" ? "chip chipDue" :
+  "chip chipOpen";
 
           const cardClass =
             due.kind === "overdue" && f.status !== "done"
