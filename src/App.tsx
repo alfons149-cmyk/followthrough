@@ -354,7 +354,7 @@ function addDays(yyyyMmDd: string, days: number) {
 
                 <div className="cardActions">
   <button className="btn btnPrimary" onClick={() => advanceStatus(f)} disabled={loading}>
-    Move → {nextStatus(f.status as any)}
+    Move → {nextStatus(f.status)}
   </button>
 
   <div className="miniRow">
