@@ -15,6 +15,19 @@ type Followup = {
   createdAt: string;
 };
 
+const STATUS_ORDER = ["open", "sent", "waiting", "followup", "done"] as const;
+type Status = typeof STATUS_ORDER[number];
+
+function nextStatus(s: Status): Status {
+  const i = STATUS_ORDER.indexOf(s);
+  return STATUS_ORDER[Math.min(i + 1, STATUS_ORDER.length - 1)];
+}
+
+function canReopen(s: Status) {
+  return s === "done";
+}
+
+
 function formatDate(s: string) {
   return s?.slice(0, 10) || "";
 }
