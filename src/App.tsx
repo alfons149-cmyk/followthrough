@@ -229,10 +229,6 @@ function addDays(ymd: string, days: number) {
   return `${y}-${m}-${d}`;
 }
 
-function dueBadge(dueAt: string) {
-  const dt = parseYMD(dueAt);
-  if (!dt) return { kind: "due" as const, label: "No date" };
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   dt.setHours(0, 0, 0, 0);
@@ -243,10 +239,6 @@ function dueBadge(dueAt: string) {
   if (diffDays <= 1) return { kind: "soon" as const, label: diffDays === 0 ? "Due today" : "Due tomorrow" };
   return { kind: "due" as const, label: `Due in ${diffDays}d` };
 }
-
-  function dueBadge(dueAt: string) {
-    const d = daysFromToday(dueAt);
-    if (d === null) return { label: "No date", kind: "due" as const };
 
     if (d < 0) return { label: `Overdue (${Math.abs(d)}d)`, kind: "overdue" as const };
     if (d === 0) return { label: "Due today", kind: "soon" as const };
