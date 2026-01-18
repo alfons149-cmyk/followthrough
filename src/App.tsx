@@ -68,6 +68,17 @@ function addDays(ymd: string, days: number) {
   return `${y}-${m}-${d}`;
 }
 
+function isOverdue(dueAt: string) {
+  const dt = parseYMD(dueAt);
+  if (!dt) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  dt.setHours(0, 0, 0, 0);
+
+  return dt.getTime() < today.getTime();
+}
+
 function autoAdvanceIfOverdue(f: Followup) {
   if (!isOverdue(f.dueAt)) return null;
 
@@ -79,17 +90,6 @@ function autoAdvanceIfOverdue(f: Followup) {
   }
 
   return null;
-}
-  
-  function isOverdue(dueAt: string) {
-  const dt = parseYMD(dueAt);
-  if (!dt) return false;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  dt.setHours(0, 0, 0, 0);
-
-  return dt.getTime() < today.getTime();
 }
 
 function isToday(ymd: string) {
