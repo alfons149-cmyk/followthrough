@@ -91,8 +91,25 @@ function addDays(ymd: string, days: number) {
   return dt.getTime() < today.getTime();
 }
 
+function isToday(ymd: string) {
+  const dt = parseYMD(ymd);
+  if (!dt) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  dt.setHours(0, 0, 0, 0);
+  return dt.getTime() === today.getTime();
+}
 
+function needsFollowupToday(f: Followup) {
+  if (f.status === "done") return false;
 
+  // status followup = altijd “actie vandaag”
+  if (f.status === "followup") return true;
+
+  const due = dueBadge(f.dueAt);
+  // overdue of due today = actie
+  return due.kind === "overdue" || isToday(f.dueAt);
+}
 
 function dueBadge(dueAt: string) {
   const dt = parseYMD(dueAt);
