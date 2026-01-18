@@ -34,16 +34,6 @@ function parseYMD(ymd: string) {
   return new Date(y, m - 1, d);
 }
 
-function addDays(ymd: string, days: number) {
-  const dt = parseYMD(ymd) ?? new Date();
-  dt.setHours(0, 0, 0, 0);
-  dt.setDate(dt.getDate() + days);
-  const y = dt.getFullYear();
-  const m = String(dt.getMonth() + 1).padStart(2, "0");
-  const d = String(dt.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 function dueBadge(dueAt: string) {
   const dt = parseYMD(dueAt);
   if (!dt) return { kind: "due" as const, label: "No date" };
