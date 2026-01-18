@@ -14,7 +14,6 @@ function canReopen(s: Status) {
 import { useEffect, useMemo, useState } from "react";
 import "./App.css"
 
-
 type Followup = {
   id: string;
   workspaceId: string;
