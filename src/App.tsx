@@ -250,17 +250,29 @@ export default function App() {
   }, [items, q, statusFilter, sortBy, sortDir]);
 
   async function refresh() {
-    setLoading(true);
-    setError("");
-    try {
-      const list = await api.list();
-      setItems(list);
-    } catch (e: any) {
-      setError(e?.message || "Unknown error");
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  setError("");
+
+  try {
+    const list = await api.list();
+
+    // 🔁 auto-advance overdue items
+    for (const f of list) {
+      const patch = autoAdvanceIfOverdue(f);
+      if (patch) {
+        await api.patch(f.id, patch);
+      }
     }
+
+    // opnieuw ophalen zodat UI & DB synchroon zijn
+    const updated = await api.list();
+    setItems(updated);
+  } catch (e: any) {
+    setError(e?.message || "Unknown error");
+  } finally {
+    setLoading(false);
   }
+}
 
   useEffect(() => {
     refresh();
