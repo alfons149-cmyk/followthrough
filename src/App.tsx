@@ -58,6 +58,19 @@ function todayYMD() {
   return `${y}-${m}-${dd}`;
 }
 
+function autoAdvanceIfOverdue(f: Followup) {
+  if (!isOverdue(f.dueAt)) return null;
+
+  if (f.status === "sent" || f.status === "waiting") {
+    return {
+      status: "followup" as const,
+      // dueAt laten staan → badge blijft "overdue"
+    };
+  }
+
+  return null;
+}
+
 function addDays(ymd: string, days: number) {
   const dt = parseYMD(ymd) ?? new Date();
   dt.setHours(0, 0, 0, 0);
