@@ -66,7 +66,20 @@ function addDays(ymd: string, days: number) {
   const m = String(dt.getMonth() + 1).padStart(2, "0");
   const d = String(dt.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+  
+  function isOverdue(dueAt: string) {
+  const dt = parseYMD(dueAt);
+  if (!dt) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  dt.setHours(0, 0, 0, 0);
+
+  return dt.getTime() < today.getTime();
 }
+
+
+
 
 function dueBadge(dueAt: string) {
   const dt = parseYMD(dueAt);
