@@ -54,16 +54,50 @@ function transitionPlan(f: Followup) {
   const current = f.status;
   const ns = nextStatus(current);
 
-  const todayStr = addDays(formatDate(new Date().toISOString()), 0);
+  // Vandaag als YYYY-MM-DD (lokale tijd)
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  // Base: als dueAt leeg/ongeldig → vandaag
   const base = formatDate(f.dueAt) || todayStr;
 
-  if (current === "open" && ns === "sent") return { status: ns, dueAt: addDays(base, 3) };
-  if (current === "sent" && ns === "waiting") return { status: ns, dueAt: addDays(base, 7) };
-  if (current === "waiting" && ns === "followup") return { status: ns, dueAt: addDays(base, 2) };
-  if (current === "followup" && ns === "done") return { status: ns };
-  return { status: ns };
-}
+  // Handige helper: als base al in het verleden ligt, gebruik vandaag
+  const baseDt = parseYMD(base);
+  const baseSafe =
+    baseDt && baseDt.getTime() < now.getTime()
+      ? todayStr
+      : base;
 
+  // 1) open → sent : je hebt iets verstuurd, check over 3 dagen
+  if (current === "open" && ns === "sent") {
+    return { status: ns, dueAt: addDays(todayStr, 3) };
+  }
+
+  // 2) sent → waiting : je wacht op reactie, plan follow-up over 7 dagen
+  if (current === "sent" && ns === "waiting") {
+    return { status: ns, dueAt: addDays(todayStr, 7) };
+  }
+
+  // 3) waiting → followup : het is tijd om op te volgen → dueAt = vandaag
+  // (zodat de kaart “actief” wordt in je lijst)
+  if (current === "waiting" && ns === "followup") {
+    return { status: ns, dueAt: todayStr };
+  }
+
+  // 4) followup → done : afronden, dueAt mag blijven staan of leeg (we laten staan)
+  if (current === "followup" && ns === "done") {
+    return { status: ns };
+  }
+
+  // 5) done → done (als je op Move blijft klikken) laten we gewoon status staan
+  if (current === "done") {
+    return { status: "done" as const };
+  }
+
+  // Fallback: status wijzigen, dueAt laten zoals het is
+  return { status: ns, dueAt: baseSafe };
+}
 
 function addDays(yyyyMmDd: string, days: number) {
   const t = Date.parse(yyyyMmDd);
