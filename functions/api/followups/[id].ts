@@ -38,24 +38,30 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
 };
 
 // PATCH /api/followups/:id
-export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params }) => {
-  const id = String(params.id || "");
-  if (!id) {
-    return Response.json({ ok: false, error: "Missing id" }, { status: 400, headers: cors });
-  }
+const db = getDb(env);
 
-  const body = (await request.json().catch(() => ({}))) as PatchBody;
+const result = await db
+  .update(followups)
+  .set(toSet)
+  .where(eq(followups.id, id))
+  .run();
 
-  const toSet: Record<string, unknown> = {};
-  if (typeof body.status === "string" && body.status.trim()) toSet.status = body.status.trim();
-  if (typeof body.dueAt === "string" && body.dueAt.trim()) toSet.dueAt = body.dueAt.trim();
-  if (typeof body.nextStep === "string" && body.nextStep.trim()) toSet.nextStep = body.nextStep.trim();
+if (!result.changes) {
+  return Response.json(
+    { ok: false, error: "Not found" },
+    { status: 404, headers: cors }
+  );
+}
 
-  if (Object.keys(toSet).length === 0) {
-    return Response.json(
-      { ok: false, error: "No valid fields to update (status, dueAt, nextStep)" },
-      { status: 400, headers: cors }
-    );
+// daarna nog wél even de bijgewerkte row ophalen
+const row = await db
+  .select()
+  .from(followups)
+  .where(eq(followups.id, id))
+  .get();
+
+return Response.json({ ok: true, item: row }, { headers: cors });
+
   }
 
   const db = getDb(env);
