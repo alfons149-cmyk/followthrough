@@ -371,6 +371,32 @@ function addDays(yyyyMmDd: string, days: number) {
             </div>
           );
         })}
+             async function markDone(f: Followup) {
+  setLoading(true);
+  setError("");
+  try {
+    const updated = await api.patch(f.id, { status: "done" });
+    setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+  } catch (e: any) {
+    setError(e?.message || "Unknown error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function reopen(f: Followup) {
+  setLoading(true);
+  setError("");
+  try {
+    const updated = await api.patch(f.id, { status: "open" });
+    setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+  } catch (e: any) {
+    setError(e?.message || "Unknown error");
+  } finally {
+    setLoading(false);
+  }
+}
+
 
         {!loading && visible.length === 0 && (
           <div className="empty">No followups match your filters.</div>
