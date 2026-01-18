@@ -364,8 +364,8 @@ function addDays(yyyyMmDd: string, days: number) {
   </div>
 
   <button className="btn" onClick={() => toggleStatus(f)} disabled={loading}>
-    Toggle → {f.status === "done" ? "open" : "done"}
-  </button>
+  Toggle → {f.status === "done" ? "open" : "done"}
+</button>
 </div>
               </div>
             </div>
