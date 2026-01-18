@@ -58,6 +58,16 @@ function todayYMD() {
   return `${y}-${m}-${dd}`;
 }
 
+function addDays(ymd: string, days: number) {
+  const dt = parseYMD(ymd) ?? new Date();
+  dt.setHours(0, 0, 0, 0);
+  dt.setDate(dt.getDate() + days);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function autoAdvanceIfOverdue(f: Followup) {
   if (!isOverdue(f.dueAt)) return null;
 
@@ -70,15 +80,6 @@ function autoAdvanceIfOverdue(f: Followup) {
 
   return null;
 }
-
-function addDays(ymd: string, days: number) {
-  const dt = parseYMD(ymd) ?? new Date();
-  dt.setHours(0, 0, 0, 0);
-  dt.setDate(dt.getDate() + days);
-  const y = dt.getFullYear();
-  const m = String(dt.getMonth() + 1).padStart(2, "0");
-  const d = String(dt.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
   
   function isOverdue(dueAt: string) {
   const dt = parseYMD(dueAt);
