@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import "./App.css";
+import "./App.css"
 
-type Status = "open" | "sent" | "waiting" | "done";
 
 type Followup = {
   id: string;
@@ -256,9 +255,7 @@ function dueBadge(dueAt: string) {
     return { label: `Due in ${d}d`, kind: "due" as const };
   }
 
-  type Status = "open" | "sent" | "waiting" | "done";
-
-function nextStatus(s: Status): Status {
+  function nextStatus(s: Status): Status {
   if (s === "open") return "sent";
   if (s === "sent") return "waiting";
   if (s === "waiting") return "done";
