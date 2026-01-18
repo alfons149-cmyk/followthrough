@@ -363,9 +363,16 @@ function addDays(yyyyMmDd: string, days: number) {
     <button className="btn btnMini" onClick={() => snooze(f, 7)} disabled={loading}>+1 week</button>
   </div>
 
-  <button className="btn" onClick={() => toggleStatus(f)} disabled={loading}>
-  Toggle → {f.status === "done" ? "open" : "done"}
-</button>
+  {f.status !== "done" ? (
+  <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+    Mark done
+  </button>
+) : (
+  <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+    Reopen
+  </button>
+)}
+
 </div>
               </div>
             </div>
