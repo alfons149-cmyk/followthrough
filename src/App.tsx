@@ -469,6 +469,12 @@ export default function App() {
               />
             </div>
 
+            <div className="kpiRow">
+  <div className="kpiTile">
+    Needs follow-up today: <b>{needsTodayCount}</b>
+  </div>
+</div>
+
             <div className="field" style={{ minWidth: 160 }}>
               <label>Status</label>
               <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
