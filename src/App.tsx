@@ -426,12 +426,6 @@ export default function App() {
     build: 2026-01-19 18:00
   </span>
 </div>
-
-  {needsTodayCount > 0 && (
-    <div className="needsToday">
-      🔔 <b>{needsTodayCount}</b> follow-up{needsTodayCount > 1 ? "s" : ""} need attention today
-    </div>
-  )}
 </header>
 
 
