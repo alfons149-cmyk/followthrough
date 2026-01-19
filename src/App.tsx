@@ -412,6 +412,10 @@ const needsTodayCount = useMemo(() => {
   </div>
 </header>
 
+<div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
+  Needs follow-up today: <b>{needsTodayCount}</b>
+</div>
+
       {error && (
         <div className="alert">
           <b>Error:</b> {error}
