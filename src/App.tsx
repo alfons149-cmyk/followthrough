@@ -255,6 +255,17 @@ export default function App() {
     return items.filter(needsFollowupToday).length;
   }, [items]);
 
+  // ✅ counter across ALL items (not filtered)
+const needsTodayCount = useMemo(() => {
+  return items.filter(needsFollowupToday).length;
+}, [items]);
+
+// ✅ overdue counter across ALL items (not filtered)
+const overdueCount = useMemo(() => {
+  return items.filter(isOverdueAndNotDone).length;
+}, [items]);
+
+
   async function refresh() {
     setLoading(true);
     setError("");
