@@ -400,3 +400,19 @@ const statusClass =
   f.status === "waiting" ? "chip chipWaiting" :
   f.status === "sent" ? "chip chipSent" :
   "chip chipOpen";
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kpiChip {
+  font-size: 0.95rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.7);
+}
