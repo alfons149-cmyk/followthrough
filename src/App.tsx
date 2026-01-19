@@ -240,9 +240,10 @@ export default function App() {
   }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
   const visible = useMemo(() => {
-    const needle = q.trim().toLowerCase();
+  // ... needle, filtered, sort, return filtered ...
+}, [items, q, statusFilter, sortBy, sortDir]);
 
-    const needsTodayCount = useMemo(() => {
+const needsTodayCount = useMemo(() => {
   return items.filter(needsFollowupToday).length;
 }, [items]);
 
