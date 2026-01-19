@@ -5,7 +5,7 @@ import "./App.css";
 // Workflow (single source of truth)
 // ==============================
 const STATUS_ORDER = ["open", "sent", "waiting", "followup", "done"] as const;
-type Status = typeof STATUS_ORDER[number];
+type Status = (typeof STATUS_ORDER)[number];
 
 function nextStatus(s: Status): Status {
   const i = STATUS_ORDER.indexOf(s);
@@ -30,7 +30,7 @@ type Followup = {
   contactName: string;
   companyName: string;
   nextStep: string;
-  dueAt: string;     // "YYYY-MM-DD" or ISO-ish, but we display slice(0,10)
+  dueAt: string; // "YYYY-MM-DD" or ISO-ish
   status: Status;
   createdAt: string; // "YYYY-MM-DD HH:MM:SS"
 };
@@ -40,7 +40,7 @@ function formatDate(s: string) {
 }
 
 // ==============================
-// Date helpers (single source of truth)
+// Date helpers
 // ==============================
 function parseYMD(ymd: string) {
   const s = (ymd || "").slice(0, 10);
@@ -88,30 +88,6 @@ function isToday(ymd: string) {
   return dt.getTime() === today.getTime();
 }
 
-function needsFollowupToday(f: Followup) {
-  if (f.status === "done") return false;
-
-  // status followup = altijd “actie vandaag”
-  if (f.status === "followup") return true;
-
-  const due = dueBadge(f.dueAt);
-  // overdue of due today = actie
-  return due.kind === "overdue" || isToday(f.dueAt);
-}
-
-function autoAdvanceIfOverdue(f: Followup) {
-  if (!isOverdue(f.dueAt)) return null;
-
-  if (f.status === "sent" || f.status === "waiting") {
-    return {
-      status: "followup" as const,
-      // dueAt laten staan → badge blijft "overdue"
-    };
-  }
-
-  return null;
-}
-
 function dueBadge(dueAt: string) {
   const dt = parseYMD(dueAt);
   if (!dt) return { kind: "due" as const, label: "No date" };
@@ -129,8 +105,23 @@ function dueBadge(dueAt: string) {
   return { kind: "due" as const, label: `Due in ${diffDays}d` };
 }
 
+function needsFollowupToday(f: Followup) {
+  if (f.status === "done") return false;
+  if (f.status === "followup") return true;
+  return isOverdue(f.dueAt) || isToday(f.dueAt);
+}
+
+function autoAdvanceIfOverdue(f: Followup) {
+  if (!isOverdue(f.dueAt)) return null;
+
+  if (f.status === "sent" || f.status === "waiting") {
+    return { status: "followup" as const };
+  }
+  return null;
+}
+
 // ==============================
-// Workflow planner for Move button
+// Move button planner
 // ==============================
 function transitionPlan(f: Followup) {
   const current = f.status;
@@ -139,27 +130,16 @@ function transitionPlan(f: Followup) {
   const today = todayYMD();
   const base = formatDate(f.dueAt) || today;
 
-  // if base is invalid or in the past → use today
   const baseDt = parseYMD(base);
   const todayDt = parseYMD(today)!;
   const baseSafe = baseDt && baseDt.getTime() < todayDt.getTime() ? today : base;
 
-  // open -> sent: check after 3 days
   if (current === "open" && ns === "sent") return { status: ns, dueAt: addDays(today, 3) };
-
-  // sent -> waiting: follow up after 7 days
   if (current === "sent" && ns === "waiting") return { status: ns, dueAt: addDays(today, 7) };
-
-  // waiting -> followup: action now
   if (current === "waiting" && ns === "followup") return { status: ns, dueAt: today };
-
-  // followup -> done: done, keep dueAt as-is
   if (current === "followup" && ns === "done") return { status: ns };
-
-  // if done, keep done
   if (current === "done") return { status: "done" as const };
 
-  // fallback
   return { status: ns, dueAt: baseSafe };
 }
 
@@ -192,7 +172,7 @@ export default function App() {
   const [draftDue, setDraftDue] = useState("");
 
   // Pages Functions: same-origin API
-  const API_BASE = ""; // empty = same origin as frontend
+  const API_BASE = "";
 
   const api = useMemo(() => {
     const base = API_BASE.replace(/\/+$/, "");
@@ -239,87 +219,62 @@ export default function App() {
     };
   }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
-    const matchesQuery =
-      !needle ||
-      `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
+  // ✅ visible list (ONLY ONCE)
+  const visible = useMemo(() => {
+    const needle = q.trim().toLowerCase();
 
-    return matchesStatus && matchesQuery;
-  });
+    const filtered = items.filter((f) => {
+      const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
 
-  const getTime = (s: string) => {
-    const t = Date.parse(s);
-    return Number.isFinite(t) ? t : 0;
-  };
+      const matchesQuery =
+        !needle ||
+        `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
 
-  filtered.sort((a, b) => {
-    let cmp = 0;
-    if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
-    if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
-    if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
+      return matchesStatus && matchesQuery;
+    });
 
-    return sortDir === "asc" ? cmp : -cmp;
-  });
+    const getTime = (s: string) => {
+      const t = Date.parse(s);
+      return Number.isFinite(t) ? t : 0;
+    };
 
-  return filtered;
-}, [items, q, statusFilter, sortBy, sortDir]);
+    filtered.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
+      if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
+      if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
 
-const needsTodayCount = useMemo(() => {
-  return items.filter(needsFollowupToday).length; // telt op ALLE items (niet gefilterd)
-}, [items]);
+    return filtered;
+  }, [items, q, statusFilter, sortBy, sortDir]);
 
-const visible = useMemo(() => {
-  const needle = q.trim().toLowerCase();
-
-  const filtered = items.filter((f) => {
-    const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
-
-    const matchesQuery =
-      !needle ||
-      `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
-
-    return matchesStatus && matchesQuery;
-  });
-
-  const getTime = (s: string) => {
-    const t = Date.parse(s);
-    return Number.isFinite(t) ? t : 0;
-  };
-
-  filtered.sort((a, b) => {
-    let cmp = 0;
-    if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
-    if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
-    if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
-    return sortDir === "asc" ? cmp : -cmp;
-  });
-
-  return filtered;
-}, [items, q, statusFilter, sortBy, sortDir]);
+  // ✅ counter across ALL items (not filtered)
+  const needsTodayCount = useMemo(() => {
+    return items.filter(needsFollowupToday).length;
+  }, [items]);
 
   async function refresh() {
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    const list = await api.list();
+    try {
+      const list = await api.list();
 
-    // 🔁 auto-advance overdue items
-    for (const f of list) {
-      const patch = autoAdvanceIfOverdue(f);
-      if (patch) {
-        await api.patch(f.id, patch);
+      // 🔁 auto-advance overdue items
+      for (const f of list) {
+        const patch = autoAdvanceIfOverdue(f);
+        if (patch) await api.patch(f.id, patch);
       }
-    }
 
-    // opnieuw ophalen zodat UI & DB synchroon zijn
-    const updated = await api.list();
-    setItems(updated);
-  } catch (e: any) {
-    setError(e?.message || "Unknown error");
-  } finally {
-    setLoading(false);
+      const updated = await api.list();
+      setItems(updated);
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   useEffect(() => {
     refresh();
@@ -415,7 +370,6 @@ const visible = useMemo(() => {
   async function saveDueAt(id: string) {
     const value = draftDue.trim();
     setEditDueId(null);
-
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
 
     setLoading(true);
@@ -430,15 +384,13 @@ const visible = useMemo(() => {
     }
   }
 
- return (
+  return (
     <div className="page">
       <header className="header">
         <h1 className="title">FollowThrough</h1>
         <div className="sub">
           Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-          <span style={{ marginLeft: 10, opacity: 0.6 }}>
-            build: 2026-01-19 18:00
-          </span>
+          <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
         </div>
 
         <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
@@ -452,8 +404,6 @@ const visible = useMemo(() => {
         </div>
       )}
 
-      
-
       {needsTodayCount > 0 && (
         <div className="alert" style={{ marginTop: 12 }}>
           📌 Needs follow-up today: <b>{needsTodayCount}</b>
@@ -464,20 +414,12 @@ const visible = useMemo(() => {
         <div className="grid">
           <div className="field">
             <label>Contact name</label>
-            <input
-              className="input"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-            />
+            <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
           </div>
 
           <div className="field">
             <label>Company</label>
-            <input
-              className="input"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-            />
+            <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
           </div>
 
           <div className="field">
@@ -505,96 +447,83 @@ const visible = useMemo(() => {
       </section>
 
       <section className="panel">
-  <div className="toolbar">
-    <div className="toolbarLeft">
-      <div className="field" style={{ minWidth: 260 }}>
-        <label>Search</label>
-        <input
-          className="input"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Alice, Example GmbH, intro…"
-        />
-      </div>
+        <div className="toolbar">
+          <div className="toolbarLeft">
+            <div className="field" style={{ minWidth: 260 }}>
+              <label>Search</label>
+              <input
+                className="input"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Alice, Example GmbH, intro…"
+              />
+            </div>
 
-      <div className="field" style={{ minWidth: 160 }}>
-        <label>Status</label>
-        <select
-          className="select"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-        >
-          <option value="all">All</option>
-          <option value="open">Open</option>
-          <option value="sent">Sent</option>
-          <option value="waiting">Waiting</option>
-          <option value="followup">Follow-up</option>
-          <option value="done">Done</option>
-        </select>
-      </div>
-    </div>
+            <div className="field" style={{ minWidth: 160 }}>
+              <label>Status</label>
+              <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+                <option value="all">All</option>
+                <option value="open">Open</option>
+                <option value="sent">Sent</option>
+                <option value="waiting">Waiting</option>
+                <option value="followup">Follow-up</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
 
-    <div className="toolbarRight">
-      <div className="field" style={{ minWidth: 170 }}>
-        <label>Sort</label>
-        <select
-          className="select"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
-        >
-          <option value="dueAt">Due date</option>
-          <option value="createdAt">Created</option>
-          <option value="company">Company</option>
-        </select>
-      </div>
+          <div className="toolbarRight">
+            <div className="field" style={{ minWidth: 170 }}>
+              <label>Sort</label>
+              <select className="select" value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
+                <option value="dueAt">Due date</option>
+                <option value="createdAt">Created</option>
+                <option value="company">Company</option>
+              </select>
+            </div>
 
-      <div className="field" style={{ minWidth: 140 }}>
-        <label>Direction</label>
-        <select
-          className="select"
-          value={sortDir}
-          onChange={(e) => setSortDir(e.target.value as any)}
-        >
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </select>
-      </div>
+            <div className="field" style={{ minWidth: 140 }}>
+              <label>Direction</label>
+              <select className="select" value={sortDir} onChange={(e) => setSortDir(e.target.value as any)}>
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+              </select>
+            </div>
 
-      <button
-        className="btn"
-        onClick={() => {
-          setQ("");
-          setStatusFilter("all");
-          setSortBy("dueAt");
-          setSortDir("asc");
-        }}
-        disabled={loading}
-      >
-        Reset
-      </button>
-    </div>
-  </div>
-</section>
+            <button
+              className="btn"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+                setSortBy("dueAt");
+                setSortDir("asc");
+              }}
+              disabled={loading}
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      </section>
 
       <div className="list">
         {visible.map((f) => {
           const due = dueBadge(f.dueAt);
           const dueClass =
-            due.kind === "overdue" ? "chip chipOverdue" :
-            due.kind === "soon" ? "chip chipSoon" :
-            "chip chipDue";
+            due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
 
           const chipClass =
-            f.status === "done" ? "chip chipDone" :
-            f.status === "followup" ? "chip chipOverdue" :
-            f.status === "waiting" ? "chip chipSoon" :
-            f.status === "sent" ? "chip chipDue" :
-            "chip chipOpen";
+            f.status === "done"
+              ? "chip chipDone"
+              : f.status === "followup"
+                ? "chip chipOverdue"
+                : f.status === "waiting"
+                  ? "chip chipSoon"
+                  : f.status === "sent"
+                    ? "chip chipDue"
+                    : "chip chipOpen";
 
-          const cardClass =
-            due.kind === "overdue" && f.status !== "done"
-              ? "card cardOverdue"
-              : "card";
+          const cardClass = due.kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card";
 
           return (
             <div key={f.id} className={cardClass}>
@@ -702,9 +631,7 @@ const visible = useMemo(() => {
           );
         })}
 
-        {!loading && visible.length === 0 && (
-          <div className="empty">No followups match your filters.</div>
-        )}
+        {!loading && visible.length === 0 && <div className="empty">No followups match your filters.</div>}
       </div>
     </div>
   );
