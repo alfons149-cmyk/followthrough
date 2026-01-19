@@ -242,6 +242,10 @@ export default function App() {
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
 
+    const needsTodayCount = useMemo(() => {
+  return items.filter(needsFollowupToday).length;
+}, [items]);
+
     const filtered = items.filter((f) => {
       const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
       const matchesQuery =
