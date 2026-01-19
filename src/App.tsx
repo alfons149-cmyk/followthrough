@@ -246,11 +246,6 @@ export default function App() {
   return items.filter(needsFollowupToday).length;
 }, [items]);
 
-
-    const needsTodayCount = useMemo(() => {
-  return items.filter(needsFollowupToday).length;
-}, [items]);
-
     const filtered = items.filter((f) => {
       const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
       const matchesQuery =
