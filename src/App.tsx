@@ -412,6 +412,14 @@ const overdueCount = useMemo(() => {
         <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
           Needs follow-up today: <b>{needsTodayCount}</b>
         </div>
+        <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
+  Needs follow-up today: <b>{needsTodayCount}</b>
+</div>
+
+<div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
+  Overdue: <b>{overdueCount}</b>
+</div>
+
       </header>
 
       {error && (
