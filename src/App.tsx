@@ -425,6 +425,13 @@ export default function App() {
     Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
   </div>
 
+  <div className="sub">
+  Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+  <span style={{ marginLeft: 10, opacity: 0.6 }}>
+    build: 2026-01-19 18:00
+  </span>
+</div>
+
   {needsTodayCount > 0 && (
     <div className="needsToday">
       🔔 <b>{needsTodayCount}</b> follow-up{needsTodayCount > 1 ? "s" : ""} need attention today
