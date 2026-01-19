@@ -406,29 +406,15 @@ const needsTodayCount = useMemo(() => {
     }
   }
 
-  return (
-    <div className="page">
-      <header className="header">
-        <h1 className="title">FollowThrough</h1>
-        <div className="sub">
-          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-        </div>
-      </header>
-
-      <header className="header">
+  <header className="header">
   <h1 className="title">FollowThrough</h1>
   <div className="sub">
     Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+    <span style={{ marginLeft: 10, opacity: 0.6 }}>
+      build: 2026-01-19 18:00
+    </span>
   </div>
-
-  <div className="sub">
-  Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-  <span style={{ marginLeft: 10, opacity: 0.6 }}>
-    build: 2026-01-19 18:00
-  </span>
-</div>
 </header>
-
 
       {error && (
         <div className="alert">
