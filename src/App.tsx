@@ -419,6 +419,20 @@ export default function App() {
         </div>
       </header>
 
+      <header className="header">
+  <h1 className="title">FollowThrough</h1>
+  <div className="sub">
+    Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+  </div>
+
+  {needsTodayCount > 0 && (
+    <div className="needsToday">
+      🔔 <b>{needsTodayCount}</b> follow-up{needsTodayCount > 1 ? "s" : ""} need attention today
+    </div>
+  )}
+</header>
+
+
       {error && (
         <div className="alert">
           <b>Error:</b> {error}
