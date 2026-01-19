@@ -145,6 +145,12 @@ function transitionPlan(f: Followup) {
 // ==============================
 // Component
 // ==============================
+
+function isOverdueAndNotDone(f: Followup) {
+  if (f.status === "done") return false;
+  return isOverdue(f.dueAt);
+}
+
 export default function App() {
   const workspaceId = "ws_1";
   const API_BASE = ""; // same-origin
