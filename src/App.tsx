@@ -5,7 +5,7 @@ import "./App.css";
 // Workflow (single source of truth)
 // ==============================
 const STATUS_ORDER = ["open", "sent", "waiting", "followup", "done"] as const;
-type Status = (typeof STATUS_ORDER)[number];
+type Status = typeof STATUS_ORDER[number];
 
 function nextStatus(s: Status): Status {
   const i = STATUS_ORDER.indexOf(s);
@@ -40,7 +40,7 @@ function formatDate(s: string) {
 }
 
 // ==============================
-// Date helpers
+// Date helpers (single source of truth)
 // ==============================
 function parseYMD(ymd: string) {
   const s = (ymd || "").slice(0, 10);
@@ -71,20 +71,18 @@ function addDays(ymd: string, days: number) {
 function isOverdue(dueAt: string) {
   const dt = parseYMD(dueAt);
   if (!dt) return false;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = parseYMD(todayYMD())!;
   dt.setHours(0, 0, 0, 0);
-
+  today.setHours(0, 0, 0, 0);
   return dt.getTime() < today.getTime();
 }
 
 function isToday(ymd: string) {
   const dt = parseYMD(ymd);
   if (!dt) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = parseYMD(todayYMD())!;
   dt.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
   return dt.getTime() === today.getTime();
 }
 
@@ -92,9 +90,9 @@ function dueBadge(dueAt: string) {
   const dt = parseYMD(dueAt);
   if (!dt) return { kind: "due" as const, label: "No date" };
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = parseYMD(todayYMD())!;
   dt.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
 
   const diffDays = Math.round((dt.getTime() - today.getTime()) / 86400000);
 
@@ -108,12 +106,13 @@ function dueBadge(dueAt: string) {
 function needsFollowupToday(f: Followup) {
   if (f.status === "done") return false;
   if (f.status === "followup") return true;
-  return isOverdue(f.dueAt) || isToday(f.dueAt);
+  const due = dueBadge(f.dueAt);
+  return due.kind === "overdue" || isToday(f.dueAt);
 }
 
+// Overdue auto-advance: sent/waiting overdue -> followup
 function autoAdvanceIfOverdue(f: Followup) {
   if (!isOverdue(f.dueAt)) return null;
-
   if (f.status === "sent" || f.status === "waiting") {
     return { status: "followup" as const };
   }
@@ -121,7 +120,7 @@ function autoAdvanceIfOverdue(f: Followup) {
 }
 
 // ==============================
-// Move button planner
+// Workflow planner for Move button
 // ==============================
 function transitionPlan(f: Followup) {
   const current = f.status;
@@ -148,6 +147,7 @@ function transitionPlan(f: Followup) {
 // ==============================
 export default function App() {
   const workspaceId = "ws_1";
+  const API_BASE = ""; // same-origin
 
   const [items, setItems] = useState<Followup[]>([]);
   const [loading, setLoading] = useState(false);
@@ -170,9 +170,6 @@ export default function App() {
   const [editDueId, setEditDueId] = useState<string | null>(null);
   const [draftNext, setDraftNext] = useState("");
   const [draftDue, setDraftDue] = useState("");
-
-  // Pages Functions: same-origin API
-  const API_BASE = "";
 
   const api = useMemo(() => {
     const base = API_BASE.replace(/\/+$/, "");
@@ -225,11 +222,9 @@ export default function App() {
 
     const filtered = items.filter((f) => {
       const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
-
       const matchesQuery =
         !needle ||
         `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
-
       return matchesStatus && matchesQuery;
     });
 
@@ -264,9 +259,12 @@ export default function App() {
       // 🔁 auto-advance overdue items
       for (const f of list) {
         const patch = autoAdvanceIfOverdue(f);
-        if (patch) await api.patch(f.id, patch);
+        if (patch) {
+          await api.patch(f.id, patch);
+        }
       }
 
+      // opnieuw ophalen zodat UI & DB synchroon zijn
       const updated = await api.list();
       setItems(updated);
     } catch (e: any) {
@@ -370,6 +368,7 @@ export default function App() {
   async function saveDueAt(id: string) {
     const value = draftDue.trim();
     setEditDueId(null);
+
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
 
     setLoading(true);
@@ -461,7 +460,11 @@ export default function App() {
 
             <div className="field" style={{ minWidth: 160 }}>
               <label>Status</label>
-              <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+              <select
+                className="select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+              >
                 <option value="all">All</option>
                 <option value="open">Open</option>
                 <option value="sent">Sent</option>
@@ -509,19 +512,18 @@ export default function App() {
       <div className="list">
         {visible.map((f) => {
           const due = dueBadge(f.dueAt);
-          const dueClass =
-            due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
+          const dueClass = due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
 
           const chipClass =
             f.status === "done"
               ? "chip chipDone"
               : f.status === "followup"
-                ? "chip chipOverdue"
-                : f.status === "waiting"
-                  ? "chip chipSoon"
-                  : f.status === "sent"
-                    ? "chip chipDue"
-                    : "chip chipOpen";
+              ? "chip chipOverdue"
+              : f.status === "waiting"
+              ? "chip chipSoon"
+              : f.status === "sent"
+              ? "chip chipDue"
+              : "chip chipOpen";
 
           const cardClass = due.kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card";
 
