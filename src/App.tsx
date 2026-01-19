@@ -402,42 +402,52 @@ const needsTodayCount = useMemo(() => {
     }
   }
 
-  <header className="header">
-  <h1 className="title">FollowThrough</h1>
-  <div className="sub">
-    Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-    <span style={{ marginLeft: 10, opacity: 0.6 }}>
-      build: 2026-01-19 18:00
-    </span>
-  </div>
-</header>
+ return (
+    <div className="page">
+      <header className="header">
+        <h1 className="title">FollowThrough</h1>
+        <div className="sub">
+          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+          <span style={{ marginLeft: 10, opacity: 0.6 }}>
+            build: 2026-01-19 18:00
+          </span>
+        </div>
 
-<div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
-  Needs follow-up today: <b>{needsTodayCount}</b>
-</div>
+        <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
+          Needs follow-up today: <b>{needsTodayCount}</b>
+        </div>
+      </header>
 
       {error && (
         <div className="alert">
           <b>Error:</b> {error}
         </div>
       )}
-      {needsTodayCount > 0 && (
-  <div className="alert" style={{ marginTop: 12 }}>
-    📌 Needs follow-up today: <b>{needsTodayCount}</b>
-  </div>
-)}
 
+      {needsTodayCount > 0 && (
+        <div className="alert" style={{ marginTop: 12 }}>
+          📌 Needs follow-up today: <b>{needsTodayCount}</b>
+        </div>
+      )}
 
       <section className="panel">
         <div className="grid">
           <div className="field">
             <label>Contact name</label>
-            <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+            <input
+              className="input"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+            />
           </div>
 
           <div className="field">
             <label>Company</label>
-            <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+            <input
+              className="input"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+            />
           </div>
 
           <div className="field">
