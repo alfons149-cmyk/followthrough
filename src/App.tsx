@@ -240,37 +240,39 @@ export default function App() {
   }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
   const visible = useMemo(() => {
-  // ... needle, filtered, sort, return filtered ...
+  const needle = q.trim().toLowerCase();
+
+  const filtered = items.filter((f) => {
+    const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
+
+    const matchesQuery =
+      !needle ||
+      `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
+
+    return matchesStatus && matchesQuery;
+  });
+
+  const getTime = (s: string) => {
+    const t = Date.parse(s);
+    return Number.isFinite(t) ? t : 0;
+  };
+
+  filtered.sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
+    if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
+    if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
+
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
+  return filtered;
 }, [items, q, statusFilter, sortBy, sortDir]);
 
 const needsTodayCount = useMemo(() => {
-  return items.filter(needsFollowupToday).length;
+  return items.filter(needsFollowupToday).length; // telt op ALLE items (niet gefilterd)
 }, [items]);
 
-    const filtered = items.filter((f) => {
-      const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
-      const matchesQuery =
-        !needle || `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
-      return matchesStatus && matchesQuery;
-    });
-
-    const getTime = (s: string) => {
-      // createdAt might be "YYYY-MM-DD HH:MM:SS" (no timezone)
-      // Date.parse can be unreliable; we only need stable sorting, so fallback to string compare if parse fails
-      const t = Date.parse(s);
-      return Number.isFinite(t) ? t : 0;
-    };
-
-    filtered.sort((a, b) => {
-      let cmp = 0;
-      if (sortBy === "dueAt") cmp = getTime(a.dueAt) - getTime(b.dueAt);
-      if (sortBy === "createdAt") cmp = getTime(a.createdAt) - getTime(b.createdAt);
-      if (sortBy === "company") cmp = a.companyName.localeCompare(b.companyName);
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-
-    return filtered;
-  }, [items, q, statusFilter, sortBy, sortDir]);
 
   async function refresh() {
   setLoading(true);
