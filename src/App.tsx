@@ -475,65 +475,76 @@ const needsTodayCount = useMemo(() => {
       </section>
 
       <section className="panel">
-        <div className="toolbar">
-          <div className="toolbarLeft">
-            <div className="field" style={{ minWidth: 260 }}>
-              <label>Search</label>
-              <input
-                className="input"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Alice, Example GmbH, intro…"
-              />
-            </div>
-         </div>
+  <div className="toolbar">
+    <div className="toolbarLeft">
+      <div className="field" style={{ minWidth: 260 }}>
+        <label>Search</label>
+        <input
+          className="input"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Alice, Example GmbH, intro…"
+        />
+      </div>
 
-            <div className="field" style={{ minWidth: 160 }}>
-              <label>Status</label>
-              <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
-                <option value="all">All</option>
-                <option value="open">Open</option>
-                <option value="sent">Sent</option>
-                <option value="waiting">Waiting</option>
-                <option value="followup">Follow-up</option>
-                <option value="done">Done</option>
-              </select>
-            </div>
-          </div>
+      <div className="field" style={{ minWidth: 160 }}>
+        <label>Status</label>
+        <select
+          className="select"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as any)}
+        >
+          <option value="all">All</option>
+          <option value="open">Open</option>
+          <option value="sent">Sent</option>
+          <option value="waiting">Waiting</option>
+          <option value="followup">Follow-up</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+    </div>
 
-          <div className="toolbarRight">
-            <div className="field" style={{ minWidth: 170 }}>
-              <label>Sort</label>
-              <select className="select" value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
-                <option value="dueAt">Due date</option>
-                <option value="createdAt">Created</option>
-                <option value="company">Company</option>
-              </select>
-            </div>
+    <div className="toolbarRight">
+      <div className="field" style={{ minWidth: 170 }}>
+        <label>Sort</label>
+        <select
+          className="select"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as any)}
+        >
+          <option value="dueAt">Due date</option>
+          <option value="createdAt">Created</option>
+          <option value="company">Company</option>
+        </select>
+      </div>
 
-            <div className="field" style={{ minWidth: 140 }}>
-              <label>Direction</label>
-              <select className="select" value={sortDir} onChange={(e) => setSortDir(e.target.value as any)}>
-                <option value="asc">Ascending</option>
-                <option value="desc">Descending</option>
-              </select>
-            </div>
+      <div className="field" style={{ minWidth: 140 }}>
+        <label>Direction</label>
+        <select
+          className="select"
+          value={sortDir}
+          onChange={(e) => setSortDir(e.target.value as any)}
+        >
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
 
-            <button
-              className="btn"
-              onClick={() => {
-                setQ("");
-                setStatusFilter("all");
-                setSortBy("dueAt");
-                setSortDir("asc");
-              }}
-              disabled={loading}
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-      </section>
+      <button
+        className="btn"
+        onClick={() => {
+          setQ("");
+          setStatusFilter("all");
+          setSortBy("dueAt");
+          setSortDir("asc");
+        }}
+        disabled={loading}
+      >
+        Reset
+      </button>
+    </div>
+  </div>
+</section>
 
       <div className="list">
         {visible.map((f) => {
