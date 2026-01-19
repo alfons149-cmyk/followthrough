@@ -483,12 +483,7 @@ export default function App() {
                 placeholder="Alice, Example GmbH, intro…"
               />
             </div>
-
-            <div className="kpiRow">
-  <div className="kpiTile">
-    Needs follow-up today: <b>{needsTodayCount}</b>
-  </div>
-</div>
+         </div>
 
             <div className="field" style={{ minWidth: 160 }}>
               <label>Status</label>
