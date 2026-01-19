@@ -239,12 +239,6 @@ export default function App() {
     };
   }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
-  const visible = useMemo(() => {
-  const needle = q.trim().toLowerCase();
-
-  const filtered = items.filter((f) => {
-    const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
-
     const matchesQuery =
       !needle ||
       `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
