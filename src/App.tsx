@@ -516,7 +516,10 @@ export default function App() {
         </div>
       </section>
 
-      <h2 className="sectionTitle">Your followups</h2>
+      <div className="sectionHeader">
+  <h2 className="sectionTitle">Your followups</h2>
+  <span className="kpiChip">Needs follow-up today: <b>{needsTodayCount}</b></span>
+</div>
 
       <div className="list">
         {visible.map((f) => {
