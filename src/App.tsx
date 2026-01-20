@@ -565,7 +565,9 @@ const overdueCount = useMemo(() => {
         : "card";
 
     const isFirstOverdue =
-      f.status !== "done" && isOverdue(f.dueAt) && !firstOverdueRef.current;
+      !firstAssigned && f.status !== "done" && due.kind === "overdue";
+
+    if (isFirstOverdue) firstAssigned = true;
 
     return (
       <div
