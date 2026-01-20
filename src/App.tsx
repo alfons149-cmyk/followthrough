@@ -170,6 +170,7 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
   const [sortBy, setSortBy] = useState<"dueAt" | "createdAt" | "company">("dueAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const firstOverdueRef = useRef<HTMLDivElement | null>(null);
 
   // inline edit
   const [editNextId, setEditNextId] = useState<string | null>(null);
