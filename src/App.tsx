@@ -251,11 +251,6 @@ export default function App() {
   }, [items, q, statusFilter, sortBy, sortDir]);
 
   // ✅ counter across ALL items (not filtered)
-  const needsTodayCount = useMemo(() => {
-    return items.filter(needsFollowupToday).length;
-  }, [items]);
-
-  // ✅ counter across ALL items (not filtered)
 const needsTodayCount = useMemo(() => {
   return items.filter(needsFollowupToday).length;
 }, [items]);
