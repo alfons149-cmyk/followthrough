@@ -421,12 +421,6 @@ const overdueCount = useMemo(() => {
         </div>
       )}
 
-      {needsTodayCount > 0 && (
-        <div className="alert" style={{ marginTop: 12 }}>
-          📌 Needs follow-up today: <b>{needsTodayCount}</b>
-        </div>
-      )}
-
       <section className="panel">
         <div className="grid">
           <div className="field">
