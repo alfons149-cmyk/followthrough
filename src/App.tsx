@@ -288,13 +288,12 @@ const overdueCount = useMemo(() => {
   }
 
   useEffect(() => {
-  if (firstOverdueRef.current) {
-    firstOverdueRef.current.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }
-}, [visible]);
+  if (overdueCount === 0) return;
+  const el = firstOverdueRef.current;
+  if (!el) return;
+
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+}, [visible, overdueCount]);
 
   async function onCreate() {
     setLoading(true);
