@@ -407,6 +407,12 @@ const overdueCount = useMemo(() => {
   Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
 </div>
 
+{overdueCount > 0 && (
+  <div className="sub" style={{ marginTop: 6 }}>
+    ⏰ Overdue: <b>{overdueCount}</b>
+  </div>
+)}
+
 {needsTodayCount > 0 && (
   <div className="alert" style={{ marginTop: 12 }}>
     📌 Needs follow-up today: <b>{needsTodayCount}</b>
