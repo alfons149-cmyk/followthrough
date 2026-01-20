@@ -536,7 +536,9 @@ const overdueCount = useMemo(() => {
         </div>
       </section>
 
-      <div className="list">
+      let firstAssigned = false;
+
+<div className="list">
   {visible.map((f) => {
     const due = dueBadge(f.dueAt);
 
