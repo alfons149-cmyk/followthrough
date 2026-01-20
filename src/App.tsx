@@ -398,29 +398,26 @@ const overdueCount = useMemo(() => {
   return (
     <div className="page">
       <header className="header">
-        <h1 className="title">FollowThrough</h1>
-        <div className="sub">
-          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-          <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
-        </div>
-        <div className="sub">
-  Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-</div>
+  <h1 className="title">FollowThrough</h1>
 
-{overdueCount > 0 && (
-  <div className="sub" style={{ marginTop: 6 }}>
-    ⏰ Overdue: <b>{overdueCount}</b>
+  <div className="sub">
+    Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+    <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
   </div>
-)}
 
-{needsTodayCount > 0 && (
-  <div className="alert" style={{ marginTop: 12 }}>
-    📌 5 follow-ups need your attention today: <b>{needsTodayCount}</b>
-  </div>
-)}
-</div>
-      </header>
+  {overdueCount > 0 && (
+    <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
+      ⏰ Overdue: <b>{overdueCount}</b>
+    </div>
+  )}
 
+  {needsTodayCount > 0 && (
+    <div className="alert" style={{ marginTop: 12 }}>
+      📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
+    </div>
+  )}
+</header>
+      
       {error && (
         <div className="alert">
           <b>Error:</b> {error}
