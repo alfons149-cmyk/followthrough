@@ -536,26 +536,53 @@ const overdueCount = useMemo(() => {
           const due = dueBadge(f.dueAt);
           const dueClass = due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
 
-          const chipClass =
-            f.status === "done"
-              ? "chip chipDone"
-              : f.status === "followup"
-              ? "chip chipOverdue"
-              : f.status === "waiting"
-              ? "chip chipSoon"
-              : f.status === "sent"
-              ? "chip chipDue"
-              : "chip chipOpen";
+          <div className="list">
+  {visible.map((f) => {
+    const due = dueBadge(f.dueAt);
 
-          const isFirstOverdue =
-          f.status !== "done" && isOverdue(f.dueAt) && !firstOverdueRef.current;
+    const dueClass =
+      due.kind === "overdue"
+        ? "chip chipOverdue"
+        : due.kind === "soon"
+        ? "chip chipSoon"
+        : "chip chipDue";
 
-          return (
-          <div
-    key={f.id}
-    ref={isFirstOverdue ? firstOverdueRef : null}
-    className={cardClass}
-  >
+    const chipClass =
+      f.status === "done"
+        ? "chip chipDone"
+        : f.status === "followup"
+        ? "chip chipOverdue"
+        : f.status === "waiting"
+        ? "chip chipSoon"
+        : f.status === "sent"
+        ? "chip chipDue"
+        : "chip chipOpen";
+
+    // ✅ DIT miste bij jou:
+    const cardClass =
+      due.kind === "overdue" && f.status !== "done"
+        ? "card cardOverdue"
+        : "card";
+
+    // ✅ jouw methode: "eerste overdue" detecteren via ref.current
+    const isFirstOverdue =
+      f.status !== "done" && isOverdue(f.dueAt) && !firstOverdueRef.current;
+
+    return (
+      <div
+        key={f.id}
+        ref={isFirstOverdue ? firstOverdueRef : null}
+        className={cardClass}
+      >
+        {/* ... hier komt jouw bestaande card inhoud ... */}
+      </div>
+    );
+  })}
+
+  {!loading && visible.length === 0 && (
+    <div className="empty">No followups match your filters.</div>
+  )}
+</div>
 
                 <div>
                   <div className="cardTitle">
