@@ -532,11 +532,6 @@ const overdueCount = useMemo(() => {
       </section>
 
       <div className="list">
-        {visible.map((f) => {
-          const due = dueBadge(f.dueAt);
-          const dueClass = due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
-
-          <div className="list">
   {visible.map((f) => {
     const due = dueBadge(f.dueAt);
 
@@ -558,13 +553,11 @@ const overdueCount = useMemo(() => {
         ? "chip chipDue"
         : "chip chipOpen";
 
-    // ✅ DIT miste bij jou:
     const cardClass =
       due.kind === "overdue" && f.status !== "done"
         ? "card cardOverdue"
         : "card";
 
-    // ✅ jouw methode: "eerste overdue" detecteren via ref.current
     const isFirstOverdue =
       f.status !== "done" && isOverdue(f.dueAt) && !firstOverdueRef.current;
 
@@ -574,7 +567,80 @@ const overdueCount = useMemo(() => {
         ref={isFirstOverdue ? firstOverdueRef : null}
         className={cardClass}
       >
-        {/* ... hier komt jouw bestaande card inhoud ... */}
+        {/* ===== JOUW CARD INHOUD ===== */}
+
+        <div>
+          <div className="cardTitle">
+            {f.contactName} <span>({f.companyName})</span>
+          </div>
+
+          <div className="cardLine">
+            <b>Next:</b>{" "}
+            {editNextId === f.id ? (
+              <input
+                className="inlineInput"
+                value={draftNext}
+                autoFocus
+                onChange={(e) => setDraftNext(e.target.value)}
+                onBlur={() => saveNextStep(f.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveNextStep(f.id);
+                  if (e.key === "Escape") setEditNextId(null);
+                }}
+              />
+            ) : (
+              <span
+                className="inlineValue"
+                title="Click to edit"
+                onClick={() => {
+                  setEditNextId(f.id);
+                  setDraftNext(f.nextStep || "");
+                }}
+              >
+                {f.nextStep}
+              </span>
+            )}
+          </div>
+
+          <div className="cardMeta">
+            <span className="metaItem">
+              Due:{" "}
+              {editDueId === f.id ? (
+                <input
+                  className="inlineInput inlineDate"
+                  value={draftDue}
+                  autoFocus
+                  onChange={(e) => setDraftDue(e.target.value)}
+                  onBlur={() => saveDueAt(f.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveDueAt(f.id);
+                    if (e.key === "Escape") setEditDueId(null);
+                  }}
+                />
+              ) : (
+                <span
+                  className="inlineValue"
+                  title="Click to edit"
+                  onClick={() => {
+                    setEditDueId(f.id);
+                    setDraftDue(formatDate(f.dueAt));
+                  }}
+                >
+                  <b>{formatDate(f.dueAt)}</b>
+                </span>
+              )}
+            </span>
+
+            <span className={dueClass}>{due.label}</span>
+            <span className={chipClass}>{statusLabel(f.status)}</span>
+
+            <span className="metaItem">
+              Id: <code>{f.id}</code>
+            </span>
+          </div>
+        </div>
+
+        {/* ===== EINDE CARD INHOUD ===== */}
       </div>
     );
   })}
@@ -583,112 +649,6 @@ const overdueCount = useMemo(() => {
     <div className="empty">No followups match your filters.</div>
   )}
 </div>
-
-                <div>
-                  <div className="cardTitle">
-                    {f.contactName} <span>({f.companyName})</span>
-                  </div>
-
-                  <div className="cardLine">
-                    <b>Next:</b>{" "}
-                    {editNextId === f.id ? (
-                      <input
-                        className="inlineInput"
-                        value={draftNext}
-                        autoFocus
-                        onChange={(e) => setDraftNext(e.target.value)}
-                        onBlur={() => saveNextStep(f.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveNextStep(f.id);
-                          if (e.key === "Escape") setEditNextId(null);
-                        }}
-                      />
-                    ) : (
-                      <span
-                        className="inlineValue"
-                        title="Click to edit"
-                        onClick={() => {
-                          setEditNextId(f.id);
-                          setDraftNext(f.nextStep || "");
-                        }}
-                      >
-                        {f.nextStep}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="cardMeta">
-                    <span className="metaItem">
-                      Due:{" "}
-                      {editDueId === f.id ? (
-                        <input
-                          className="inlineInput inlineDate"
-                          value={draftDue}
-                          autoFocus
-                          onChange={(e) => setDraftDue(e.target.value)}
-                          onBlur={() => saveDueAt(f.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") saveDueAt(f.id);
-                            if (e.key === "Escape") setEditDueId(null);
-                          }}
-                        />
-                      ) : (
-                        <span
-                          className="inlineValue"
-                          title="Click to edit"
-                          onClick={() => {
-                            setEditDueId(f.id);
-                            setDraftDue(formatDate(f.dueAt));
-                          }}
-                        >
-                          <b>{formatDate(f.dueAt)}</b>
-                        </span>
-                      )}
-                    </span>
-
-                    <span className={dueClass}>{due.label}</span>
-                    <span className={chipClass}>{statusLabel(f.status)}</span>
-
-                    <span className="metaItem">
-                      Id: <code>{f.id}</code>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="cardActions">
-                  <button className="btn btnPrimary" onClick={() => advanceStatus(f)} disabled={loading}>
-                    Move → {statusLabel(nextStatus(f.status))}
-                  </button>
-
-                  <div className="miniRow">
-                    <button className="btn btnMini" onClick={() => snooze(f, 1)} disabled={loading}>
-                      Tomorrow
-                    </button>
-                    <button className="btn btnMini" onClick={() => snooze(f, 3)} disabled={loading}>
-                      +3 days
-                    </button>
-                    <button className="btn btnMini" onClick={() => snooze(f, 7)} disabled={loading}>
-                      +1 week
-                    </button>
-                  </div>
-
-                  {f.status !== "done" ? (
-                    <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-                      Mark done
-                    </button>
-                  ) : (
-                    <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-                      Reopen
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-
-        {!loading && visible.length === 0 && <div className="empty">No followups match your filters.</div>}
-      </div>
     </div>
   );
 }
