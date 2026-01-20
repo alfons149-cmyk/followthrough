@@ -650,13 +650,10 @@ const overdueCount = useMemo(() => {
 
         {/* ===== EINDE CARD INHOUD ===== */}
       </div>
-    );
+   );
   })}
 
   {!loading && visible.length === 0 && (
     <div className="empty">No followups match your filters.</div>
   )}
 </div>
-    </div>
-  );
-}
