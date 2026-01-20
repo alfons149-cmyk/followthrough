@@ -547,11 +547,16 @@ const overdueCount = useMemo(() => {
               ? "chip chipDue"
               : "chip chipOpen";
 
-          const cardClass = due.kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card";
+          const isFirstOverdue =
+          f.status !== "done" && isOverdue(f.dueAt) && !firstOverdueRef.current;
 
           return (
-            <div key={f.id} className={cardClass}>
-              <div className="cardTop">
+          <div
+    key={f.id}
+    ref={isFirstOverdue ? firstOverdueRef : null}
+    className={cardClass}
+  >
+
                 <div>
                   <div className="cardTitle">
                     {f.contactName} <span>({f.companyName})</span>
