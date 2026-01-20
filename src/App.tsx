@@ -180,7 +180,7 @@ export default function App() {
 
   const api = useMemo(() => {
     const base = API_BASE.replace(/\/+$/, "");
-  let firstAssigned = false;
+    
     return {
       async list() {
         const url = `${base}/api/followups?workspaceId=${encodeURIComponent(workspaceId)}`;
@@ -398,7 +398,7 @@ const overdueCount = useMemo(() => {
       setLoading(false);
     }
   }
-
+  let firstAssigned = false;
   return (
     <div className="page">
       <header className="header">
