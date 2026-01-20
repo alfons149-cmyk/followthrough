@@ -407,9 +407,6 @@ const overdueCount = useMemo(() => {
         <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
           Needs follow-up today: <b>{needsTodayCount}</b>
         </div>
-        <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
-  Needs follow-up today: <b>{needsTodayCount}</b>
-</div>
 
 <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
   Overdue: <b>{overdueCount}</b>
@@ -418,13 +415,7 @@ const overdueCount = useMemo(() => {
 <div className="sub">
   Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
   {" · "}
-  <span>
-    Needs follow-up today: <b>{needsTodayCount}</b>
-  </span>
-  {" · "}
-  <span>
-    Overdue: <b>{overdueCount}</b>
-  </span>
+ 
 </div>
       </header>
 
