@@ -406,10 +406,17 @@ const overdueCount = useMemo(() => {
   </div>
 
   {overdueCount > 0 && (
-    <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
-      ⏰ Overdue: <b>{overdueCount}</b>
-    </div>
-  )}
+  <div
+    className="sub"
+    style={{
+      marginTop: 6,
+      color: "#c62828", // rood
+      fontWeight: 600,
+    }}
+  >
+    ⏰ Overdue: {overdueCount}
+  </div>
+)}
 
   {needsTodayCount > 0 && (
     <div className="alert" style={{ marginTop: 12 }}>
