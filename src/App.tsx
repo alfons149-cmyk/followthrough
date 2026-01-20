@@ -415,7 +415,7 @@ const overdueCount = useMemo(() => {
 
 {needsTodayCount > 0 && (
   <div className="alert" style={{ marginTop: 12 }}>
-    📌 Needs follow-up today: <b>{needsTodayCount}</b>
+    📌 5 follow-ups need your attention today: <b>{needsTodayCount}</b>
   </div>
 )}
 </div>
