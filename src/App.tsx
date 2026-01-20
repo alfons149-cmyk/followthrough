@@ -288,9 +288,13 @@ const overdueCount = useMemo(() => {
   }
 
   useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  if (firstOverdueRef.current) {
+    firstOverdueRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }
+}, [visible]);
 
   async function onCreate() {
     setLoading(true);
