@@ -403,19 +403,15 @@ const overdueCount = useMemo(() => {
           Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
           <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
         </div>
-
-        <div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
-          Needs follow-up today: <b>{needsTodayCount}</b>
-        </div>
-
-<div className="sub" style={{ marginTop: 6, opacity: 0.8 }}>
-  Overdue: <b>{overdueCount}</b>
-</div>
-        
-<div className="sub">
+        <div className="sub">
   Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-  {" · "}
- 
+</div>
+
+{needsTodayCount > 0 && (
+  <div className="alert" style={{ marginTop: 12 }}>
+    📌 Needs follow-up today: <b>{needsTodayCount}</b>
+  </div>
+)}
 </div>
       </header>
 
