@@ -399,6 +399,7 @@ const overdueCount = useMemo(() => {
     }
   }
   let firstAssigned = false;
+  
   return (
     <div className="page">
       <header className="header">
