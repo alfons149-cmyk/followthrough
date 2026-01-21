@@ -642,9 +642,11 @@ const overdueCount = useMemo(() => {
     );
   })}
 
-  {!loading && visible.length === 0 && (
+   {!loading && visible.length === 0 && (
     <div className="empty">No followups match your filters.</div>
   )}
-</div>
+</div> {/* einde .list */}
+
+</div> {/* einde .page */}
   );
 }
