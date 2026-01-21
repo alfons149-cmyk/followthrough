@@ -563,10 +563,13 @@ const overdueCount = useMemo(() => {
         ? "card cardOverdue"
         : "card";
 
-    const isFirstOverdue =
-      !firstAssigned && f.status !== "done" && due.kind === "overdue";
-
-    if (isFirstOverdue) firstAssigned = true;
+    const firstOverdueId = useMemo(() => {
+  const first = visible.find((f) => {
+    if (f.status === "done") return false;
+    return dueBadge(f.dueAt).kind === "overdue";
+  });
+  return first?.id ?? null;
+}, [visible]);
 
     return (
       <div
