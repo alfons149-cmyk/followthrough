@@ -545,4 +545,12 @@ const overdueCount = useMemo(() => {
       {f.contactName} ({f.companyName})
     </div>
   ))}
-</div>
+
+  {!loading && visible.length === 0 && (
+    <div className="empty">No followups match your filters.</div>
+  )}
+</div> {/* einde .list */}
+
+</div> {/* einde .page */}
+);
+}
