@@ -5,7 +5,7 @@ import "./App.css";
 // Workflow (single source of truth)
 // ==============================
 const STATUS_ORDER = ["open", "sent", "waiting", "followup", "done"] as const;
-type Status = typeof STATUS_ORDER[number];
+type Status = (typeof STATUS_ORDER)[number];
 
 function nextStatus(s: Status): Status {
   const i = STATUS_ORDER.indexOf(s);
@@ -142,10 +142,6 @@ function transitionPlan(f: Followup) {
   return { status: ns, dueAt: baseSafe };
 }
 
-// ==============================
-// Component
-// ==============================
-
 function isOverdueAndNotDone(f: Followup) {
   if (f.status === "done") return false;
   return isOverdue(f.dueAt);
@@ -170,6 +166,8 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
   const [sortBy, setSortBy] = useState<"dueAt" | "createdAt" | "company">("dueAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  // scroll target
   const firstOverdueRef = useRef<HTMLDivElement | null>(null);
 
   // inline edit
@@ -180,7 +178,7 @@ export default function App() {
 
   const api = useMemo(() => {
     const base = API_BASE.replace(/\/+$/, "");
-    
+
     return {
       async list() {
         const url = `${base}/api/followups?workspaceId=${encodeURIComponent(workspaceId)}`;
@@ -223,15 +221,14 @@ export default function App() {
     };
   }, [API_BASE, workspaceId, contactName, companyName, nextStep, dueAt]);
 
-  // ✅ visible list (ONLY ONCE)
+  // visible list (filter + sort)
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
 
     const filtered = items.filter((f) => {
       const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
       const matchesQuery =
-        !needle ||
-        `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
+        !needle || `${f.contactName} ${f.companyName} ${f.nextStep}`.toLowerCase().includes(needle);
       return matchesStatus && matchesQuery;
     });
 
@@ -251,20 +248,15 @@ export default function App() {
     return filtered;
   }, [items, q, statusFilter, sortBy, sortDir]);
 
-  // ✅ counter across ALL items (not filtered)
-const needsTodayCount = useMemo(() => {
-  return items.filter(needsFollowupToday).length;
-}, [items]);
+  // counters across ALL items (not filtered)
+  const needsTodayCount = useMemo(() => items.filter(needsFollowupToday).length, [items]);
+  const overdueCount = useMemo(() => items.filter(isOverdueAndNotDone).length, [items]);
 
-// ✅ overdue counter across ALL items (not filtered)
-const overdueCount = useMemo(() => {
-  return items.filter(isOverdueAndNotDone).length;
-}, [items]);
-
-  useEffect(() => {
-  refresh();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+  // first overdue item in visible list (stable, no render side-effects)
+  const firstOverdueId = useMemo(() => {
+    const first = visible.find((f) => f.status !== "done" && dueBadge(f.dueAt).kind === "overdue");
+    return first?.id ?? null;
+  }, [visible]);
 
   async function refresh() {
     setLoading(true);
@@ -273,7 +265,7 @@ const overdueCount = useMemo(() => {
     try {
       const list = await api.list();
 
-      // 🔁 auto-advance overdue items
+      // auto-advance overdue items
       for (const f of list) {
         const patch = autoAdvanceIfOverdue(f);
         if (patch) {
@@ -281,7 +273,6 @@ const overdueCount = useMemo(() => {
         }
       }
 
-      // opnieuw ophalen zodat UI & DB synchroon zijn
       const updated = await api.list();
       setItems(updated);
     } catch (e: any) {
@@ -291,12 +282,19 @@ const overdueCount = useMemo(() => {
     }
   }
 
- useEffect(() => {
-  if (!firstOverdueId) return;
-  const el = firstOverdueRef.current;
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "center" });
-}, [firstOverdueId]);
+  // auto-load on first mount
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // scroll to first overdue in visible list
+  useEffect(() => {
+    if (!firstOverdueId) return;
+    const el = firstOverdueRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [firstOverdueId]);
 
   async function onCreate() {
     setLoading(true);
@@ -401,60 +399,268 @@ const overdueCount = useMemo(() => {
       setLoading(false);
     }
   }
-  let firstAssigned = false;
-  
+
   return (
     <div className="page">
       <header className="header">
-  <h1 className="title">FollowThrough</h1>
+        <h1 className="title">FollowThrough</h1>
 
-  <div className="sub">
-    Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-    <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
-  </div>
+        <div className="sub">
+          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+          <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
+        </div>
 
-  {overdueCount > 0 && (
-  <div
-    className="sub"
-    style={{
-      marginTop: 6,
-      color: "#c62828", // rood
-      fontWeight: 600,
-    }}
-  >
-    ⏰ Overdue: {overdueCount}
-  </div>
-)}
+        {overdueCount > 0 && (
+          <div
+            className="sub"
+            style={{
+              marginTop: 6,
+              color: "#c62828",
+              fontWeight: 600,
+            }}
+          >
+            ⏰ Overdue: {overdueCount}
+          </div>
+        )}
 
-  {needsTodayCount > 0 && (
-    <div className="alert" style={{ marginTop: 12 }}>
-      📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
-    </div>
-  )}
-</header>
-      
+        {needsTodayCount > 0 && (
+          <div className="alert" style={{ marginTop: 12 }}>
+            📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
+          </div>
+        )}
+      </header>
+
       {error && (
         <div className="alert">
           <b>Error:</b> {error}
         </div>
       )}
 
+      {/* Create / Refresh */}
+      <section className="panel">
+        <div className="grid">
+          <div className="field">
+            <label>Contact name</label>
+            <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label>Company</label>
+            <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label>Next step</label>
+            <input className="input" value={nextStep} onChange={(e) => setNextStep(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label>Due at (YYYY-MM-DD)</label>
+            <input className="input" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
+          </div>
+        </div>
+
+        <div className="toolbar">
+          <div className="toolbarLeft">
+            <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
+              + Add followup
+            </button>
+            <button className="btn" onClick={refresh} disabled={loading}>
+              Refresh
+            </button>
+            {loading && <span className="loading">Loading…</span>}
+          </div>
+        </div>
       </section>
 
-<section className="panel">
-  <div className="list">
-    {visible.map((f) => (
-      <div key={f.id} className="card">
-        {f.contactName} ({f.companyName})
+      {/* Filters / Sort */}
+      <section className="panel">
+        <div className="toolbar">
+          <div className="toolbarLeft">
+            <div className="field" style={{ minWidth: 260 }}>
+              <label>Search</label>
+              <input
+                className="input"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Alice, Example GmbH, intro…"
+              />
+            </div>
+
+            <div className="field" style={{ minWidth: 160 }}>
+              <label>Status</label>
+              <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+                <option value="all">All</option>
+                <option value="open">Open</option>
+                <option value="sent">Sent</option>
+                <option value="waiting">Waiting</option>
+                <option value="followup">Follow-up</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="toolbarRight">
+            <div className="field" style={{ minWidth: 170 }}>
+              <label>Sort</label>
+              <select className="select" value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
+                <option value="dueAt">Due date</option>
+                <option value="createdAt">Created</option>
+                <option value="company">Company</option>
+              </select>
+            </div>
+
+            <div className="field" style={{ minWidth: 140 }}>
+              <label>Direction</label>
+              <select className="select" value={sortDir} onChange={(e) => setSortDir(e.target.value as any)}>
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+              </select>
+            </div>
+
+            <button
+              className="btn"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+                setSortBy("dueAt");
+                setSortDir("asc");
+              }}
+              disabled={loading}
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* List */}
+      <div className="list">
+        {visible.map((f) => {
+          const due = dueBadge(f.dueAt);
+
+          const dueClass =
+            due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
+
+          const chipClass =
+            f.status === "done"
+              ? "chip chipDone"
+              : f.status === "followup"
+              ? "chip chipOverdue"
+              : f.status === "waiting"
+              ? "chip chipSoon"
+              : f.status === "sent"
+              ? "chip chipDue"
+              : "chip chipOpen";
+
+          const cardClass = due.kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card";
+
+          const isFirstOverdue = firstOverdueId === f.id;
+
+          return (
+            <div key={f.id} ref={isFirstOverdue ? firstOverdueRef : null} className={cardClass}>
+              <div>
+                <div className="cardTitle">
+                  {f.contactName} <span>({f.companyName})</span>
+                </div>
+
+                <div className="cardLine">
+                  <b>Next:</b>{" "}
+                  {editNextId === f.id ? (
+                    <input
+                      className="inlineInput"
+                      value={draftNext}
+                      autoFocus
+                      onChange={(e) => setDraftNext(e.target.value)}
+                      onBlur={() => saveNextStep(f.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveNextStep(f.id);
+                        if (e.key === "Escape") setEditNextId(null);
+                      }}
+                    />
+                  ) : (
+                    <span
+                      className="inlineValue"
+                      title="Click to edit"
+                      onClick={() => {
+                        setEditNextId(f.id);
+                        setDraftNext(f.nextStep || "");
+                      }}
+                    >
+                      {f.nextStep}
+                    </span>
+                  )}
+                </div>
+
+                <div className="cardMeta">
+                  <span className="metaItem">
+                    Due:{" "}
+                    {editDueId === f.id ? (
+                      <input
+                        className="inlineInput inlineDate"
+                        value={draftDue}
+                        autoFocus
+                        onChange={(e) => setDraftDue(e.target.value)}
+                        onBlur={() => saveDueAt(f.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveDueAt(f.id);
+                          if (e.key === "Escape") setEditDueId(null);
+                        }}
+                      />
+                    ) : (
+                      <span
+                        className="inlineValue"
+                        title="Click to edit"
+                        onClick={() => {
+                          setEditDueId(f.id);
+                          setDraftDue(formatDate(f.dueAt));
+                        }}
+                      >
+                        <b>{formatDate(f.dueAt)}</b>
+                      </span>
+                    )}
+                  </span>
+
+                  <span className={dueClass}>{due.label}</span>
+                  <span className={chipClass}>{statusLabel(f.status)}</span>
+
+                  <span className="metaItem">
+                    Id: <code>{f.id}</code>
+                  </span>
+                </div>
+
+                <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
+                    Move
+                  </button>
+
+                  <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
+                    +1d
+                  </button>
+                  <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
+                    +3d
+                  </button>
+                  <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
+                    +7d
+                  </button>
+
+                  {f.status !== "done" ? (
+                    <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+                      Done
+                    </button>
+                  ) : (
+                    <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+                      Reopen
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {!loading && visible.length === 0 && <div className="empty">No followups match your filters.</div>}
       </div>
-    ))}
-
-    {!loading && visible.length === 0 && (
-      <div className="empty">No followups match your filters.</div>
-    )}
-  </div>
-</section>
-
-</div> {/* einde .page */}
-);
+    </div>
+  );
 }
