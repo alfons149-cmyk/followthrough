@@ -261,6 +261,10 @@ const overdueCount = useMemo(() => {
   return items.filter(isOverdueAndNotDone).length;
 }, [items]);
 
+  useEffect(() => {
+  refresh();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   async function refresh() {
     setLoading(true);
