@@ -571,12 +571,13 @@ const overdueCount = useMemo(() => {
   return first?.id ?? null;
 }, [visible]);
 
-    return (
-      <div
-        key={f.id}
-        ref={isFirstOverdue ? firstOverdueRef : null}
-        className={cardClass}
-      >
+   return (
+  <div
+    key={f.id}
+    ref={firstOverdueId === f.id ? firstOverdueRef : null}
+    className={cardClass}
+  >
+
         {/* ===== JOUW CARD INHOUD ===== */}
 
         <div>
