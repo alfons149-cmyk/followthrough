@@ -566,23 +566,8 @@ const overdueCount = useMemo(() => {
         ? "card cardOverdue"
         : "card";
 
-    const firstOverdueId = useMemo(() => {
-  const first = visible.find((f) => {
-    if (f.status === "done") return false;
-    return dueBadge(f.dueAt).kind === "overdue";
-  });
-  return first?.id ?? null;
-}, [visible]);
-
-   return (
-  <div
-    key={f.id}
-    ref={firstOverdueId === f.id ? firstOverdueRef : null}
-    className={cardClass}
-  >
-
-        {/* ===== JOUW CARD INHOUD ===== */}
-
+    return (
+      <div key={f.id} className={cardClass}>
         <div>
           <div className="cardTitle">
             {f.contactName} <span>({f.companyName})</span>
@@ -653,17 +638,14 @@ const overdueCount = useMemo(() => {
             </span>
           </div>
         </div>
-
-        {/* ===== EINDE CARD INHOUD ===== */}
       </div>
-   );
+    );
   })}
 
-   {!loading && visible.length === 0 && (
+  {!loading && visible.length === 0 && (
     <div className="empty">No followups match your filters.</div>
   )}
-</div> {/* einde .list */}
-
+</div>
 </div> {/* einde .page */}
   );
 }
