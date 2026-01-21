@@ -640,7 +640,7 @@ const overdueCount = useMemo(() => {
         </div>
       </div>
     );
-  }))}  // ✅ goed (sluit map(...) af)
+    }))}
 
    {!loading && visible.length === 0 && (
     <div className="empty">No followups match your filters.</div>
