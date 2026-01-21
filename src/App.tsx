@@ -645,8 +645,8 @@ const overdueCount = useMemo(() => {
   {!loading && visible.length === 0 && (
     <div className="empty">No followups match your filters.</div>
   )}
-</div> {/* einde .list */}
+</div>
 
-</div> {/* einde .page */}
+</div>
 );
 }
