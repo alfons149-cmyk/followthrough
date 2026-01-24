@@ -445,25 +445,38 @@ return (
       )}
 
       {/* Create / Refresh */}
+
+    <section className="panel">
+
+  {items.length === 0 && (
+    <div className="empty">
+      <h3>No follow-ups yet</h3>
+      <p>
+        Add your first one and FollowThrough will remind you at the right moment.
+      </p>
+      <button onClick={() => setShowForm(true)}>
+        + Add your first follow-up
+      </button>
+    </div>
+  )}
+
+  <div className="grid">
+    <div className="field">
+      <label>Contact name</label>
+      <input ... />
+    </div>
+
+    <div className="field">
+      <label>Company</label>
+      <input ... />
+    </div>
+    
       <section className="panel">
         <div className="grid">
           <div className="field">
             <label>Contact name</label>
             <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
           </div>
-
-          {items.length === 0 && (
-  <div className="empty">
-    <h3>No follow-ups yet</h3>
-    <p>
-      Add your first one and FollowThrough will remind you at the right moment.
-    </p>
-    <button onClick={() => setShowForm(true)}>
-      + Add your first follow-up
-    </button>
-  </div>
-)}
-
 
           <div className="field">
             <label>Company</label>
