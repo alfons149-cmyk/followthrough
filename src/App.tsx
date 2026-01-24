@@ -405,10 +405,14 @@ export default function App() {
       <header className="header">
         <h1 className="title">FollowThrough</h1>
 
-        <div className="sub">
-          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-          <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
-        </div>
+        {import.meta.env.DEV && (
+  <div className="sub">
+    Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+    <span style={{ marginLeft: 10, opacity: 0.6 }}>
+      build: 2026-01-19 18:00
+    </span>
+  </div>
+)}
 
         {overdueCount > 0 && (
           <div
