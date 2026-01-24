@@ -452,6 +452,19 @@ return (
             <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
           </div>
 
+          {items.length === 0 && (
+  <div className="empty">
+    <h3>No follow-ups yet</h3>
+    <p>
+      Add your first one and FollowThrough will remind you at the right moment.
+    </p>
+    <button onClick={() => setShowForm(true)}>
+      + Add your first follow-up
+    </button>
+  </div>
+)}
+
+
           <div className="field">
             <label>Company</label>
             <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
