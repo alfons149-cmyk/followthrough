@@ -400,7 +400,7 @@ export default function App() {
     }
   }
 
- return (
+return (
   <div className="page">
     <header className="header">
       <h1 className="title">FollowThrough</h1>
@@ -417,29 +417,27 @@ export default function App() {
       )}
     </header>
 
-        {overdueCount > 0 && (
-  <div
-    className="sub"
-    style={{
-      marginTop: 6,
-      color: "#8a5a00",
-      background: "#fff4e5",
-      padding: "6px 10px",
-      borderRadius: 6,
-      fontWeight: 500,
-    }}
-  >
-    🔔 You have {overdueCount} follow-ups scheduled for today
-  </div>
-)}
+    {overdueCount > 0 && (
+      <div
+        className="sub"
+        style={{
+          marginTop: 6,
+          color: "#8a5a00",
+          background: "#fff4e5",
+          padding: "6px 10px",
+          borderRadius: 6,
+          fontWeight: 500,
+        }}
+      >
+        🔔 You have {overdueCount} follow-ups scheduled for today
+      </div>
+    )}
 
-        {needsTodayCount > 0 && (
-          <div className="alert" style={{ marginTop: 12 }}>
-            📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
-          </div>
-        )}
-      </header>
-
+    {needsTodayCount > 0 && (
+      <div className="alert" style={{ marginTop: 12 }}>
+        📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
+      </div>
+    )}
       {error && (
         <div className="alert">
           <b>Error:</b> {error}
