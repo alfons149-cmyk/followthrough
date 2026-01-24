@@ -418,17 +418,20 @@ export default function App() {
     </header>
 
         {overdueCount > 0 && (
-          <div
-            className="sub"
-            style={{
-              marginTop: 6,
-              color: "#c62828",
-              fontWeight: 600,
-            }}
-          >
-            ⏰ Overdue: {overdueCount}
-          </div>
-        )}
+  <div
+    className="sub"
+    style={{
+      marginTop: 6,
+      color: "#8a5a00",
+      background: "#fff4e5",
+      padding: "6px 10px",
+      borderRadius: 6,
+      fontWeight: 500,
+    }}
+  >
+    🔔 You have {overdueCount} follow-ups scheduled for today
+  </div>
+)}
 
         {needsTodayCount > 0 && (
           <div className="alert" style={{ marginTop: 12 }}>
