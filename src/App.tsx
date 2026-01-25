@@ -457,34 +457,89 @@ return (
     <div className="empty">
       <h3>No matches</h3>
       <p>Try clearing search or changing the status filter.</p>
-      <button onClick={() => { setQ(""); setStatusFilter("all"); }}>
+      <button
+        onClick={() => {
+          setQ("");
+          setStatusFilter("all");
+        }}
+      >
         Clear filters
       </button>
     </div>
   ) : (
     visible.map((f) => (
-  <div key={f.id} className="card">
-    <div className="cardLine">
-  <b>Next:</b> ...
-  {editNextId === f.id ? ( ... ) : ( ... )}
+      <div key={f.id} className="card">
+        {/* NEXT STEP (inline edit) */}
+        <div className="cardLine">
+          <b>Next:</b>{" "}
+          {editNextId === f.id ? (
+            <input
+              className="inlineInput"
+              value={draftNext}
+              autoFocus
+              onChange={(e) => setDraftNext(e.target.value)}
+              onBlur={() => saveNextStep(f.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveNextStep(f.id);
+                if (e.key === "Escape") setEditNextId(null);
+              }}
+            />
+          ) : (
+            <span
+              className="inlineValue"
+              title="Click to edit"
+              onClick={() => {
+                setEditNextId(f.id);
+                setDraftNext(f.nextStep || "");
+              }}
+            >
+              {f.nextStep || "—"}
+            </span>
+          )}
+        </div>
 
-    <div style={{ fontWeight: 600 }}>
-      {f.contactName ?? f.contact ?? f.name ?? "Unnamed contact"}
-    </div>
+        {/* CONTACT + COMPANY (read-only) */}
+        <div style={{ fontWeight: 600, marginTop: 8 }}>
+          {f.contactName ?? f.contact ?? f.name ?? "Unnamed contact"}
+        </div>
+        <div style={{ opacity: 0.8 }}>
+          {f.companyName ?? f.company ?? f.org ?? "No company"}
+        </div>
 
-    <div style={{ opacity: 0.8 }}>
-      {f.companyName ?? f.company ?? f.org ?? "No company"}
-    </div>
-
-    <div style={{ marginTop: 6 }}>
-      {f.nextStep ?? f.next ?? ""}
-    </div>
-
-    <div style={{ marginTop: 8, opacity: 0.7 }}>
-      Due: {f.dueAt ?? f.due ?? ""}
-    </div>
-  </div>
-))
+        {/* DUE (inline edit) */}
+        <div className="cardMeta" style={{ marginTop: 10 }}>
+          <span className="metaItem">
+            Due:{" "}
+            {editDueId === f.id ? (
+              <input
+                className="inlineInput inlineDate"
+                value={draftDue}
+                autoFocus
+                onChange={(e) => setDraftDue(e.target.value)}
+                onBlur={() => saveDueAt(f.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveDueAt(f.id);
+                  if (e.key === "Escape") setEditDueId(null);
+                }}
+              />
+            ) : (
+              <span
+                className="inlineValue"
+                title="Click to edit"
+                onClick={() => {
+                  setEditDueId(f.id);
+                  setDraftDue(f.dueAt || "");
+                }}
+              >
+                {f.dueAt || "—"}
+              </span>
+            )}
+          </span>
+        </div>
+      </div>
+    ))
+  )}
+</div>
 
 {/* Create / Refresh */}
 <section className="panel">
