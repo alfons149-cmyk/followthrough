@@ -433,22 +433,21 @@ return (
       </div>
     )}
 
-    {needsTodayCount > 0 && (
-      <div className="alert" style={{ marginTop: 12 }}>
-        📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
-      </div>
-    )}
-      {error && (
-        <div className="alert">
-          <b>Error:</b> {error}
-        </div>
-      )}
+   {needsTodayCount > 0 && (
+  <div className="alert" style={{ marginTop: 12 }}>
+    📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
+  </div>
+)}
 
-      {/* List */}
-    {/* Create / Refresh */}
-<section className="panel">
+{error && (
+  <div className="alert">
+    <b>Error:</b> {error}
+  </div>
+)}
 
-  {items.length === 0 && (
+{/* List */}
+<div className="list">
+  {visible.length === 0 ? (
     <div className="empty">
       <h3>No follow-ups yet</h3>
       <p>
@@ -458,8 +457,41 @@ return (
         + Add your first follow-up
       </button>
     </div>
-  )}
+  ) : (
+    visible.map((f) => {
+      const due = dueBadge(f.dueAt);
 
+      const dueClass =
+        due.kind === "overdue"
+          ? "chip chipOverdue"
+          : due.kind === "soon"
+          ? "chip chipSoon"
+          : "chip chipDue";
+
+      const chipClass =
+        f.status === "done"
+          ? "chip chipDone"
+          : f.status === "followup"
+          ? "chip chipOverdue"
+          : f.status === "waiting"
+          ? "chip chipSoon"
+          : f.status === "sent"
+          ? "chip chipDue"
+          : "chip chipOpen";
+
+      const cardClass = due.kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card";
+
+      return (
+        <div key={f.id} className={cardClass}>
+          {/* jouw card content */}
+        </div>
+      );
+    })
+  )}
+</div>
+
+{/* Create / Refresh */}
+<section className="panel">
   <div className="grid">
     <div className="field">
       <label>Contact name</label>
@@ -497,7 +529,6 @@ return (
       />
     </div>
   </div>
-
 </section>
 
       <div className="list">
