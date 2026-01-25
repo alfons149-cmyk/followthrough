@@ -601,8 +601,9 @@ return (
     </div>
 
     {/* Create / Refresh */}
-<section className="panel">
-  <div className="field">
+  <section className="panel">
+  <div className="grid">
+    <div className="field">
   <label>Contact name</label>
   <input
     id="contactName"
