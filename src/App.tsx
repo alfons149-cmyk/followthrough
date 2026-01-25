@@ -616,9 +616,11 @@ return (
         onChange={(e) => setDueAt(e.target.value)}
       />
     </div>
-
-    <button className="btn" onClick={onCreate}>
-  Add follow-up
+<button
+  className="btn"
+  onClick={() => document.getElementById("contactName")?.focus()}
+>
+  + Add your first follow-up
 </button>
   </div>
 </section>
