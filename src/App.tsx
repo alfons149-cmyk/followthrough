@@ -464,6 +464,10 @@ return (
   ) : (
     visible.map((f) => (
   <div key={f.id} className="card">
+    <div className="cardLine">
+  <b>Next:</b> ...
+  {editNextId === f.id ? ( ... ) : ( ... )}
+
     <div style={{ fontWeight: 600 }}>
       {f.contactName ?? f.contact ?? f.name ?? "Unnamed contact"}
     </div>
