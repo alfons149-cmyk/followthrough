@@ -404,15 +404,12 @@ return (
   <div className="page">
     <header className="header">
       <h1 className="title">FollowThrough</h1>
-
       <p className="tagline">Never forget a business follow-up again.</p>
 
       {import.meta.env.DEV && (
         <div className="sub">
           Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-          <span style={{ marginLeft: 10, opacity: 0.6 }}>
-            build: 2026-01-19 18:00
-          </span>
+          <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
         </div>
       )}
     </header>
@@ -433,170 +430,177 @@ return (
       </div>
     )}
 
-   {needsTodayCount > 0 && (
-  <div className="alert" style={{ marginTop: 12 }}>
-    📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
-  </div>
-)}
+    {needsTodayCount > 0 && (
+      <div className="alert" style={{ marginTop: 12 }}>
+        📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
+      </div>
+    )}
 
-{error && (
-  <div className="alert">
-    <b>Error:</b> {error}
-  </div>
-)}
+    {error && (
+      <div className="alert">
+        <b>Error:</b> {error}
+      </div>
+    )}
 
-{/* List */}
-<div className="list">
-  {items.length === 0 ? (
-    <div className="empty">
-      <h3>No follow-ups yet</h3>
-      <p>Add your first one and FollowThrough will remind you at the right moment.</p>
-      <button className="btn" onClick={() => setShowForm(true)}>
-        + Add your first follow-up
-      </button>
-    </div>
-  ) : visible.length === 0 ? (
-    <div className="empty">
-      <h3>No matches</h3>
-      <p>Try clearing search or changing the status filter.</p>
-      <button
-        className="btn"
-        onClick={() => {
-          setQ("");
-          setStatusFilter("all");
-        }}
-      >
-        Clear filters
-      </button>
-    </div>
-  ) : (
-    visible.map((f) => {
-      const id = (f as any).id as string;
-
-      const contact =
-        (f as any).contactName ?? (f as any).contact ?? (f as any).name ?? "Unnamed contact";
-      const company =
-        (f as any).companyName ?? (f as any).company ?? (f as any).org ?? "No company";
-
-      // ✅ deze berekeningen had je vroeger al — moeten hier weer terug
-      const due = dueBadge((f as any).dueAt);
-      const dueClass =
-        due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
-
-      const chipClass =
-        (f as any).status === "done"
-          ? "chip chipDone"
-          : (f as any).status === "followup"
-          ? "chip chipOverdue"
-          : (f as any).status === "waiting"
-          ? "chip chipSoon"
-          : (f as any).status === "sent"
-          ? "chip chipDue"
-          : "chip chipOpen";
-
-      const cardClass = due.kind === "overdue" && (f as any).status !== "done" ? "card cardOverdue" : "card";
-
-      return (
-        <div key={id} className={cardClass}>
-          {/* NEXT (inline edit) */}
-          <div className="cardLine">
-            <b>Next:</b>{" "}
-            {editNextId === id ? (
-              <input
-                className="inlineInput"
-                value={draftNext}
-                autoFocus
-                onChange={(e) => setDraftNext(e.target.value)}
-                onBlur={() => saveNextStep(id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveNextStep(id);
-                  if (e.key === "Escape") setEditNextId(null);
-                }}
-              />
-            ) : (
-              <span
-                className="inlineValue"
-                title="Click to edit"
-                onClick={() => {
-                  setEditNextId(id);
-                  setDraftNext(((f as any).nextStep as string) || "");
-                }}
-              >
-                {((f as any).nextStep as string) || "—"}
-              </span>
-            )}
-          </div>
-
-          {/* CONTACT / COMPANY */}
-          <div style={{ fontWeight: 600, marginTop: 8 }}>{contact}</div>
-          <div style={{ opacity: 0.8 }}>{company}</div>
-
-          {/* META */}
-          <div className="cardMeta" style={{ marginTop: 10 }}>
-            <span className="metaItem">
-              Due:{" "}
-              {editDueId === id ? (
-                <input
-                  className="inlineInput inlineDate"
-                  value={draftDue}
-                  autoFocus
-                  onChange={(e) => setDraftDue(e.target.value)}
-                  onBlur={() => saveDueAt(id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveDueAt(id);
-                    if (e.key === "Escape") setEditDueId(null);
-                  }}
-                />
-              ) : (
-                <span
-                  className="inlineValue"
-                  title="Click to edit"
-                  onClick={() => {
-                    setEditDueId(id);
-                    setDraftDue(((f as any).dueAt as string) || "");
-                  }}
-                >
-                  <b>{((f as any).dueAt as string) || "—"}</b>
-                </span>
-              )}
-            </span>
-
-            <span className={dueClass}>{due.label}</span>
-            <span className={chipClass}>{statusLabel((f as any).status)}</span>
-
-            <span className="metaItem">
-              Id: <code>{id}</code>
-            </span>
-          </div>
-
-          {/* ACTIONS */}
-          <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
-              Move
-            </button>
-
-            <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
-              +1d
-            </button>
-            <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
-              +3d
-            </button>
-            <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
-              +7d
-            </button>
-
-            {(f as any).status !== "done" ? (
-              <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-                Done
-              </button>
-            ) : (
-              <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-                Reopen
-              </button>
-            )}
-          </div>
+    {/* List */}
+    <div className="list">
+      {items.length === 0 ? (
+        <div className="empty">
+          <h3>No follow-ups yet</h3>
+          <p>Add your first one and FollowThrough will remind you at the right moment.</p>
+          <button className="btn" onClick={() => setShowForm(true)}>
+            + Add your first follow-up
+          </button>
         </div>
-      );
-    })
-  )}
-</div>
+      ) : visible.length === 0 ? (
+        <div className="empty">
+          <h3>No matches</h3>
+          <p>Try clearing search or changing the status filter.</p>
+          <button
+            className="btn"
+            onClick={() => {
+              setQ("");
+              setStatusFilter("all");
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        visible.map((f) => {
+          const id = (f as any).id as string;
+
+          const contact =
+            (f as any).contactName ?? (f as any).contact ?? (f as any).name ?? "Unnamed contact";
+          const company =
+            (f as any).companyName ?? (f as any).company ?? (f as any).org ?? "No company";
+
+          const due = dueBadge((f as any).dueAt);
+          const dueClass =
+            due.kind === "overdue"
+              ? "chip chipOverdue"
+              : due.kind === "soon"
+              ? "chip chipSoon"
+              : "chip chipDue";
+
+          const chipClass =
+            (f as any).status === "done"
+              ? "chip chipDone"
+              : (f as any).status === "followup"
+              ? "chip chipOverdue"
+              : (f as any).status === "waiting"
+              ? "chip chipSoon"
+              : (f as any).status === "sent"
+              ? "chip chipDue"
+              : "chip chipOpen";
+
+          const cardClass = due.kind === "overdue" && (f as any).status !== "done" ? "card cardOverdue" : "card";
+
+          return (
+            <div key={id} className={cardClass}>
+              <div className="cardLine">
+                <b>Next:</b>{" "}
+                {editNextId === id ? (
+                  <input
+                    className="inlineInput"
+                    value={draftNext}
+                    autoFocus
+                    onChange={(e) => setDraftNext(e.target.value)}
+                    onBlur={() => saveNextStep(id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveNextStep(id);
+                      if (e.key === "Escape") setEditNextId(null);
+                    }}
+                  />
+                ) : (
+                  <span
+                    className="inlineValue"
+                    title="Click to edit"
+                    onClick={() => {
+                      setEditNextId(id);
+                      setDraftNext(((f as any).nextStep as string) || "");
+                    }}
+                  >
+                    {((f as any).nextStep as string) || "—"}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ fontWeight: 600, marginTop: 8 }}>{contact}</div>
+              <div style={{ opacity: 0.8 }}>{company}</div>
+
+              <div className="cardMeta" style={{ marginTop: 10 }}>
+                <span className="metaItem">
+                  Due:{" "}
+                  {editDueId === id ? (
+                    <input
+                      className="inlineInput inlineDate"
+                      value={draftDue}
+                      autoFocus
+                      onChange={(e) => setDraftDue(e.target.value)}
+                      onBlur={() => saveDueAt(id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveDueAt(id);
+                        if (e.key === "Escape") setEditDueId(null);
+                      }}
+                    />
+                  ) : (
+                    <span
+                      className="inlineValue"
+                      title="Click to edit"
+                      onClick={() => {
+                        setEditDueId(id);
+                        setDraftDue(((f as any).dueAt as string) || "");
+                      }}
+                    >
+                      <b>{((f as any).dueAt as string) || "—"}</b>
+                    </span>
+                  )}
+                </span>
+
+                <span className={dueClass}>{due.label}</span>
+                <span className={chipClass}>{statusLabel((f as any).status)}</span>
+
+                <span className="metaItem">
+                  Id: <code>{id}</code>
+                </span>
+              </div>
+
+              <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
+                  Move
+                </button>
+                <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
+                  +1d
+                </button>
+                <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
+                  +3d
+                </button>
+                <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
+                  +7d
+                </button>
+
+                {(f as any).status !== "done" ? (
+                  <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+                    Done
+                  </button>
+                ) : (
+                  <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+                    Reopen
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+
+    {/* Create / Refresh */}
+    <section className="panel">
+      <div className="grid">
+        {/* PLAK HIER je bestaande velden (Contact name / Company / Next step / Due at + buttons) */}
+      </div>
+    </section>
+  </div>
+);
