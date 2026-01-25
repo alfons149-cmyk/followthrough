@@ -617,9 +617,15 @@ return (
       />
     </div>
 
-    <button className="btn" onClick={createFollowup}>
-      Add follow-up
-    </button>
+    <button
+  className="btn"
+  onClick={() => {
+    document.getElementById("contactName")?.focus();
+  }}
+>
+  + Add your first follow-up
+</button>
+
   </div>
 </section>
   </div>
