@@ -448,7 +448,7 @@ return (
         <div className="empty">
           <h3>No follow-ups yet</h3>
           <p>Add your first one and FollowThrough will remind you at the right moment.</p>
-          <button className="btn" onClick={() => setShowForm(true)}>
+          <button className="btn" onClick={() => document.getElementById("contactName")?.focus()}
             + Add your first follow-up
           </button>
         </div>
