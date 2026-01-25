@@ -451,6 +451,7 @@ return (
           <button className="btn" onClick={() => document.getElementById("contactName")?.focus()}
             + Add your first follow-up
           </button>
+          <button className="btn" onClick={onCreate}>Add follow-up</button>
         </div>
       ) : visible.length === 0 ? (
         <div className="empty">
