@@ -445,15 +445,18 @@ return (
     {/* List */}
     <div className="list">
       {items.length === 0 ? (
-        <div className="empty">
-          <h3>No follow-ups yet</h3>
-          <p>Add your first one and FollowThrough will remind you at the right moment.</p>
-          <button className="btn" onClick={() => document.getElementById("contactName")?.focus()}
-            + Add your first follow-up
-          </button>
-          <button className="btn" onClick={onCreate}>Add follow-up</button>
-        </div>
-      ) : visible.length === 0 ? (
+  <div className="empty">
+    <h3>No follow-ups yet</h3>
+    <p>Add your first one and FollowThrough will remind you at the right moment.</p>
+
+    <button
+      className="btn"
+      onClick={() => document.getElementById("contactName")?.focus()}
+    >
+      + Add your first follow-up
+    </button>
+  </div>
+) : visible.length === 0 ? (
         <div className="empty">
           <h3>No matches</h3>
           <p>Try clearing search or changing the status filter.</p>
