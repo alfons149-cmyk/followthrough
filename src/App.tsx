@@ -463,15 +463,24 @@ return (
     </div>
   ) : (
     visible.map((f) => (
-      <div key={f.id} className="card">
-        <div style={{ fontWeight: 600 }}>{f.contactName || "Unnamed contact"}</div>
-        <div style={{ opacity: 0.8 }}>{f.companyName || "No company"}</div>
-        <div style={{ marginTop: 6 }}>{f.nextStep}</div>
-        <div style={{ marginTop: 8, opacity: 0.7 }}>Due: {f.dueAt}</div>
-      </div>
-    ))
-  )}
-</div>
+  <div key={f.id} className="card">
+    <div style={{ fontWeight: 600 }}>
+      {f.contactName ?? f.contact ?? f.name ?? "Unnamed contact"}
+    </div>
+
+    <div style={{ opacity: 0.8 }}>
+      {f.companyName ?? f.company ?? f.org ?? "No company"}
+    </div>
+
+    <div style={{ marginTop: 6 }}>
+      {f.nextStep ?? f.next ?? ""}
+    </div>
+
+    <div style={{ marginTop: 8, opacity: 0.7 }}>
+      Due: {f.dueAt ?? f.due ?? ""}
+    </div>
+  </div>
+))
 
 {/* Create / Refresh */}
 <section className="panel">
