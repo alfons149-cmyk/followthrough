@@ -609,6 +609,7 @@ return (
         onChange={(e) => setContactName(e.target.value)}
       />
     </div>
+    </section>
 
     <div className="field">
       <label>Company</label>
