@@ -443,41 +443,41 @@ return (
     )}
 
     {/* List */}
-    <div className="list">
-      {items.length === 0 ? (
-  <div className="empty">
-    <h3>No follow-ups yet</h3>
-    <p>Add your first one and FollowThrough will remind you at the right moment.</p>
+   <div className="list">
+  {items.length === 0 ? (
+    <div className="empty">
+      <h3>No follow-ups yet</h3>
+      <p>Add your first one and FollowThrough will remind you at the right moment.</p>
 
-    <button
-      className="btn"
-      onClick={() => document.getElementById("contactName")?.focus()}
-    >
-      + Add your first follow-up
-    </button>
-  </div>
-) : visible.length === 0 ? (
-        <div className="empty">
-          <h3>No matches</h3>
-          <p>Try clearing search or changing the status filter.</p>
-          <button
-            className="btn"
-            onClick={() => {
-              setQ("");
-              setStatusFilter("all");
-            }}
-          >
-            Clear filters
-          </button>
-        </div>
-      ) : (
-        visible.map((f) => {
-          const id = (f as any).id as string;
+      <button
+        className="btn"
+        onClick={() => document.getElementById("contactName")?.focus()}
+      >
+        + Add your first follow-up
+      </button>
+    </div>
+  ) : visible.length === 0 ? (
+    <div className="empty">
+      <h3>No matches</h3>
+      <p>Try clearing search or changing the status filter.</p>
+      <button
+        className="btn"
+        onClick={() => {
+          setQ("");
+          setStatusFilter("all");
+        }}
+      >
+        Clear filters
+      </button>
+    </div>
+  ) : (
+    visible.map((f) => {
+      const id = (f as any).id as string;
 
-          const contact =
-            (f as any).contactName ?? (f as any).contact ?? (f as any).name ?? "Unnamed contact";
-          const company =
-            (f as any).companyName ?? (f as any).company ?? (f as any).org ?? "No company";
+      const contact =
+        (f as any).contactName ?? (f as any).contact ?? (f as any).name ?? "Unnamed contact";
+      const company =
+        (f as any).companyName ?? (f as any).company ?? (f as any).org ?? "No company";
 
           const due = dueBadge((f as any).dueAt);
           const dueClass =
