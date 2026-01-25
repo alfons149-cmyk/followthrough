@@ -598,6 +598,24 @@ return (
 
     {/* Create / Refresh */}
 <section className="panel">
+  <div className="field">
+  <label>Contact name</label>
+  <input
+    id="contactName"
+    className="input"
+    value={contactName}
+    onChange={(e) => setContactName(e.target.value)}
+  />
+</div>
+
+<div className="field">
+  <label>Company</label>
+  <input
+    className="input"
+    value={companyName}
+    onChange={(e) => setCompanyName(e.target.value)}
+  />
+</div>
   <div className="grid">
     <div className="field">
       <label>Next step</label>
