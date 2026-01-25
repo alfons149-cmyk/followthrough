@@ -599,8 +599,48 @@ return (
     {/* Create / Refresh */}
     <section className="panel">
       <div className="grid">
-        {/* PLAK HIER je bestaande velden (Contact name / Company / Next step / Due at + buttons) */}
-      </div>
-    </section>
+        <section className="panel">
+  <div className="grid">
+    <div className="field">
+      <label>Contact name</label>
+      <input
+        className="input"
+        value={contactName}
+        onChange={(e) => setContactName(e.target.value)}
+      />
+    </div>
+
+    <div className="field">
+      <label>Company</label>
+      <input
+        className="input"
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
+      />
+    </div>
+
+    <div className="field">
+      <label>Next step</label>
+      <input
+        className="input"
+        value={nextStep}
+        onChange={(e) => setNextStep(e.target.value)}
+      />
+    </div>
+
+    <div className="field">
+      <label>Due at (YYYY-MM-DD)</label>
+      <input
+        className="input"
+        value={dueAt}
+        onChange={(e) => setDueAt(e.target.value)}
+      />
+    </div>
+
+    <button className="btn" onClick={createFollowup}>
+      Add follow-up
+    </button>
+  </div>
+</section>
   </div>
 );
