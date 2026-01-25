@@ -644,7 +644,9 @@ return (
 >
   + Add your first follow-up
 </button>
-
+<button className="btn" onClick={onCreate} disabled={loading}>
+  Add follow-up
+</button>
   </div>
 </section>
   </div>
