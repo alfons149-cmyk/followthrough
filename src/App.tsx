@@ -444,9 +444,8 @@ return (
         </div>
       )}
 
-      {/* Create / Refresh */}
-
-    <section className="panel">
+    {/* Create / Refresh */}
+<section className="panel">
 
   {items.length === 0 && (
     <div className="empty">
@@ -463,49 +462,42 @@ return (
   <div className="grid">
     <div className="field">
       <label>Contact name</label>
-      <input ... />
+      <input
+        className="input"
+        value={contactName}
+        onChange={(e) => setContactName(e.target.value)}
+      />
     </div>
 
     <div className="field">
       <label>Company</label>
-      <input ... />
+      <input
+        className="input"
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
+      />
     </div>
-    
-      <section className="panel">
-        <div className="grid">
-          <div className="field">
-            <label>Contact name</label>
-            <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
-          </div>
 
-          <div className="field">
-            <label>Company</label>
-            <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-          </div>
+    <div className="field">
+      <label>Next step</label>
+      <input
+        className="input"
+        value={nextStep}
+        onChange={(e) => setNextStep(e.target.value)}
+      />
+    </div>
 
-          <div className="field">
-            <label>Next step</label>
-            <input className="input" value={nextStep} onChange={(e) => setNextStep(e.target.value)} />
-          </div>
+    <div className="field">
+      <label>Due at (YYYY-MM-DD)</label>
+      <input
+        className="input"
+        value={dueAt}
+        onChange={(e) => setDueAt(e.target.value)}
+      />
+    </div>
+  </div>
 
-          <div className="field">
-            <label>Due at (YYYY-MM-DD)</label>
-            <input className="input" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="toolbar">
-          <div className="toolbarLeft">
-            <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
-              + Add followup
-            </button>
-            <button className="btn" onClick={refresh} disabled={loading}>
-              Refresh
-            </button>
-            {loading && <span className="loading">Loading…</span>}
-          </div>
-        </div>
-      </section>
+</section>
 
       {/* Filters / Sort */}
       <section className="panel">
