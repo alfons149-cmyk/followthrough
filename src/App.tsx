@@ -451,13 +451,16 @@ return (
     <div className="empty">
       <h3>No follow-ups yet</h3>
       <p>Add your first one and FollowThrough will remind you at the right moment.</p>
-      <button onClick={() => setShowForm(true)}>+ Add your first follow-up</button>
+      <button className="btn" onClick={() => setShowForm(true)}>
+        + Add your first follow-up
+      </button>
     </div>
   ) : visible.length === 0 ? (
     <div className="empty">
       <h3>No matches</h3>
       <p>Try clearing search or changing the status filter.</p>
       <button
+        className="btn"
         onClick={() => {
           setQ("");
           setStatusFilter("all");
@@ -467,15 +470,15 @@ return (
       </button>
     </div>
   ) : (
-  visible.map((f) => {
+    visible.map((f) => {
     const contact =
       (f as any).contactName ?? (f as any).contact ?? (f as any).name ?? "Unnamed contact";
     const company =
       (f as any).companyName ?? (f as any).company ?? (f as any).org ?? "No company";
     const id = (f as any).id as string;
 
-    return (
-      <div key={id} className="card">
+      return (
+        <div key={f.id} className={cardClass}>
         <div className="cardLine">
           <b>Next:</b>{" "}
           {editNextId === id ? (
