@@ -530,36 +530,7 @@ return (
     </div>
   </div>
 </section>
-
-      <div className="list">
-        {visible.map((f) => {
-          const due = dueBadge(f.dueAt);
-
-          const dueClass =
-            due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
-
-          const chipClass =
-            f.status === "done"
-              ? "chip chipDone"
-              : f.status === "followup"
-              ? "chip chipOverdue"
-              : f.status === "waiting"
-              ? "chip chipSoon"
-              : f.status === "sent"
-              ? "chip chipDue"
-              : "chip chipOpen";
-
-          const cardClass = due.kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card";
-
-          const isFirstOverdue = firstOverdueId === f.id;
-
-          return (
-            <div key={f.id} ref={isFirstOverdue ? firstOverdueRef : null} className={cardClass}>
-              <div>
-                <div className="cardTitle">
-                  {f.contactName} <span>({f.companyName})</span>
-                </div>
-
+      
                 <div className="cardLine">
                   <b>Next:</b>{" "}
                   {editNextId === f.id ? (
