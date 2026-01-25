@@ -602,26 +602,6 @@ return (
         <section className="panel">
   <div className="grid">
     <div className="field">
-      <label>Contact name</label>
-      <input
-        className="input"
-        value={contactName}
-        onChange={(e) => setContactName(e.target.value)}
-      />
-    </div>
-    </div>
-    </section>
-
-    <div className="field">
-      <label>Company</label>
-      <input
-        className="input"
-        value={companyName}
-        onChange={(e) => setCompanyName(e.target.value)}
-      />
-    </div>
-
-    <div className="field">
       <label>Next step</label>
       <input
         className="input"
