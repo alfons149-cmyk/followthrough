@@ -164,8 +164,6 @@ export default function App() {
   // filter/sort UI state
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
-  const [sortBy, setSortBy] = useState<"dueAt" | "createdAt" | "company">("dueAt");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   // scroll target
   const firstOverdueRef = useRef<HTMLDivElement | null>(null);
