@@ -611,7 +611,9 @@ return (
     value={contactName}
     onChange={(e) => setContactName(e.target.value)}
   />
-</div>
+    </div>
+  </div>  
+</section>
 
 <div className="field">
   <label>Company</label>
