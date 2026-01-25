@@ -447,46 +447,29 @@ return (
 
 {/* List */}
 <div className="list">
-  {visible.length === 0 ? (
+  {items.length === 0 ? (
     <div className="empty">
       <h3>No follow-ups yet</h3>
-      <p>
-        Add your first one and FollowThrough will remind you at the right moment.
-      </p>
-      <button onClick={() => setShowForm(true)}>
-        + Add your first follow-up
+      <p>Add your first one and FollowThrough will remind you at the right moment.</p>
+      <button onClick={() => setShowForm(true)}>+ Add your first follow-up</button>
+    </div>
+  ) : visible.length === 0 ? (
+    <div className="empty">
+      <h3>No matches</h3>
+      <p>Try clearing search or changing the status filter.</p>
+      <button onClick={() => { setQ(""); setStatusFilter("all"); }}>
+        Clear filters
       </button>
     </div>
   ) : (
-    visible.map((f) => {
-      const due = dueBadge(f.dueAt);
-
-      const dueClass =
-        due.kind === "overdue"
-          ? "chip chipOverdue"
-          : due.kind === "soon"
-          ? "chip chipSoon"
-          : "chip chipDue";
-
-      const chipClass =
-        f.status === "done"
-          ? "chip chipDone"
-          : f.status === "followup"
-          ? "chip chipOverdue"
-          : f.status === "waiting"
-          ? "chip chipSoon"
-          : f.status === "sent"
-          ? "chip chipDue"
-          : "chip chipOpen";
-
-      const cardClass = due.kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card";
-
-      return (
-        <div key={f.id} className={cardClass}>
-          {/* jouw card content */}
-        </div>
-      );
-    })
+    visible.map((f) => (
+      <div key={f.id} className="card">
+        <div style={{ fontWeight: 600 }}>{f.contactName || "Unnamed contact"}</div>
+        <div style={{ opacity: 0.8 }}>{f.companyName || "No company"}</div>
+        <div style={{ marginTop: 6 }}>{f.nextStep}</div>
+        <div style={{ marginTop: 8, opacity: 0.7 }}>Due: {f.dueAt}</div>
+      </div>
+    ))
   )}
 </div>
 
