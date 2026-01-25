@@ -444,6 +444,7 @@ return (
         </div>
       )}
 
+      {/* List */}
     {/* Create / Refresh */}
 <section className="panel">
 
@@ -499,7 +500,6 @@ return (
 
 </section>
 
-      {/* List */}
       <div className="list">
         {visible.map((f) => {
           const due = dueBadge(f.dueAt);
