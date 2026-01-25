@@ -597,9 +597,7 @@ return (
     </div>
 
     {/* Create / Refresh */}
-    <section className="panel">
-      <div className="grid">
-        <section className="panel">
+<section className="panel">
   <div className="grid">
     <div className="field">
       <label>Next step</label>
