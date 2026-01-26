@@ -453,3 +453,12 @@ const statusClass =
   padding: 8px 16px;
   border-radius: 6px;
 }
+.onboarding {
+  margin: 14px 0 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f6f7f9;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.onboarding h3 { margin: 0 0 8px; }
+.onboarding ol { margin: 0; padding-left: 18px; line-height: 1.5; }
