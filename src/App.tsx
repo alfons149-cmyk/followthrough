@@ -531,85 +531,111 @@ return (
         Clear filters
       </button>
     </div>
- <div className="list">
-  {visible.map((f) => {
-    const { id, contactName, companyName, nextStep, dueAt, status } = f;
+ {/* List */}
+<div className="list">
+  {items.length === 0 ? (
+    <div className="empty">
+      <h3>No follow-ups yet</h3>
+      <p>Add your first one and FollowThrough will remind you at the right moment.</p>
 
-    const due = dueBadge(dueAt);
-
-    const dueClass =
-      due.kind === "overdue"
-        ? "chip chipOverdue"
-        : due.kind === "soon"
-        ? "chip chipSoon"
-        : "chip chipDue";
-
-    const chipClass =
-      status === "done"
-        ? "chip chipDone"
-        : status === "followup"
-        ? "chip chipOverdue"
-        : status === "waiting"
-        ? "chip chipSoon"
-        : status === "sent"
-        ? "chip chipDue"
-        : "chip chipOpen";
-
-    const cardClass =
-      due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
-
-    return (
-      <div key={id} className={cardClass}>
-        <div className="cardLine">
-          <b>Next:</b> {nextStep || "—"}
-        </div>
-        <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
-        <div style={{ opacity: 0.8 }}>{companyName}</div>
-
-        <div className="cardMeta" style={{ marginTop: 10 }}>
-          <span className="metaItem">
-            Due: <b>{dueAt}</b>
-          </span>
-          <span className={dueClass}>{due.label}</span>
-          <span className={chipClass}>{statusLabel(status)}</span>
-        </div>
-      </div>
-    );
-  })}
-</div>
-    
-      <div
-        className="cardActions"
-        style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}
+      <button className="btn" onClick={() => document.getElementById("contactName")?.focus()}>
+        + Add your first follow-up
+      </button>
+    </div>
+  
+  ) : visible.length === 0 ? (
+    <div className="empty">
+      <h3>No matches</h3>
+      <p>Try clearing search or changing the status filter.</p>
+      <button
+        className="btn"
+        onClick={() => {
+          setQ("");
+          setStatusFilter("all");
+        }}
       >
-        <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
-          Move
-        </button>
-        <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
-          +1d
-        </button>
-        <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
-          +3d
-        </button>
-        <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
-          +7d
-        </button>
+        Clear filters
+      </button>
+    </div>
+  ) : (
+    visible.map((f) => {
+      const { id, contactName, companyName, nextStep, dueAt, status } = f;
 
-        {status !== "done" ? (
-          <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-            Done
-          </button>
-        ) : (
-          <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-            Reopen
-          </button>
-        )}
-      </div>
-    </div>
-  );
-})
-      )}
-    </div>
+      const due = dueBadge(dueAt);
+      const dueClass =
+        due.kind === "overdue"
+          ? "chip chipOverdue"
+          : due.kind === "soon"
+          ? "chip chipSoon"
+          : "chip chipDue";
+
+      const chipClass =
+        status === "done"
+          ? "chip chipDone"
+          : status === "followup"
+          ? "chip chipOverdue"
+          : status === "waiting"
+          ? "chip chipSoon"
+          : status === "sent"
+          ? "chip chipDue"
+          : "chip chipOpen";
+
+      const cardClass =
+        due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
+
+      return (
+        <div key={id} className={cardClass}>
+          <div className="cardLine">
+            <b>Next:</b>{" "}
+            <span className="inlineValue" title="Click to edit">
+              {nextStep || "—"}
+            </span>
+          </div>
+
+          <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
+          <div style={{ opacity: 0.8 }}>{companyName}</div>
+
+          <div className="cardMeta" style={{ marginTop: 10 }}>
+            <span className="metaItem">
+              Due: <b>{dueAt}</b>
+            </span>
+            <span className={dueClass}>{due.label}</span>
+            <span className={chipClass}>{statusLabel(status)}</span>
+
+            <span className="metaItem">
+              Id: <code>{id}</code>
+            </span>
+          </div>
+
+          <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
+              Move
+            </button>
+            <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
+              +1d
+            </button>
+            <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
+              +3d
+            </button>
+            <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
+              +7d
+            </button>
+
+            {status !== "done" ? (
+              <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+                Done
+              </button>
+            ) : (
+              <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+                Reopen
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    })
+  )}
+</div>
 
    {/* Create / Refresh */}
 <section className="panel">
