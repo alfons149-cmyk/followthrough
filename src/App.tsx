@@ -531,109 +531,53 @@ return (
         Clear filters
       </button>
     </div>
-  ) : (
-   visible.map((f) => {
-  const { id, contactName, companyName, nextStep, dueAt, status } = f;
+ <div className="list">
+  {visible.map((f) => {
+    const { id, contactName, companyName, nextStep, dueAt, status } = f;
 
-  const due = dueBadge(dueAt);
+    const due = dueBadge(dueAt);
 
-  const dueClass =
-    due.kind === "overdue"
-      ? "chip chipOverdue"
-      : due.kind === "soon"
-      ? "chip chipSoon"
-      : "chip chipDue";
+    const dueClass =
+      due.kind === "overdue"
+        ? "chip chipOverdue"
+        : due.kind === "soon"
+        ? "chip chipSoon"
+        : "chip chipDue";
 
-  const chipClass =
-    status === "done"
-      ? "chip chipDone"
-      : status === "followup"
-      ? "chip chipOverdue"
-      : status === "waiting"
-      ? "chip chipSoon"
-      : status === "sent"
-      ? "chip chipDue"
-      : "chip chipOpen";
+    const chipClass =
+      status === "done"
+        ? "chip chipDone"
+        : status === "followup"
+        ? "chip chipOverdue"
+        : status === "waiting"
+        ? "chip chipSoon"
+        : status === "sent"
+        ? "chip chipDue"
+        : "chip chipOpen";
 
-  const cardClass =
-    due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
+    const cardClass =
+      due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
 
-  return (
-    <div
-      key={id}
-      className={cardClass}
-      ref={id === firstOverdueId ? firstOverdueRef : null}
-    >
-      <div className="cardLine">
-        <b>Next:</b>{" "}
-        {editNextId === id ? (
-          <input
-            className="inlineInput"
-            value={draftNext}
-            autoFocus
-            onChange={(e) => setDraftNext(e.target.value)}
-            onBlur={() => saveNextStep(id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") saveNextStep(id);
-              if (e.key === "Escape") setEditNextId(null);
-            }}
-          />
-        ) : (
-          <span
-            className="inlineValue"
-            title="Click to edit"
-            onClick={() => {
-              setEditNextId(id);
-              setDraftNext(nextStep || "");
-            }}
-          >
-            {nextStep || "—"}
+    return (
+      <div key={id} className={cardClass}>
+        <div className="cardLine">
+          <b>Next:</b> {nextStep || "—"}
+        </div>
+        <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
+        <div style={{ opacity: 0.8 }}>{companyName}</div>
+
+        <div className="cardMeta" style={{ marginTop: 10 }}>
+          <span className="metaItem">
+            Due: <b>{dueAt}</b>
           </span>
-        )}
+          <span className={dueClass}>{due.label}</span>
+          <span className={chipClass}>{statusLabel(status)}</span>
+        </div>
       </div>
-
-      <div style={{ fontWeight: 600, marginTop: 8 }}>
-        {contactName || "Unnamed contact"}
-      </div>
-      <div style={{ opacity: 0.8 }}>{companyName || "No company"}</div>
-
-      <div className="cardMeta" style={{ marginTop: 10 }}>
-        <span className="metaItem">
-          Due:{" "}
-          {editDueId === id ? (
-            <input
-              className="inlineInput inlineDate"
-              value={draftDue}
-              autoFocus
-              onChange={(e) => setDraftDue(e.target.value)}
-              onBlur={() => saveDueAt(id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveDueAt(id);
-                if (e.key === "Escape") setEditDueId(null);
-              }}
-            />
-          ) : (
-            <span
-              className="inlineValue"
-              title="Click to edit"
-              onClick={() => {
-                setEditDueId(id);
-                setDraftDue(dueAt || "");
-              }}
-            >
-              <b>{dueAt || "—"}</b>
-            </span>
-          )}
-        </span>
-
-        <span className={dueClass}>{due.label}</span>
-        <span className={chipClass}>{statusLabel(status)}</span>
-
-        <span className="metaItem">
-          Id: <code>{id}</code>
-        </span>
-      </div>
-
+    );
+  })}
+</div>
+    
       <div
         className="cardActions"
         style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}
