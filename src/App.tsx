@@ -454,68 +454,30 @@ return (
       )}
     </header>
 
-    {items.length === 0 && (
-      <div className="onboarding">
-        <h3>Get started in 3 steps</h3>
-        <ol>
-          <li>Add a person you want to follow up with</li>
-          <li>Set the next action and date</li>
-          <li>Let FollowThrough remind you</li>
-        </ol>
-      </div>
-    )}
+   {items.length === 0 && (
+  <div className="empty">
+    <h2>Welcome to FollowThrough 👋</h2>
+    <p>Your personal system for never forgetting business follow-ups.</p>
 
-    {overdueCount > 0 && (
-      <div
-        className="sub"
-        style={{
-          marginTop: 6,
-          color: "#8a5a00",
-          background: "#fff4e5",
-          padding: "6px 10px",
-          borderRadius: 6,
-          fontWeight: 500,
-        }}
+    <ul style={{ textAlign: "left", marginTop: 12 }}>
+      <li>📌 Track who to follow up with</li>
+      <li>⏰ Get reminded at the right moment</li>
+      <li>✅ Build a professional follow-up routine</li>
+    </ul>
+
+    <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <button className="btn" onClick={seedDemoData}>
+        Try with example data
+      </button>
+      <button
+        className="btn btnPrimary"
+        onClick={() => document.getElementById("contactName")?.focus()}
       >
-        🔔 You have {overdueCount} follow-ups scheduled for today
-      </div>
-    )}
-
-    {needsTodayCount > 0 && (
-      <div className="alert" style={{ marginTop: 12 }}>
-        📌 Follow-ups that need your attention today: <b>{needsTodayCount}</b>
-      </div>
-    )}
-
-    {error && (
-      <div className="alert">
-        <b>Error:</b> {error}
-      </div>
-    )}
-
-    {/* List */}
-   <div className="empty">
-  <h2>Welcome to FollowThrough 👋</h2>
-  <p>Your personal system for never forgetting business follow-ups.</p>
-
-  <ul style={{ textAlign: "left", marginTop: 12 }}>
-    <li>📌 Track who to follow up with</li>
-    <li>⏰ Get reminded at the right moment</li>
-    <li>✅ Build a professional follow-up routine</li>
-  </ul>
-
-  <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
-    <button className="btn" onClick={() => seedDemoData()}>
-      Try with example data
-    </button>
-    <button
-      className="btn btnPrimary"
-      onClick={() => document.getElementById("contactName")?.focus()}
-    >
-      Add your first follow-up
-    </button>
+        Add your first follow-up
+      </button>
+    </div>
   </div>
-</div>
+)}
 
  {/* List */}
 <div className="list">
