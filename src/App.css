@@ -263,28 +263,6 @@ code{
   flex-wrap: wrap;
 }
 
-.chip{
-  display:inline-flex;
-  align-items:center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 12px;
-  border: 1px solid transparent;
-}
-
-.chipOpen{
-  background: var(--chipOpenBg);
-  color: var(--chipOpenTx);
-  border-color: rgba(7, 89, 133, 0.18);
-}
-
-.chipDone{
-  background: var(--chipDoneBg);
-  color: var(--chipDoneTx);
-  border-color: rgba(22, 101, 52, 0.18);
-}
-
 .empty{
   color: var(--muted);
   background: #ffffff;
@@ -418,3 +396,38 @@ code{
   border-radius: 8px;
   font-size: 0.9rem;
 }
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.tagline {
+  margin-top: 4px;
+  color: #666;
+  font-size: 0.95rem;
+}
+.empty {
+  margin-top: 3rem;
+  text-align: center;
+  color: #555;
+}
+
+.empty h3 {
+  margin-bottom: 0.5rem;
+}
+
+.empty button {
+  margin-top: 1rem;
+  padding: 8px 16px;
+  border-radius: 6px;
+}
+.onboarding {
+  margin: 14px 0 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f6f7f9;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.onboarding h3 { margin: 0 0 8px; }
+.onboarding ol { margin: 0; padding-left: 18px; line-height: 1.5; }
