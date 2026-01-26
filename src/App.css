@@ -263,12 +263,6 @@ code{
   flex-wrap: wrap;
 }
 
-.chipOpen{
-  background: var(--chipOpenBg);
-  color: var(--chipOpenTx);
-  border-color: rgba(7, 89, 133, 0.18);
-}
-
 .chipDone{
   background: var(--chipDoneBg);
   color: var(--chipDoneTx);
