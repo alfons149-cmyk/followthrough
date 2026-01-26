@@ -443,19 +443,29 @@ return (
     )}
 
     {/* List */}
-   <div className="list">
-  {items.length === 0 ? (
-    <div className="empty">
-      <h3>No follow-ups yet</h3>
-      <p>Add your first one and FollowThrough will remind you at the right moment.</p>
+   <div className="empty">
+  <h2>Welcome to FollowThrough 👋</h2>
+  <p>Your personal system for never forgetting business follow-ups.</p>
 
-      <button
-        className="btn"
-        onClick={() => document.getElementById("contactName")?.focus()}
-      >
-        + Add your first follow-up
-      </button>
-    </div>
+  <ul style={{ textAlign: "left", marginTop: 12 }}>
+    <li>📌 Track who to follow up with</li>
+    <li>⏰ Get reminded at the right moment</li>
+    <li>✅ Build a professional follow-up routine</li>
+  </ul>
+
+  <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
+    <button className="btn" onClick={() => seedDemoData()}>
+      Try with example data
+    </button>
+    <button
+      className="btn btnPrimary"
+      onClick={() => document.getElementById("contactName")?.focus()}
+    >
+      Add your first follow-up
+    </button>
+  </div>
+</div>
+
   ) : visible.length === 0 ? (
     <div className="empty">
       <h3>No matches</h3>
