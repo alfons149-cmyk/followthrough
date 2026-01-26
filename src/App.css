@@ -395,12 +395,6 @@ code{
   color: #166534;
   border: 1px solid #bbf7d0;
 }
-const statusClass =
-  f.status === "done" ? "chip chipDone" :
-  f.status === "waiting" ? "chip chipWaiting" :
-  f.status === "sent" ? "chip chipSent" :
-  "chip chipOpen";
-}
 
 .sectionHeader {
   display: flex;
