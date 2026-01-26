@@ -263,12 +263,6 @@ code{
   flex-wrap: wrap;
 }
 
-.chipDone{
-  background: var(--chipDoneBg);
-  color: var(--chipDoneTx);
-  border-color: rgba(22, 101, 52, 0.18);
-}
-
 .empty{
   color: var(--muted);
   background: #ffffff;
