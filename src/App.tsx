@@ -494,7 +494,8 @@ return (
       )}
     </header>
 
-   {items.length === 0 && (
+   {/* Empty-state / Welcome */}
+{items.length === 0 && (
   <div className="empty">
     <h2>Welcome to FollowThrough 👋</h2>
     <p>Your personal system for never forgetting business follow-ups.</p>
@@ -519,19 +520,9 @@ return (
   </div>
 )}
 
- {/* List */}
+{/* List */}
 <div className="list">
-  {items.length === 0 ? (
-    <div className="empty">
-      <h3>No follow-ups yet</h3>
-      <p>Add your first one and FollowThrough will remind you at the right moment.</p>
-
-      <button className="btn" onClick={() => document.getElementById("contactName")?.focus()}>
-        + Add your first follow-up
-      </button>
-    </div>
-  
-  ) : visible.length === 0 ? (
+  {items.length > 0 && visible.length === 0 ? (
     <div className="empty">
       <h3>No matches</h3>
       <p>Try clearing search or changing the status filter.</p>
@@ -574,10 +565,7 @@ return (
       return (
         <div key={id} className={cardClass}>
           <div className="cardLine">
-            <b>Next:</b>{" "}
-            <span className="inlineValue" title="Click to edit">
-              {nextStep || "—"}
-            </span>
+            <b>Next:</b> {nextStep || "—"}
           </div>
 
           <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
@@ -595,7 +583,10 @@ return (
             </span>
           </div>
 
-          <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div
+            className="cardActions"
+            style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}
+          >
             <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
               Move
             </button>
