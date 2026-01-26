@@ -455,7 +455,6 @@ return (
         </div>
       )}
     </header>
-  </div>   
 
   {/* List */}
 {items.length === 0 ? (
