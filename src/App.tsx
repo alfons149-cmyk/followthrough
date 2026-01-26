@@ -600,30 +600,28 @@ return (
       )}
     </div>
 
-    {/* Create / Refresh */}
-  <section className="panel">
+   {/* Create / Refresh */}
+<section className="panel">
   <div className="grid">
     <div className="field">
-  <label>Contact name</label>
-  <input
-    id="contactName"
-    className="input"
-    value={contactName}
-    onChange={(e) => setContactName(e.target.value)}
-  />
+      <label>Contact name</label>
+      <input
+        id="contactName"
+        className="input"
+        value={contactName}
+        onChange={(e) => setContactName(e.target.value)}
+      />
     </div>
-  </div>  
-</section>
 
-<div className="field">
-  <label>Company</label>
-  <input
-    className="input"
-    value={companyName}
-    onChange={(e) => setCompanyName(e.target.value)}
-  />
-</div>
-  <div className="grid">
+    <div className="field">
+      <label>Company</label>
+      <input
+        className="input"
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
+      />
+    </div>
+
     <div className="field">
       <label>Next step</label>
       <input
@@ -641,15 +639,10 @@ return (
         onChange={(e) => setDueAt(e.target.value)}
       />
     </div>
-<button
-  className="btn"
-  onClick={() => document.getElementById("contactName")?.focus()}
->
-  + Add your first follow-up
-</button>
-<button className="btn" onClick={onCreate} disabled={loading}>
-  Add follow-up
-</button>
+
+    <button className="btn" onClick={onCreate} disabled={loading}>
+      Add follow-up
+    </button>
   </div>
 </section>
   </div>
