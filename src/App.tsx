@@ -472,7 +472,11 @@ return (
     </div>
   ) : (
     visible.map((f) => {
-  const { id, contactName, companyName, nextStep, dueAt, status } = f;
+  const { id, dueAt, status } = f;
+
+  const contact = f.contactName || "Unnamed contact";
+  const company = f.companyName || "No company";
+  const next = f.nextStep || "—";
 
   const due = dueBadge(dueAt);
   const dueClass =
@@ -481,7 +485,6 @@ return (
       : due.kind === "soon"
       ? "chip chipSoon"
       : "chip chipDue";
-
           const chipClass =
             (f as any).status === "done"
               ? "chip chipDone"
