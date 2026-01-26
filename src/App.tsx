@@ -456,8 +456,8 @@ return (
       )}
     </header>
 
-   {/* Empty-state / Welcome */}
-{items.length === 0 && (
+  {/* List */}
+{items.length === 0 ? (
   <div className="empty">
     <h2>Welcome to FollowThrough 👋</h2>
     <p>Your personal system for never forgetting business follow-ups.</p>
@@ -480,26 +480,23 @@ return (
       </button>
     </div>
   </div>
-)}
-
-{/* List */}
-<div className="list">
-  {items.length > 0 && visible.length === 0 ? (
-    <div className="empty">
-      <h3>No matches</h3>
-      <p>Try clearing search or changing the status filter.</p>
-      <button
-        className="btn"
-        onClick={() => {
-          setQ("");
-          setStatusFilter("all");
-        }}
-      >
-        Clear filters
-      </button>
-    </div>
-
-    visible.map((f) => {
+) : visible.length === 0 ? (
+  <div className="empty">
+    <h3>No matches</h3>
+    <p>Try clearing search or changing the status filter.</p>
+    <button
+      className="btn"
+      onClick={() => {
+        setQ("");
+        setStatusFilter("all");
+      }}
+    >
+      Clear filters
+    </button>
+  </div>
+) : (
+  <div className="list">
+    {visible.map((f) => {
       const { id, contactName, companyName, nextStep, dueAt, status } = f;
 
       const due = dueBadge(dueAt);
@@ -574,10 +571,10 @@ return (
           </div>
         </div>
       );
-    })
-  )}
-</div>
-
+    })}
+  </div>
+)}
+    
    {/* Create / Refresh */}
 <section className="panel">
   <div className="grid">
