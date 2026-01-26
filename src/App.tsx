@@ -7,44 +7,6 @@ import "./App.css";
 const STATUS_ORDER = ["open", "sent", "waiting", "followup", "done"] as const;
 type Status = (typeof STATUS_ORDER)[number];
 
-function seedDemoData() {
-  setItems([
-    {
-      id: "demo_1",
-      workspaceId: "ws_1",
-      ownerId: "u_1",
-      contactName: "Laura Smith",
-      companyName: "Bright Consulting",
-      nextStep: "Send proposal",
-      dueAt: todayYMD(),
-      status: "followup",
-      createdAt: todayYMD(),
-    },
-    {
-      id: "demo_2",
-      workspaceId: "ws_1",
-      ownerId: "u_1",
-      contactName: "Mark Johnson",
-      companyName: "TechNova",
-      nextStep: "Call about pricing",
-      dueAt: addDays(todayYMD(), 3),
-      status: "waiting",
-      createdAt: todayYMD(),
-    },
-    {
-      id: "demo_3",
-      workspaceId: "ws_1",
-      ownerId: "u_1",
-      contactName: "Ana López",
-      companyName: "Soluciones SL",
-      nextStep: "Follow up after meeting",
-      dueAt: addDays(todayYMD(), -2),
-      status: "sent",
-      createdAt: todayYMD(),
-    },
-  ]);
-}
-
 function nextStatus(s: Status): Status {
   const i = STATUS_ORDER.indexOf(s);
   return STATUS_ORDER[Math.min(i + 1, STATUS_ORDER.length - 1)];
