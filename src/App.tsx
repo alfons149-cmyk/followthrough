@@ -439,6 +439,17 @@ export default function App() {
   }
 
 return (
+  {items.length === 0 && (
+  <div className="onboarding">
+    <h3>Get started in 3 steps</h3>
+    <ol>
+      <li>Add a person you want to follow up with</li>
+      <li>Set the next action and date</li>
+      <li>Let FollowThrough remind you</li>
+    </ol>
+  </div>
+)}
+  
   <div className="page">
     <header className="header">
       <h1 className="title">FollowThrough</h1>
