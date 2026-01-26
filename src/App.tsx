@@ -517,20 +517,6 @@ return (
   </div>
 </div>
 
-  ) : visible.length === 0 ? (
-    <div className="empty">
-      <h3>No matches</h3>
-      <p>Try clearing search or changing the status filter.</p>
-      <button
-        className="btn"
-        onClick={() => {
-          setQ("");
-          setStatusFilter("all");
-        }}
-      >
-        Clear filters
-      </button>
-    </div>
  {/* List */}
 <div className="list">
   {items.length === 0 ? (
