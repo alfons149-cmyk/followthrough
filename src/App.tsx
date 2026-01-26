@@ -498,7 +498,7 @@ return (
         Clear filters
       </button>
     </div>
-  ) : (
+
     visible.map((f) => {
       const { id, contactName, companyName, nextStep, dueAt, status } = f;
 
