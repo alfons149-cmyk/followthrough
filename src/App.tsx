@@ -440,6 +440,20 @@ export default function App() {
 
 return (
   <div className="page">
+    <header className="header">
+      <h1 className="title">FollowThrough</h1>
+      <p className="tagline">Never forget a business follow-up again.</p>
+
+      {import.meta.env.DEV && (
+        <div className="sub">
+          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+          <span style={{ marginLeft: 10, opacity: 0.6 }}>
+            build: 2026-01-19 18:00
+          </span>
+        </div>
+      )}
+    </header>
+
     {items.length === 0 && (
       <div className="onboarding">
         <h3>Get started in 3 steps</h3>
@@ -450,36 +464,6 @@ return (
         </ol>
       </div>
     )}
-
-    {/* de rest van je UI hier... */}
-  </div>
-);
-
-  
-  <div className="page">
-    <header className="header">
-      <h1 className="title">FollowThrough</h1>
-      <p className="tagline">Never forget a business follow-up again.</p>
-
-      {import.meta.env.DEV && (
-        <div className="sub">
-          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-          <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
-        </div>
-      )}
-    </header>
-    
-    {items.length === 0 && (
-  <div className="onboarding">
-    <h3>Get started in 3 steps</h3>
-    <ol>
-      <li>Add a person you want to follow up with</li>
-      <li>Set the next action and date</li>
-      <li>Let FollowThrough remind you</li>
-    </ol>
-  </div>
-)}
-
 
     {overdueCount > 0 && (
       <div
