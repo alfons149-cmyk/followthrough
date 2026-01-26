@@ -501,7 +501,11 @@ return (
           const cardClass = due.kind === "overdue" && (f as any).status !== "done" ? "card cardOverdue" : "card";
 
           return (
-            <div key={id} className={cardClass}>
+          <div
+          key={id}
+          className={cardClass}
+          ref={id === firstOverdueId ? firstOverdueRef : null}
+          >
               <div className="cardLine">
                 <b>Next:</b>{" "}
                 {editNextId === id ? (
