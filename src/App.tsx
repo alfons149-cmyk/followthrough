@@ -193,6 +193,46 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
+    function seedDemoData() {
+    const t = todayYMD();
+    setItems([
+      {
+        id: "demo_1",
+        workspaceId,
+        ownerId: "u_1",
+        contactName: "Laura Smith",
+        companyName: "Bright Consulting",
+        nextStep: "Send proposal",
+        dueAt: t,
+        status: "followup",
+        createdAt: t,
+      },
+      {
+        id: "demo_2",
+        workspaceId,
+        ownerId: "u_1",
+        contactName: "Mark Johnson",
+        companyName: "TechNova",
+        nextStep: "Call about pricing",
+        dueAt: addDays(t, 3),
+        status: "waiting",
+        createdAt: t,
+      },
+      {
+        id: "demo_3",
+        workspaceId,
+        ownerId: "u_1",
+        contactName: "Ana López",
+        companyName: "Soluciones SL",
+        nextStep: "Follow up after meeting",
+        dueAt: addDays(t, -2),
+        status: "sent",
+        createdAt: t,
+      },
+    ]);
+  }
+
+
   // create form
   const [contactName, setContactName] = useState("Alice Example");
   const [companyName, setCompanyName] = useState("Example GmbH");
