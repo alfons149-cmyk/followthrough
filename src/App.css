@@ -263,16 +263,6 @@ code{
   flex-wrap: wrap;
 }
 
-.chip{
-  display:inline-flex;
-  align-items:center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 12px;
-  border: 1px solid transparent;
-}
-
 .chipOpen{
   background: var(--chipOpenBg);
   color: var(--chipOpenTx);
