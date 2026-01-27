@@ -399,11 +399,6 @@ export default function App() {
     }
   }
 
-  async function saveNextStep(id: string) {
-    const value = draftNext.trim();
-    setEditNextId(null);
-    if (!value) return;
-
     setLoading(true);
     setError("");
     try {
@@ -415,10 +410,6 @@ export default function App() {
       setLoading(false);
     }
   }
-
-  async function saveDueAt(id: string) {
-    const value = draftDue.trim();
-    setEditDueId(null);
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
 
