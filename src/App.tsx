@@ -456,125 +456,143 @@ return (
       )}
     </header>
 
-  {/* List */}
-{items.length === 0 ? (
-  <div className="empty">
-    <h2>Welcome to FollowThrough 👋</h2>
-    <p>Your personal system for never forgetting business follow-ups.</p>
+    {/* Errors / counters */}
+    {error && (
+      <div className="errorBanner">
+        <b>Error:</b> {error}
+      </div>
+    )}
 
-    <ul style={{ textAlign: "left", marginTop: 12 }}>
-      <li>📌 Track who to follow up with</li>
-      <li>⏰ Get reminded at the right moment</li>
-      <li>✅ Build a professional follow-up routine</li>
-    </ul>
-
-    <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-      <button className="btn" onClick={seedDemoData}>
-        Try with example data
-      </button>
-      <button
-        className="btn btnPrimary"
-        onClick={() => document.getElementById("contactName")?.focus()}
-      >
-        Add your first follow-up
-      </button>
+    <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+      <span className="chip chipSoon">Need today: {needsTodayCount}</span>
+      <span className="chip chipOverdue">Overdue: {overdueCount}</span>
     </div>
-  </div>
-) : visible.length === 0 ? (
-  <div className="empty">
-    <h3>No matches</h3>
-    <p>Try clearing search or changing the status filter.</p>
-    <button
-      className="btn"
-      onClick={() => {
-        setQ("");
-        setStatusFilter("all");
-      }}
-    >
-      Clear filters
-    </button>
-  </div>
-) : (
-  <div className="list">
-    {visible.map((f) => {
-      const { id, contactName, companyName, nextStep, dueAt, status } = f;
 
-      const due = dueBadge(dueAt);
-      const dueClass =
-        due.kind === "overdue"
-          ? "chip chipOverdue"
-          : due.kind === "soon"
-          ? "chip chipSoon"
-          : "chip chipDue";
+    {/* List */}
+    {items.length === 0 ? (
+      <div className="empty">
+        <h2>Welcome to FollowThrough 👋</h2>
+        <p>Your personal system for never forgetting business follow-ups.</p>
 
-      const chipClass =
-        status === "done"
-          ? "chip chipDone"
-          : status === "followup"
-          ? "chip chipOverdue"
-          : status === "waiting"
-          ? "chip chipSoon"
-          : status === "sent"
-          ? "chip chipDue"
-          : "chip chipOpen";
+        <ul style={{ textAlign: "left", marginTop: 12 }}>
+          <li>📌 Track who to follow up with</li>
+          <li>⏰ Get reminded at the right moment</li>
+          <li>✅ Build a professional follow-up routine</li>
+        </ul>
 
-      const cardClass =
-        due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
-
-      return (
-        <div key={id} className={cardClass}>
-          <div className="cardLine">
-            <b>Next:</b> {nextStep || "—"}
-          </div>
-
-          <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
-          <div style={{ opacity: 0.8 }}>{companyName}</div>
-
-          <div className="cardMeta" style={{ marginTop: 10 }}>
-            <span className="metaItem">
-              Due: <b>{dueAt}</b>
-            </span>
-            <span className={dueClass}>{due.label}</span>
-            <span className={chipClass}>{statusLabel(status)}</span>
-
-            <span className="metaItem">
-              Id: <code>{id}</code>
-            </span>
-          </div>
-
-          <div
-            className="cardActions"
-            style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}
+        <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="btn" onClick={seedDemoData}>
+            Try with example data
+          </button>
+          <button
+            className="btn btnPrimary"
+            onClick={() => document.getElementById("contactName")?.focus()}
           >
-            <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
-              Move
-            </button>
-            <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
-              +1d
-            </button>
-            <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
-              +3d
-            </button>
-            <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
-              +7d
-            </button>
-
-            {status !== "done" ? (
-              <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-                Done
-              </button>
-            ) : (
-              <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-                Reopen
-              </button>
-            )}
-          </div>
+            Add your first follow-up
+          </button>
         </div>
-      );
-       }))}
-  </div>
-)}
-    
+      </div>
+    ) : visible.length === 0 ? (
+      <div className="empty">
+        <h3>No matches</h3>
+        <p>Try clearing search or changing the status filter.</p>
+        <button
+          className="btn"
+          onClick={() => {
+            setQ("");
+            setStatusFilter("all");
+          }}
+        >
+          Clear filters
+        </button>
+      </div>
+    ) : (
+      <div className="list">
+        {visible.map((f) => {
+          const { id, contactName, companyName, nextStep, dueAt, status } = f;
+
+          const due = dueBadge(dueAt);
+          const dueClass =
+            due.kind === "overdue"
+              ? "chip chipOverdue"
+              : due.kind === "soon"
+              ? "chip chipSoon"
+              : "chip chipDue";
+
+          const chipClass =
+            status === "done"
+              ? "chip chipDone"
+              : status === "followup"
+              ? "chip chipOverdue"
+              : status === "waiting"
+              ? "chip chipSoon"
+              : status === "sent"
+              ? "chip chipDue"
+              : "chip chipOpen";
+
+          const cardClass =
+            due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
+
+          const attachRef = firstOverdueId === id;
+
+          return (
+            <div
+              key={id}
+              className={cardClass}
+              ref={attachRef ? firstOverdueRef : undefined}
+            >
+              <div className="cardLine">
+                <b>Next:</b> {nextStep || "—"}
+              </div>
+
+              <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
+              <div style={{ opacity: 0.8 }}>{companyName}</div>
+
+              <div className="cardMeta" style={{ marginTop: 10 }}>
+                <span className="metaItem">
+                  Due: <b>{dueAt}</b>
+                </span>
+                <span className={dueClass}>{due.label}</span>
+                <span className={chipClass}>{statusLabel(status)}</span>
+
+                <span className="metaItem">
+                  Id: <code>{id}</code>
+                </span>
+              </div>
+
+              <div
+                className="cardActions"
+                style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}
+              >
+                <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
+                  Move
+                </button>
+                <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
+                  +1d
+                </button>
+                <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
+                  +3d
+                </button>
+                <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
+                  +7d
+                </button>
+
+                {status !== "done" ? (
+                  <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+                    Done
+                  </button>
+                ) : (
+                  <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+                    Reopen
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+
    {/* Create / Refresh */}
 <section className="panel">
   <div className="grid">
