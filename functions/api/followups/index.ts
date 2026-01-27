@@ -76,7 +76,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     );
   }
 
+  if (request.method === "OPTIONS") {
+  return new Response(null, { status: 204, headers: cors(request) });
+}
+
   const id = `f_${crypto.randomUUID()}`;
+
+  function cors(request: Request) {
+  const origin = request.headers.get("Origin") || "";
+  const allowed = "https://followthrough-ui.pages.dev";
+
+  return {
+    "Access-Control-Allow-Origin": origin === allowed ? origin : allowed,
+    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Accept",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+}
+
+  return new Response(JSON.stringify(data), {
+  status: 200,
+  headers: { "Content-Type": "application/json", ...cors(request) },
+});
 
   // SQLite-friendly timestamp: "YYYY-MM-DD HH:MM:SS"
   const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
