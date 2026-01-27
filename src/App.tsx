@@ -155,7 +155,28 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
-    function seedDemoData() {
+  // create form
+  const [contactName, setContactName] = useState("Alice Example");
+  const [companyName, setCompanyName] = useState("Example GmbH");
+  const [nextStep, setNextStep] = useState("Send intro email");
+  const [dueAt, setDueAt] = useState("2026-01-10");
+
+  // filter/sort UI state
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
+  const [sortBy] = useState<"dueAt" | "createdAt" | "company">("dueAt");
+  const [sortDir] = useState<"asc" | "desc">("asc");
+
+  // inline edit state (draft-variant)
+  const [editNextId, setEditNextId] = useState<string | null>(null);
+  const [editDueId, setEditDueId] = useState<string | null>(null);
+  const [draftNext, setDraftNext] = useState("");
+  const [draftDue, setDraftDue] = useState("");
+
+  // scroll target
+  const firstOverdueRef = useRef<HTMLDivElement | null>(null);
+
+  function seedDemoData() {
     const t = todayYMD();
     setItems([
       {
@@ -193,22 +214,6 @@ export default function App() {
       },
     ]);
   }
-
-
-  // create form
-  const [contactName, setContactName] = useState("Alice Example");
-  const [companyName, setCompanyName] = useState("Example GmbH");
-  const [nextStep, setNextStep] = useState("Send intro email");
-  const [dueAt, setDueAt] = useState("2026-01-10");
-
-  // filter/sort UI state
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
-  const [sortBy] = useState<"dueAt" | "createdAt" | "company">("dueAt");
-  const [sortDir] = useState<"asc" | "desc">("asc");
-
-  // scroll target
-  const firstOverdueRef = useRef<HTMLDivElement | null>(null);
 
   const api = useMemo(() => {
     const base = API_BASE.replace(/\/+$/, "");
@@ -282,11 +287,11 @@ export default function App() {
     return filtered;
   }, [items, q, statusFilter, sortBy, sortDir]);
 
-  // counters across ALL items (not filtered)
+  // counters across ALL items
   const needsTodayCount = useMemo(() => items.filter(needsFollowupToday).length, [items]);
   const overdueCount = useMemo(() => items.filter(isOverdueAndNotDone).length, [items]);
 
-  // first overdue item in visible list (stable, no render side-effects)
+  // first overdue item in visible list
   const firstOverdueId = useMemo(() => {
     const first = visible.find((f) => f.status !== "done" && dueBadge(f.dueAt).kind === "overdue");
     return first?.id ?? null;
@@ -307,31 +312,8 @@ export default function App() {
         }
       }
 
-        async function saveNextStep(id: string, value: string) {
-    const v = value.trim();
-    if (!v) return;
-
-    setLoading(true);
-    setError("");
-    try {
-      const updated = await api.patch(id, { nextStep: v });
-      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-    } catch (e: any) {
-      setError(e?.message || "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function saveDueAt(id: string, value: string) {
-    const v = value.trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
-
-    setLoading(true);
-    setError("");
-    try {
-      const updated = await api.patch(id, { dueAt: v });
-      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      const updated = await api.list();
+      setItems(updated);
     } catch (e: any) {
       setError(e?.message || "Unknown error");
     } finally {
@@ -409,14 +391,11 @@ export default function App() {
     }
   }
 
-    async function saveNextStep(id: string, value: string) {
-    const v = value.trim();
-    if (!v) return;
-
+  async function reopen(f: Followup) {
     setLoading(true);
     setError("");
     try {
-      const updated = await api.patch(id, { nextStep: v });
+      const updated = await api.patch(f.id, { status: "open" });
       setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
     } catch (e: any) {
       setError(e?.message || "Unknown error");
@@ -424,28 +403,6 @@ export default function App() {
       setLoading(false);
     }
   }
-
-  async function saveDueAt(id: string, value: string) {
-    const v = value.trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
-
-    setLoading(true);
-    setError("");
-    try {
-      const updated = await api.patch(id, { dueAt: v });
-      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-    } catch (e: any) {
-      setError(e?.message || "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-        // inline edit state
-  const [editNextId, setEditNextId] = useState<string | null>(null);
-  const [editDueId, setEditDueId] = useState<string | null>(null);
-  const [draftNext, setDraftNext] = useState("");
-  const [draftDue, setDraftDue] = useState("");
 
   async function saveNextStep(id: string) {
     const v = draftNext.trim();
@@ -481,295 +438,271 @@ export default function App() {
     }
   }
 
-return (
-  <div className="page">
-    <header className="header">
-      <h1 className="title">FollowThrough</h1>
-      <p className="tagline">Never forget a business follow-up again.</p>
+  return (
+    <div className="page">
+      <header className="header">
+        <h1 className="title">FollowThrough</h1>
+        <p className="tagline">Never forget a business follow-up again.</p>
 
-      {import.meta.env.DEV && (
-        <div className="sub">
-          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-          <span style={{ marginLeft: 10, opacity: 0.6 }}>
-            build: 2026-01-19 18:00
-          </span>
+        {import.meta.env.DEV && (
+          <div className="sub">
+            Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
+            <span style={{ marginLeft: 10, opacity: 0.6 }}>build: 2026-01-19 18:00</span>
+          </div>
+        )}
+      </header>
+
+      {/* Errors / counters */}
+      {error && (
+        <div className="errorBanner">
+          <b>Error:</b> {error}
         </div>
       )}
-    </header>
 
-    {/* Errors / counters */}
-    {error && (
-      <div className="errorBanner">
-        <b>Error:</b> {error}
+      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+        <span className="chip chipSoon">Need today: {needsTodayCount}</span>
+        <span className="chip chipOverdue">Overdue: {overdueCount}</span>
       </div>
-    )}
 
-    <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-      <span className="chip chipSoon">Need today: {needsTodayCount}</span>
-      <span className="chip chipOverdue">Overdue: {overdueCount}</span>
-    </div>
+      {/* List */}
+      {items.length === 0 ? (
+        <div className="empty">
+          <h2>Welcome to FollowThrough 👋</h2>
+          <p>Your personal system for never forgetting business follow-ups.</p>
 
-    {/* List */}
-    {items.length === 0 ? (
-      <div className="empty">
-        <h2>Welcome to FollowThrough 👋</h2>
-        <p>Your personal system for never forgetting business follow-ups.</p>
+          <ul style={{ textAlign: "left", marginTop: 12 }}>
+            <li>📌 Track who to follow up with</li>
+            <li>⏰ Get reminded at the right moment</li>
+            <li>✅ Build a professional follow-up routine</li>
+          </ul>
 
-        <ul style={{ textAlign: "left", marginTop: 12 }}>
-          <li>📌 Track who to follow up with</li>
-          <li>⏰ Get reminded at the right moment</li>
-          <li>✅ Build a professional follow-up routine</li>
-        </ul>
-
-        <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="btn" onClick={seedDemoData}>
-            Try with example data
-          </button>
+          <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button className="btn" onClick={seedDemoData} disabled={loading}>
+              Try with example data
+            </button>
+            <button
+              className="btn btnPrimary"
+              onClick={() => document.getElementById("contactName")?.focus()}
+              disabled={loading}
+            >
+              Add your first follow-up
+            </button>
+          </div>
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="empty">
+          <h3>No matches</h3>
+          <p>Try clearing search or changing the status filter.</p>
           <button
-            className="btn btnPrimary"
-            onClick={() => document.getElementById("contactName")?.focus()}
+            className="btn"
+            onClick={() => {
+              setQ("");
+              setStatusFilter("all");
+            }}
+            disabled={loading}
           >
-            Add your first follow-up
+            Clear filters
           </button>
         </div>
-      </div>
-    ) : visible.length === 0 ? (
-      <div className="empty">
-        <h3>No matches</h3>
-        <p>Try clearing search or changing the status filter.</p>
-        <button
-          className="btn"
-          onClick={() => {
-            setQ("");
-            setStatusFilter("all");
-          }}
-        >
-          Clear filters
-        </button>
-      </div>
-    ) : (
-      <div className="list">
-        {visible.map((f) => {
-          const { id, contactName, companyName, nextStep, dueAt, status } = f;
+      ) : (
+        <div className="list">
+          {visible.map((f) => {
+            const { id, contactName, companyName, nextStep: ns, dueAt: da, status } = f;
 
-          const due = dueBadge(dueAt);
-          const dueClass =
-            due.kind === "overdue"
-              ? "chip chipOverdue"
-              : due.kind === "soon"
-              ? "chip chipSoon"
-              : "chip chipDue";
+            const due = dueBadge(da);
+            const dueClass =
+              due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
 
-          const chipClass =
-            status === "done"
-              ? "chip chipDone"
-              : status === "followup"
-              ? "chip chipOverdue"
-              : status === "waiting"
-              ? "chip chipSoon"
-              : status === "sent"
-              ? "chip chipDue"
-              : "chip chipOpen";
+            const chipClass =
+              status === "done"
+                ? "chip chipDone"
+                : status === "followup"
+                ? "chip chipOverdue"
+                : status === "waiting"
+                ? "chip chipSoon"
+                : status === "sent"
+                ? "chip chipDue"
+                : "chip chipOpen";
 
-          const cardClass =
-            due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
+            const cardClass = due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
+            const attachRef = firstOverdueId === id;
 
-          const attachRef = firstOverdueId === id;
+            return (
+              <div key={id} className={cardClass} ref={attachRef ? firstOverdueRef : undefined}>
+                {/* Next step inline edit */}
+                <div className="cardLine">
+                  <b>Next:</b>{" "}
+                  {editNextId === id ? (
+                    <input
+                      className="input"
+                      value={draftNext}
+                      autoFocus
+                      disabled={loading}
+                      onChange={(e) => setDraftNext(e.target.value)}
+                      onBlur={() => saveNextStep(id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveNextStep(id);
+                        if (e.key === "Escape") setEditNextId(null);
+                      }}
+                      style={{ maxWidth: 520 }}
+                    />
+                  ) : (
+                    <>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                          setEditNextId(id);
+                          setDraftNext(ns || "");
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {ns || "—"}
+                      </span>
 
-          return (
-            <div
-              key={id}
-              className={cardClass}
-              ref={attachRef ? firstOverdueRef : undefined}
-            >
-   <div className="cardLine">
-  <b>Next:</b>{" "}
-  {editNextId === id ? (
-    <input
-      className="input"
-      value={draftNext}
-      autoFocus
-      disabled={loading}
-      onChange={(e) => setDraftNext(e.target.value)}
-      onBlur={() => saveNextStep(id)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") saveNextStep(id);
-        if (e.key === "Escape") setEditNextId(null);
-      }}
-      style={{ maxWidth: 520 }}
-    />
-  ) : (
-    <>
-      <span
-        role="button"
-        tabIndex={0}
-        onClick={() => {
-          setEditNextId(id);
-          setDraftNext(nextStep || "");
-        }}
-        style={{ cursor: "pointer" }}
-      >
-        {nextStep || "—"}
-      </span>
+                      <button
+                        className="btn"
+                        title="Edit next step"
+                        disabled={loading}
+                        style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                        onClick={() => {
+                          setEditNextId(id);
+                          setDraftNext(ns || "");
+                        }}
+                      >
+                        ✎
+                      </button>
+                    </>
+                  )}
+                </div>
 
-      <button
-        className="btn"
-        title="Edit next step"
-        style={{
-          marginLeft: 6,
-          padding: "2px 6px",
-          fontSize: 12,
-        }}
-        onClick={() => {
-          setEditNextId(id);
-          setDraftNext(nextStep || "");
-        }}
-      >
-        ✎
-      </button>
-    </>
-  )}
-</div>
+                <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
+                <div style={{ opacity: 0.8 }}>{companyName}</div>
 
-              <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
-              <div style={{ opacity: 0.8 }}>{companyName}</div>
+                <div className="cardMeta" style={{ marginTop: 10 }}>
+                  {/* Due inline edit */}
+                  <span className="metaItem">
+                    Due:{" "}
+                    {editDueId === id ? (
+                      <input
+                        className="input"
+                        value={draftDue}
+                        autoFocus
+                        disabled={loading}
+                        onChange={(e) => setDraftDue(e.target.value)}
+                        onBlur={() => saveDueAt(id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveDueAt(id);
+                          if (e.key === "Escape") setEditDueId(null);
+                        }}
+                        style={{ width: 140 }}
+                        placeholder="YYYY-MM-DD"
+                      />
+                    ) : (
+                      <>
+                        <b
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            setEditDueId(id);
+                            setDraftDue(formatDate(da) || "");
+                          }}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {formatDate(da)}
+                        </b>
 
-              <div className="cardMeta" style={{ marginTop: 10 }}>
-               <span className="metaItem">
-  Due:{" "}
-  {editDueId === id ? (
-    <input
-      className="input"
-      value={draftDue}
-      autoFocus
-      disabled={loading}
-      onChange={(e) => setDraftDue(e.target.value)}
-      onBlur={() => saveDueAt(id)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") saveDueAt(id);
-        if (e.key === "Escape") setEditDueId(null);
-      }}
-      style={{ width: 140 }}
-      placeholder="YYYY-MM-DD"
-    />
-  ) : (
-    <>
-      <b
-        role="button"
-        tabIndex={0}
-        onClick={() => {
-          setEditDueId(id);
-          setDraftDue(formatDate(dueAt) || "");
-        }}
-        style={{ cursor: "pointer" }}
-      >
-        {formatDate(dueAt)}
-      </b>
+                        <button
+                          className="btn"
+                          title="Edit due date"
+                          disabled={loading}
+                          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                          onClick={() => {
+                            setEditDueId(id);
+                            setDraftDue(formatDate(da) || "");
+                          }}
+                        >
+                          ✎
+                        </button>
+                      </>
+                    )}
+                  </span>
 
-      <button
-        className="btn"
-        title="Edit due date"
-        style={{
-          marginLeft: 6,
-          padding: "2px 6px",
-          fontSize: 12,
-        }}
-        onClick={() => {
-          setEditDueId(id);
-          setDraftDue(formatDate(dueAt) || "");
-        }}
-      >
-        ✎
-      </button>
-    </>
-  )}
-</span>            
-                <span className={dueClass}>{due.label}</span>
-                <span className={chipClass}>{statusLabel(status)}</span>
+                  <span className={dueClass}>{due.label}</span>
+                  <span className={chipClass}>{statusLabel(status)}</span>
 
-                <span className="metaItem">
-                  Id: <code>{id}</code>
-                </span>
-              </div>
+                  <span className="metaItem">
+                    Id: <code>{id}</code>
+                  </span>
+                </div>
 
-              <div
-                className="cardActions"
-                style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}
-              >
-                <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
-                  Move
-                </button>
-                <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
-                  +1d
-                </button>
-                <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
-                  +3d
-                </button>
-                <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
-                  +7d
-                </button>
-
-                {status !== "done" ? (
-                  <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-                    Done
+                <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
+                    Move
                   </button>
-                ) : (
-                  <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-                    Reopen
+                  <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
+                    +1d
                   </button>
-                )}
+                  <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
+                    +3d
+                  </button>
+                  <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
+                    +7d
+                  </button>
+
+                  {status !== "done" ? (
+                    <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+                      Done
+                    </button>
+                  ) : (
+                    <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+                      Reopen
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-    )}
+            );
+          })}
+        </div>
+      )}
 
-   {/* Create / Refresh */}
-<section className="panel">
-  <div className="grid">
-    <div className="field">
-      <label>Contact name</label>
-      <input
-        id="contactName"
-        className="input"
-        value={contactName}
-        onChange={(e) => setContactName(e.target.value)}
-      />
+      {/* Create / Refresh */}
+      <section className="panel">
+        <div className="grid">
+          <div className="field">
+            <label>Contact name</label>
+            <input
+              id="contactName"
+              className="input"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+            />
+          </div>
+
+          <div className="field">
+            <label>Company</label>
+            <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label>Next step</label>
+            <input className="input" value={nextStep} onChange={(e) => setNextStep(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label>Due at (YYYY-MM-DD)</label>
+            <input className="input" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
+          </div>
+
+          <button className="btn" onClick={onCreate} disabled={loading}>
+            Add follow-up
+          </button>
+
+          <button className="btn" onClick={refresh} disabled={loading} style={{ marginLeft: 8 }}>
+            Refresh
+          </button>
+        </div>
+      </section>
     </div>
-
-    <div className="field">
-      <label>Company</label>
-      <input
-        className="input"
-        value={companyName}
-        onChange={(e) => setCompanyName(e.target.value)}
-      />
-    </div>
-
-    <div className="field">
-      <label>Next step</label>
-      <input
-        className="input"
-        value={nextStep}
-        onChange={(e) => setNextStep(e.target.value)}
-      />
-    </div>
-
-    <div className="field">
-      <label>Due at (YYYY-MM-DD)</label>
-      <input
-        className="input"
-        value={dueAt}
-        onChange={(e) => setDueAt(e.target.value)}
-      />
-    </div>
-
-    <button className="btn" onClick={onCreate} disabled={loading}>
-      Add follow-up
-    </button>
-  </div>
-</section>
-  </div>
-);
+  );
 }
