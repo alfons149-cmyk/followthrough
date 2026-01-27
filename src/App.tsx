@@ -459,12 +459,15 @@ export default function App() {
         </div>
       )}
 
-      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+            <div
+        className="kpis"
+        style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}
+      >
         <span className="chip chipSoon">Need today: {needsTodayCount}</span>
         <span className="chip chipOverdue">Overdue: {overdueCount}</span>
       </div>
 
-            {/* List */}
+      {/* List */}
       {items.length === 0 ? (
         <div className="empty">
           <h2>Welcome to FollowThrough 👋</h2>
