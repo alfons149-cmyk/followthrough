@@ -409,11 +409,14 @@ export default function App() {
     }
   }
 
-  async function reopen(f: Followup) {
+    async function saveNextStep(id: string, value: string) {
+    const v = value.trim();
+    if (!v) return;
+
     setLoading(true);
     setError("");
     try {
-      const updated = await api.patch(f.id, { status: "open" });
+      const updated = await api.patch(id, { nextStep: v });
       setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
     } catch (e: any) {
       setError(e?.message || "Unknown error");
@@ -422,24 +425,14 @@ export default function App() {
     }
   }
 
-    setLoading(true);
-    setError("");
-    try {
-      const updated = await api.patch(id, { nextStep: value });
-      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-    } catch (e: any) {
-      setError(e?.message || "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+  async function saveDueAt(id: string, value: string) {
+    const v = value.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
 
     setLoading(true);
     setError("");
     try {
-      const updated = await api.patch(id, { dueAt: value });
+      const updated = await api.patch(id, { dueAt: v });
       setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
     } catch (e: any) {
       setError(e?.message || "Unknown error");
