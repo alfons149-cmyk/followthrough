@@ -666,7 +666,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Create / Refresh */}
+           {/* Create / Refresh */}
       <section className="panel">
         <div className="grid">
           <div className="field">
@@ -681,17 +681,29 @@ export default function App() {
 
           <div className="field">
             <label>Company</label>
-            <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+            <input
+              className="input"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+            />
           </div>
 
           <div className="field">
             <label>Next step</label>
-            <input className="input" value={nextStep} onChange={(e) => setNextStep(e.target.value)} />
+            <input
+              className="input"
+              value={nextStep}
+              onChange={(e) => setNextStep(e.target.value)}
+            />
           </div>
 
           <div className="field">
             <label>Due at (YYYY-MM-DD)</label>
-            <input className="input" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
+            <input
+              className="input"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+            />
           </div>
 
           <button className="btn" onClick={onCreate} disabled={loading}>
