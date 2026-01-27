@@ -1,25 +1,37 @@
+// functions/api/followups/index.ts
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { getDb, type Env } from "../_db";
 import { followups } from "../../../src/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 
 /**
- * CORS (handig als je ooit vanaf een ander domein test,
- * maar het werkt ook prima same-origin)
+ * CORS
+ * UI: https://followthrough-ui.pages.dev
+ * API: https://followthrough.pages.dev
+ *
+ * Voor nu: allow origin = UI domein (strakker dan '*')
  */
-const cors: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Max-Age": "86400",
-};
+const UI_ORIGIN = "https://followthrough-ui.pages.dev";
 
-export const onRequestOptions: PagesFunction<Env> = async () => {
-  return new Response(null, { status: 204, headers: cors });
+function corsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("Origin") || "";
+  const allowOrigin = origin === UI_ORIGIN ? origin : UI_ORIGIN;
+
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Accept",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+}
+
+export const onRequestOptions: PagesFunction<Env> = async ({ request }) => {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
 };
 
 /**
- * GET /api/followups?workspaceId=ws_1&status=open
+ * GET /api/followups?workspaceId=ws_1&status=open|sent|waiting|followup|done|all
  * -> { items: Followup[] }
  */
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
@@ -31,7 +43,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
   const where =
     status && status !== "all"
-      ? and(eq(followups.workspaceId, workspaceId), eq(followups.status, status))
+      ? and(eq(followups.workspaceId, workspaceId), eq(followups.status as any, status))
       : eq(followups.workspaceId, workspaceId);
 
   const rows = await db
@@ -41,7 +53,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     .orderBy(desc(followups.dueAt))
     .limit(100);
 
-  return Response.json({ items: rows }, { headers: cors });
+  return Response.json(
+    { items: rows },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request),
+      },
+    }
+  );
 };
 
 /**
@@ -52,56 +72,43 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
 
-  const body = await request.json<{
+  let body: {
     workspaceId: string;
     ownerId: string;
     contactName: string;
     companyName: string;
     nextStep: string;
-    dueAt: string; // "YYYY-MM-DD"
+    dueAt: string; // YYYY-MM-DD
     status?: string;
-  }>();
+  };
 
-  // (optioneel) minimale validatie zodat errors duidelijker worden
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { ok: false, error: "Invalid JSON body" },
+      { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
+    );
+  }
+
+  // minimale validatie
   if (!body.workspaceId || !body.ownerId) {
     return Response.json(
       { ok: false, error: "Missing workspaceId/ownerId" },
-      { status: 400, headers: cors }
+      { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
     );
   }
+
   if (!body.contactName || !body.companyName || !body.nextStep || !body.dueAt) {
     return Response.json(
       { ok: false, error: "Missing required fields" },
-      { status: 400, headers: cors }
+      { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
     );
   }
 
-  if (request.method === "OPTIONS") {
-  return new Response(null, { status: 204, headers: cors(request) });
-}
-
-  const id = `f_${crypto.randomUUID()}`;
-
-  function cors(request: Request) {
-  const origin = request.headers.get("Origin") || "";
-  const allowed = "https://followthrough-ui.pages.dev";
-
-  return {
-    "Access-Control-Allow-Origin": origin === allowed ? origin : allowed,
-    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Accept",
-    "Access-Control-Max-Age": "86400",
-    "Vary": "Origin",
-  };
-}
-
-  return new Response(JSON.stringify(data), {
-  status: 200,
-  headers: { "Content-Type": "application/json", ...cors(request) },
-});
-
   // SQLite-friendly timestamp: "YYYY-MM-DD HH:MM:SS"
   const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+  const id = `f_${crypto.randomUUID()}`;
 
   await db.insert(followups).values({
     id,
@@ -112,8 +119,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     nextStep: body.nextStep,
     dueAt: body.dueAt,
     status: body.status ?? "open",
-    createdAt, // belangrijk als created_at NOT NULL is in je schema
+    createdAt,
   });
 
-  return Response.json({ ok: true, id }, { headers: cors });
+  return Response.json(
+    { ok: true, id },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders(request),
+      },
+    }
+  );
 };
