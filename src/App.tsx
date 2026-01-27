@@ -635,7 +635,7 @@ return (
               <div style={{ opacity: 0.8 }}>{companyName}</div>
 
               <div className="cardMeta" style={{ marginTop: 10 }}>
-                <span className="metaItem">
+               <span className="metaItem">
   Due:{" "}
   {editDueId === id ? (
     <input
@@ -653,26 +653,37 @@ return (
       placeholder="YYYY-MM-DD"
     />
   ) : (
-    <b
-      role="button"
-      tabIndex={0}
-      title="Click to edit"
-      onClick={() => {
-        setEditDueId(id);
-        setDraftDue(formatDate(dueAt) || "");
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
+    <>
+      <b
+        role="button"
+        tabIndex={0}
+        onClick={() => {
           setEditDueId(id);
           setDraftDue(formatDate(dueAt) || "");
-        }
-      }}
-      style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}
-    >
-      {formatDate(dueAt)}
-    </b>
+        }}
+        style={{ cursor: "pointer" }}
+      >
+        {formatDate(dueAt)}
+      </b>
+
+      <button
+        className="btn"
+        title="Edit due date"
+        style={{
+          marginLeft: 6,
+          padding: "2px 6px",
+          fontSize: 12,
+        }}
+        onClick={() => {
+          setEditDueId(id);
+          setDraftDue(formatDate(dueAt) || "");
+        }}
+      >
+        ✎
+      </button>
+    </>
   )}
-</span>               
+</span>            
                 <span className={dueClass}>{due.label}</span>
                 <span className={chipClass}>{statusLabel(status)}</span>
 
