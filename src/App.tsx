@@ -149,7 +149,7 @@ function isOverdueAndNotDone(f: Followup) {
 
 export default function App() {
   const workspaceId = "ws_1";
-  const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+  const API_BASE = ""; // same-origin
 
   const [items, setItems] = useState<Followup[]>([]);
   const [loading, setLoading] = useState(false);
