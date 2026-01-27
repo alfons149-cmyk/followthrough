@@ -441,6 +441,47 @@ export default function App() {
     }
   }
 
+        // inline edit state
+  const [editNextId, setEditNextId] = useState<string | null>(null);
+  const [editDueId, setEditDueId] = useState<string | null>(null);
+  const [draftNext, setDraftNext] = useState("");
+  const [draftDue, setDraftDue] = useState("");
+
+  async function saveNextStep(id: string) {
+    const v = draftNext.trim();
+    setEditNextId(null);
+    if (!v) return;
+
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(id, { nextStep: v });
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveDueAt(id: string) {
+    const v = draftDue.trim();
+    setEditDueId(null);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+
+    setLoading(true);
+    setError("");
+    try {
+      const updated = await api.patch(id, { dueAt: v });
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    } catch (e: any) {
+      setError(e?.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
 return (
   <div className="page">
     <header className="header">
