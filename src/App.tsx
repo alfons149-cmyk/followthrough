@@ -582,7 +582,7 @@ return (
               className={cardClass}
               ref={attachRef ? firstOverdueRef : undefined}
             >
-              <div className="cardLine">
+   <div className="cardLine">
   <b>Next:</b>{" "}
   {editNextId === id ? (
     <input
@@ -599,24 +599,35 @@ return (
       style={{ maxWidth: 520 }}
     />
   ) : (
-    <span
-      role="button"
-      tabIndex={0}
-      title="Click to edit"
-      onClick={() => {
-        setEditNextId(id);
-        setDraftNext(nextStep || "");
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
+    <>
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={() => {
           setEditNextId(id);
           setDraftNext(nextStep || "");
-        }
-      }}
-      style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}
-    >
-      {nextStep || "—"}
-    </span>
+        }}
+        style={{ cursor: "pointer" }}
+      >
+        {nextStep || "—"}
+      </span>
+
+      <button
+        className="btn"
+        title="Edit next step"
+        style={{
+          marginLeft: 6,
+          padding: "2px 6px",
+          fontSize: 12,
+        }}
+        onClick={() => {
+          setEditNextId(id);
+          setDraftNext(nextStep || "");
+        }}
+      >
+        ✎
+      </button>
+    </>
   )}
 </div>
 
