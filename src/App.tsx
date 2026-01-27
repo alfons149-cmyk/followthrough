@@ -210,12 +210,6 @@ export default function App() {
   // scroll target
   const firstOverdueRef = useRef<HTMLDivElement | null>(null);
 
-  // inline edit
-  const [editNextId, setEditNextId] = useState<string | null>(null);
-  const [editDueId, setEditDueId] = useState<string | null>(null);
-  const [draftNext, setDraftNext] = useState("");
-  const [draftDue, setDraftDue] = useState("");
-
   const api = useMemo(() => {
     const base = API_BASE.replace(/\/+$/, "");
 
