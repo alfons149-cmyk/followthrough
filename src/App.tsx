@@ -625,8 +625,43 @@ return (
 
               <div className="cardMeta" style={{ marginTop: 10 }}>
                 <span className="metaItem">
-                  Due: <b>{dueAt}</b>
-                </span>
+  Due:{" "}
+  {editDueId === id ? (
+    <input
+      className="input"
+      value={draftDue}
+      autoFocus
+      disabled={loading}
+      onChange={(e) => setDraftDue(e.target.value)}
+      onBlur={() => saveDueAt(id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") saveDueAt(id);
+        if (e.key === "Escape") setEditDueId(null);
+      }}
+      style={{ width: 140 }}
+      placeholder="YYYY-MM-DD"
+    />
+  ) : (
+    <b
+      role="button"
+      tabIndex={0}
+      title="Click to edit"
+      onClick={() => {
+        setEditDueId(id);
+        setDraftDue(formatDate(dueAt) || "");
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          setEditDueId(id);
+          setDraftDue(formatDate(dueAt) || "");
+        }
+      }}
+      style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}
+    >
+      {formatDate(dueAt)}
+    </b>
+  )}
+</span>               
                 <span className={dueClass}>{due.label}</span>
                 <span className={chipClass}>{statusLabel(status)}</span>
 
