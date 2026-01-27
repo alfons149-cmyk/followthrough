@@ -583,8 +583,42 @@ return (
               ref={attachRef ? firstOverdueRef : undefined}
             >
               <div className="cardLine">
-                <b>Next:</b> {nextStep || "—"}
-              </div>
+  <b>Next:</b>{" "}
+  {editNextId === id ? (
+    <input
+      className="input"
+      value={draftNext}
+      autoFocus
+      disabled={loading}
+      onChange={(e) => setDraftNext(e.target.value)}
+      onBlur={() => saveNextStep(id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") saveNextStep(id);
+        if (e.key === "Escape") setEditNextId(null);
+      }}
+      style={{ maxWidth: 520 }}
+    />
+  ) : (
+    <span
+      role="button"
+      tabIndex={0}
+      title="Click to edit"
+      onClick={() => {
+        setEditNextId(id);
+        setDraftNext(nextStep || "");
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          setEditNextId(id);
+          setDraftNext(nextStep || "");
+        }
+      }}
+      style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}
+    >
+      {nextStep || "—"}
+    </span>
+  )}
+</div>
 
               <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
               <div style={{ opacity: 0.8 }}>{companyName}</div>
