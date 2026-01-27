@@ -665,8 +665,8 @@ export default function App() {
           })}
         </div>
       )}
-
-           {/* Create / Refresh */}
+      
+      {/* Create / Refresh */}
       <section className="panel">
         <div className="grid">
           <div className="field">
@@ -710,7 +710,12 @@ export default function App() {
             Add follow-up
           </button>
 
-          <button className="btn" onClick={refresh} disabled={loading} style={{ marginLeft: 8 }}>
+          <button
+            className="btn"
+            onClick={refresh}
+            disabled={loading}
+            style={{ marginLeft: 8 }}
+          >
             Refresh
           </button>
         </div>
