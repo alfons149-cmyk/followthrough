@@ -464,7 +464,7 @@ export default function App() {
         <span className="chip chipOverdue">Overdue: {overdueCount}</span>
       </div>
 
-      {/* List */}
+            {/* List */}
       {items.length === 0 ? (
         <div className="empty">
           <h2>Welcome to FollowThrough 👋</h2>
@@ -511,7 +511,11 @@ export default function App() {
 
             const due = dueBadge(da);
             const dueClass =
-              due.kind === "overdue" ? "chip chipOverdue" : due.kind === "soon" ? "chip chipSoon" : "chip chipDue";
+              due.kind === "overdue"
+                ? "chip chipOverdue"
+                : due.kind === "soon"
+                ? "chip chipSoon"
+                : "chip chipDue";
 
             const chipClass =
               status === "done"
@@ -580,7 +584,6 @@ export default function App() {
                 <div style={{ opacity: 0.8 }}>{companyName}</div>
 
                 <div className="cardMeta" style={{ marginTop: 10 }}>
-                  {/* Due inline edit */}
                   <span className="metaItem">
                     Due:{" "}
                     {editDueId === id ? (
