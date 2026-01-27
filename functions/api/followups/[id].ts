@@ -1,83 +1,116 @@
+// functions/api/followups/[id].ts
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { getDb, type Env } from "../_db";
-import { followups } from "../../../src/db/schema";
+import { getDb, type Env } from "../../_db";
+import { followups } from "../../../../src/db/schema";
 import { eq } from "drizzle-orm";
 
-type PatchBody = Partial<{
-  status: string;
-  dueAt: string;     // "YYYY-MM-DD" of ISO string
-  nextStep: string;
-}>;
-
-const cors: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,PATCH,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Max-Age": "86400",
-};
-
-export const onRequestOptions: PagesFunction<Env> = async () => {
-  return new Response(null, { status: 204, headers: cors });
-};
-
 /**
- * GET /api/followups/:id
- * Handig voor debug: check of route matcht + item bestaat
+ * CORS
+ * UI: https://followthrough-ui.pages.dev
+ * API: https://followthrough.pages.dev
  */
-export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
-  const id = String(params.id || "");
-  if (!id) {
-    return Response.json({ ok: false, error: "Missing id" }, { status: 400, headers: cors });
-  }
+const UI_ORIGIN = "https://followthrough-ui.pages.dev";
 
+function corsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("Origin") || "";
+  const allowOrigin = origin === UI_ORIGIN ? origin : UI_ORIGIN;
+
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Methods": "GET,PATCH,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Accept",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+}
+
+export const onRequestOptions: PagesFunction<Env> = async ({ request }) => {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
+};
+
+// (optioneel, maar handig) GET /api/followups/:id -> { item }
+export const onRequestGet: PagesFunction<Env> = async ({ env, request, params }) => {
   const db = getDb(env);
-  const row = await db.select().from(followups).where(eq(followups.id, id)).get();
+  const id = String(params.id || "");
 
-  if (!row) {
-    return Response.json({ ok: false, error: "Not found" }, { status: 404, headers: cors });
+  if (!id) {
+    return Response.json(
+      { ok: false, error: "Missing id" },
+      { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
+    );
   }
 
-  return Response.json({ ok: true, item: row }, { headers: cors });
+  const rows = await db.select().from(followups).where(eq(followups.id, id)).limit(1);
+  const item = rows[0];
+
+  if (!item) {
+    return Response.json(
+      { ok: false, error: "Not found" },
+      { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
+    );
+  }
+
+  return Response.json(
+    { item },
+    { headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
+  );
 };
 
 /**
  * PATCH /api/followups/:id
- * Body (JSON): { status?, dueAt?, nextStep? }
- * -> { ok: true, item }
+ * body: { status?: "open"|"sent"|"waiting"|"followup"|"done", dueAt?: "YYYY-MM-DD", nextStep?: string }
+ * -> { item }
  */
 export const onRequestPatch: PagesFunction<Env> = async ({ env, request, params }) => {
+  const db = getDb(env);
   const id = String(params.id || "");
+
   if (!id) {
-    return Response.json({ ok: false, error: "Missing id" }, { status: 400, headers: cors });
-  }
-
-  const body = (await request.json().catch(() => ({}))) as PatchBody;
-
-  // Bouw een update-object op met alleen toegestane velden
-  const toSet: Record<string, unknown> = {};
-  if (typeof body.status === "string" && body.status.trim()) toSet.status = body.status.trim();
-  if (typeof body.dueAt === "string" && body.dueAt.trim()) toSet.dueAt = body.dueAt.trim();
-  if (typeof body.nextStep === "string" && body.nextStep.trim()) toSet.nextStep = body.nextStep.trim();
-
-  if (Object.keys(toSet).length === 0) {
     return Response.json(
-      { ok: false, error: "No valid fields to update (status, dueAt, nextStep)" },
-      { status: 400, headers: cors }
+      { ok: false, error: "Missing id" },
+      { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
     );
   }
 
-  const db = getDb(env);
-
-  // Update uitvoeren
-  await db.update(followups).set(toSet).where(eq(followups.id, id));
-
-  // Updated row teruggeven (handig voor je UI)
-  const row = await db.select().from(followups).where(eq(followups.id, id)).get();
-
-  if (!row) {
-    // (zeldzaam) als id niet bestond
-    return Response.json({ ok: false, error: "Not found" }, { status: 404, headers: cors });
+  let body: { status?: string; dueAt?: string; nextStep?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { ok: false, error: "Invalid JSON body" },
+      { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
+    );
   }
 
-  return Response.json({ ok: true, item: row }, { headers: cors });
+  // Alleen deze velden toelaten
+  const patch: Record<string, any> = {};
+
+  if (typeof body.status === "string") patch.status = body.status;
+  if (typeof body.dueAt === "string") patch.dueAt = body.dueAt;
+  if (typeof body.nextStep === "string") patch.nextStep = body.nextStep;
+
+  if (Object.keys(patch).length === 0) {
+    return Response.json(
+      { ok: false, error: "No fields to update" },
+      { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
+    );
+  }
+
+  // Update + teruglezen (D1/SQLite: returning is niet altijd consistent, dus veilig opnieuw select)
+  await db.update(followups).set(patch).where(eq(followups.id, id));
+
+  const rows = await db.select().from(followups).where(eq(followups.id, id)).limit(1);
+  const item = rows[0];
+
+  if (!item) {
+    return Response.json(
+      { ok: false, error: "Not found" },
+      { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
+    );
+  }
+
+  return Response.json(
+    { item },
+    { headers: { "Content-Type": "application/json", ...corsHeaders(request) } }
+  );
 };
