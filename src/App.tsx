@@ -464,51 +464,150 @@ const api = useMemo(() => {
       </div>
 
       {/* List */}
-      {items.length === 0 ? (
-        <div className="empty">
-          <h2>Welcome to FollowThrough 👋</h2>
-          <p>Your personal system for never forgetting business follow-ups.</p>
+{items.length === 0 ? (
+  <div className="empty">
+    <h2>Welcome to FollowThrough 👋</h2>
+    <p>Your personal system for never forgetting business follow-ups.</p>
 
-          <ul style={{ textAlign: "left", marginTop: 12 }}>
-            <li>📌 Track who to follow up with</li>
-            <li>⏰ Get reminded at the right moment</li>
-            <li>✅ Build a professional follow-up routine</li>
-          </ul>
+    <ul style={{ textAlign: "left", marginTop: 12 }}>
+      <li>📌 Track who to follow up with</li>
+      <li>⏰ Get reminded at the right moment</li>
+      <li>✅ Build a professional follow-up routine</li>
+    </ul>
 
-          <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button className="btn" onClick={seedDemoData} disabled={loading}>
-              Try with example data
-            </button>
-            <button
-              className="btn btnPrimary"
-              onClick={() => document.getElementById("contactName")?.focus()}
+    <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <button className="btn" onClick={seedDemoData} disabled={loading}>
+        Try with example data
+      </button>
+      <button
+        className="btn btnPrimary"
+        onClick={() => document.getElementById("contactName")?.focus()}
+        disabled={loading}
+      >
+        Add your first follow-up
+      </button>
+    </div>
+  </div>
+) : visible.length === 0 ? (
+  <div className="empty">
+    <h3>No matches</h3>
+    <p>Try clearing search or changing the status filter.</p>
+    <button
+      className="btn"
+      onClick={() => {
+        setQ("");
+        setStatusFilter("all");
+      }}
+      disabled={loading}
+    >
+      Clear filters
+    </button>
+  </div>
+) : (
+  <div className="list">
+    {visible.map((f) => (
+      <div key={f.id} className={dueBadge(f.dueAt).kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card"}>
+        {/* Next step inline edit */}
+        <div className="cardLine">
+          <b>Next:</b>{" "}
+          {editNextId === f.id ? (
+            <input
+              className="input"
+              value={draftNext}
+              autoFocus
               disabled={loading}
-            >
-              Add your first follow-up
-            </button>
-          </div>
-        </div>
-      ) : visible.length === 0 ? (
-        <div className="empty">
-          <h3>No matches</h3>
-          <p>Try clearing search or changing the status filter.</p>
-          <button
-            className="btn"
-            onClick={() => {
-              setQ("");
-              setStatusFilter("all");
-            }}
-            disabled={loading}
-          >
-            Clear filters
-          </button>
-        </div>
-      ) : (
-        <div className="list">
-          {visible.map((f) => {
-            const { id, contactName, companyName, nextStep: ns, dueAt: da, status } = f;
+              onChange={(e) => setDraftNext(e.target.value)}
+              onBlur={() => saveNextStep(f.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveNextStep(f.id);
+                if (e.key === "Escape") setEditNextId(null);
+              }}
+              style={{ maxWidth: 520 }}
+            />
+          ) : (
+            <>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setEditNextId(f.id);
+                  setDraftNext(f.nextStep || "");
+                }}
+                style={{ cursor: "pointer" }}
+              >
+                {f.nextStep || "—"}
+              </span>
 
-            const due = dueBadge(da);
+              <button
+                className="btn"
+                title="Edit next step"
+                disabled={loading}
+                style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                onClick={() => {
+                  setEditNextId(f.id);
+                  setDraftNext(f.nextStep || "");
+                }}
+              >
+                ✎
+              </button>
+            </>
+          )}
+        </div>
+
+        <div style={{ fontWeight: 600, marginTop: 8 }}>{f.contactName}</div>
+        <div style={{ opacity: 0.8 }}>{f.companyName}</div>
+
+        <div className="cardMeta" style={{ marginTop: 10 }}>
+          {/* Due inline edit */}
+          <span className="metaItem">
+            Due:{" "}
+            {editDueId === f.id ? (
+              <input
+                className="input"
+                value={draftDue}
+                autoFocus
+                disabled={loading}
+                onChange={(e) => setDraftDue(e.target.value)}
+                onBlur={() => saveDueAt(f.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveDueAt(f.id);
+                  if (e.key === "Escape") setEditDueId(null);
+                }}
+                style={{ width: 140 }}
+                placeholder="YYYY-MM-DD"
+              />
+            ) : (
+              <>
+                <b
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setEditDueId(f.id);
+                    setDraftDue(formatDate(f.dueAt) || "");
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  {formatDate(f.dueAt)}
+                </b>
+
+                <button
+                  className="btn"
+                  title="Edit due date"
+                  disabled={loading}
+                  style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                  onClick={() => {
+                    setEditDueId(f.id);
+                    setDraftDue(formatDate(f.dueAt) || "");
+                  }}
+                >
+                  ✎
+                </button>
+              </>
+            )}
+          </span>
+
+          {(() => {
+            const due = dueBadge(f.dueAt);
             const dueClass =
               due.kind === "overdue"
                 ? "chip chipOverdue"
@@ -517,156 +616,57 @@ const api = useMemo(() => {
                 : "chip chipDue";
 
             const chipClass =
-              status === "done"
+              f.status === "done"
                 ? "chip chipDone"
-                : status === "followup"
+                : f.status === "followup"
                 ? "chip chipOverdue"
-                : status === "waiting"
+                : f.status === "waiting"
                 ? "chip chipSoon"
-                : status === "sent"
+                : f.status === "sent"
                 ? "chip chipDue"
                 : "chip chipOpen";
 
-            const cardClass = due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
-            const attachRef = firstOverdueId === id;
-
             return (
-              <div key={id} className={cardClass} ref={attachRef ? firstOverdueRef : undefined}>
-                {/* Next step inline edit */}
-                <div className="cardLine">
-                  <b>Next:</b>{" "}
-                  {editNextId === id ? (
-                    <input
-                      className="input"
-                      value={draftNext}
-                      autoFocus
-                      disabled={loading}
-                      onChange={(e) => setDraftNext(e.target.value)}
-                      onBlur={() => saveNextStep(id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveNextStep(id);
-                        if (e.key === "Escape") setEditNextId(null);
-                      }}
-                      style={{ maxWidth: 520 }}
-                    />
-                  ) : (
-                    <>
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => {
-                          setEditNextId(id);
-                          setDraftNext(ns || "");
-                        }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {ns || "—"}
-                      </span>
-
-                      <button
-                        className="btn"
-                        title="Edit next step"
-                        disabled={loading}
-                        style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                        onClick={() => {
-                          setEditNextId(id);
-                          setDraftNext(ns || "");
-                        }}
-                      >
-                        ✎
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                <div style={{ fontWeight: 600, marginTop: 8 }}>{contactName}</div>
-                <div style={{ opacity: 0.8 }}>{companyName}</div>
-
-                <div className="cardMeta" style={{ marginTop: 10 }}>
-                  <span className="metaItem">
-                    Due:{" "}
-                    {editDueId === id ? (
-                      <input
-                        className="input"
-                        value={draftDue}
-                        autoFocus
-                        disabled={loading}
-                        onChange={(e) => setDraftDue(e.target.value)}
-                        onBlur={() => saveDueAt(id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveDueAt(id);
-                          if (e.key === "Escape") setEditDueId(null);
-                        }}
-                        style={{ width: 140 }}
-                        placeholder="YYYY-MM-DD"
-                      />
-                    ) : (
-                      <>
-                        <b
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => {
-                            setEditDueId(id);
-                            setDraftDue(formatDate(da) || "");
-                          }}
-                          style={{ cursor: "pointer" }}
-                        >
-                          {formatDate(da)}
-                        </b>
-
-                        <button
-                          className="btn"
-                          title="Edit due date"
-                          disabled={loading}
-                          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                          onClick={() => {
-                            setEditDueId(id);
-                            setDraftDue(formatDate(da) || "");
-                          }}
-                        >
-                          ✎
-                        </button>
-                      </>
-                    )}
-                  </span>
-
-                  <span className={dueClass}>{due.label}</span>
-                  <span className={chipClass}>{statusLabel(status)}</span>
-
-                  <span className="metaItem">
-                    Id: <code>{id}</code>
-                  </span>
-                </div>
-
-                <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
-                    Move
-                  </button>
-                  <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
-                    +1d
-                  </button>
-                  <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
-                    +3d
-                  </button>
-                  <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
-                    +7d
-                  </button>
-
-                  {status !== "done" ? (
-                    <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-                      Done
-                    </button>
-                  ) : (
-                    <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-                      Reopen
-                    </button>
-                  )}
-                </div>
-              </div>
+              <>
+                <span className={dueClass}>{due.label}</span>
+                <span className={chipClass}>{statusLabel(f.status)}</span>
+              </>
             );
-          })}
+          })()}
+
+          <span className="metaItem">
+            Id: <code>{f.id}</code>
+          </span>
         </div>
-      )}
+
+        <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
+            Move
+          </button>
+          <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
+            +1d
+          </button>
+          <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
+            +3d
+          </button>
+          <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
+            +7d
+          </button>
+
+          {f.status !== "done" ? (
+            <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+              Done
+            </button>
+          ) : (
+            <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+              Reopen
+            </button>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
       
       {/* Create / Refresh */}
       <section className="panel">
