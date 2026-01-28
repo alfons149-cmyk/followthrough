@@ -503,12 +503,12 @@ const api = useMemo(() => {
       Clear filters
     </button>
   </div>
- ) : (
+) : (
   <div className="list">
     {visible.map((f) => {
-      const { id, contactName, companyName, nextStep, dueAt, status } = f;
+      const { id, status } = f;
 
-      const due = dueBadge(dueAt);
+      const due = dueBadge(f.dueAt);
       const dueClass =
         due.kind === "overdue"
           ? "chip chipOverdue"
@@ -533,125 +533,74 @@ const api = useMemo(() => {
       const attachRef = firstOverdueId === id;
 
       return (
-        <div key={id} className={cardClass} ref={attachRef ? firstOverdueRef : undefined}>
-          {/* jouw card JSX hier */}
+        <div
+          key={id}
+          className={cardClass}
+          ref={attachRef ? firstOverdueRef : undefined}
+        >
+          <div style={{ fontWeight: 600, marginTop: 8 }}>{f.contactName}</div>
+          <div style={{ opacity: 0.8 }}>{f.companyName}</div>
+
+          <div className="cardMeta" style={{ marginTop: 10 }}>
+            <span className="metaItem">
+              Due:{" "}
+              {editDueId === f.id ? (
+                <input
+                  className="input"
+                  value={draftDue}
+                  autoFocus
+                  disabled={loading}
+                  onChange={(e) => setDraftDue(e.target.value)}
+                  onBlur={() => saveDueAt(f.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveDueAt(f.id);
+                    if (e.key === "Escape") setEditDueId(null);
+                  }}
+                  style={{ width: 140 }}
+                  placeholder="YYYY-MM-DD"
+                />
+              ) : (
+                <>
+                  <b
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setEditDueId(f.id);
+                      setDraftDue(formatDate(f.dueAt) || "");
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {formatDate(f.dueAt)}
+                  </b>
+
+                  <button
+                    className="btn"
+                    title="Edit due date"
+                    disabled={loading}
+                    style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                    onClick={() => {
+                      setEditDueId(f.id);
+                      setDraftDue(formatDate(f.dueAt) || "");
+                    }}
+                  >
+                    ✎
+                  </button>
+                </>
+              )}
+            </span>
+
+            <span className={dueClass}>{due.label}</span>
+            <span className={chipClass}>{statusLabel(status)}</span>
+
+            <span className="metaItem">
+              Id: <code>{id}</code>
+            </span>
+          </div>
+
+          {/* hier horen ook je buttons (Move, +1d, Done/Reopen, etc.) */}
         </div>
       );
     })}
-  </div>
-)}
-
-        <div style={{ fontWeight: 600, marginTop: 8 }}>{f.contactName}</div>
-        <div style={{ opacity: 0.8 }}>{f.companyName}</div>
-
-        <div className="cardMeta" style={{ marginTop: 10 }}>
-          {/* Due inline edit */}
-          <span className="metaItem">
-            Due:{" "}
-            {editDueId === f.id ? (
-              <input
-                className="input"
-                value={draftDue}
-                autoFocus
-                disabled={loading}
-                onChange={(e) => setDraftDue(e.target.value)}
-                onBlur={() => saveDueAt(f.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveDueAt(f.id);
-                  if (e.key === "Escape") setEditDueId(null);
-                }}
-                style={{ width: 140 }}
-                placeholder="YYYY-MM-DD"
-              />
-            ) : (
-              <>
-                <b
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
-                    setEditDueId(f.id);
-                    setDraftDue(formatDate(f.dueAt) || "");
-                  }}
-                  style={{ cursor: "pointer" }}
-                >
-                  {formatDate(f.dueAt)}
-                </b>
-
-                <button
-                  className="btn"
-                  title="Edit due date"
-                  disabled={loading}
-                  style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                  onClick={() => {
-                    setEditDueId(f.id);
-                    setDraftDue(formatDate(f.dueAt) || "");
-                  }}
-                >
-                  ✎
-                </button>
-              </>
-            )}
-          </span>
-
-          {(() => {
-            const due = dueBadge(f.dueAt);
-            const dueClass =
-              due.kind === "overdue"
-                ? "chip chipOverdue"
-                : due.kind === "soon"
-                ? "chip chipSoon"
-                : "chip chipDue";
-
-            const chipClass =
-              f.status === "done"
-                ? "chip chipDone"
-                : f.status === "followup"
-                ? "chip chipOverdue"
-                : f.status === "waiting"
-                ? "chip chipSoon"
-                : f.status === "sent"
-                ? "chip chipDue"
-                : "chip chipOpen";
-
-            return (
-              <>
-                <span className={dueClass}>{due.label}</span>
-                <span className={chipClass}>{statusLabel(f.status)}</span>
-              </>
-            );
-          })()}
-
-          <span className="metaItem">
-            Id: <code>{f.id}</code>
-          </span>
-        </div>
-
-        <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
-            Move
-          </button>
-          <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
-            +1d
-          </button>
-          <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
-            +3d
-          </button>
-          <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
-            +7d
-          </button>
-
-          {f.status !== "done" ? (
-            <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-              Done
-            </button>
-          ) : (
-            <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-              Reopen
-            </button>
-          )}
-        </div>
-      </div>
-    ))}
   </div>
 )}
       
