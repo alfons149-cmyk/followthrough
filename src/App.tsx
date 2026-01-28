@@ -503,56 +503,43 @@ const api = useMemo(() => {
       Clear filters
     </button>
   </div>
-) : (
+ ) : (
   <div className="list">
-    {visible.map((f) => (
-      <div key={f.id} className={dueBadge(f.dueAt).kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card"}>
-        {/* Next step inline edit */}
-        <div className="cardLine">
-          <b>Next:</b>{" "}
-          {editNextId === f.id ? (
-            <input
-              className="input"
-              value={draftNext}
-              autoFocus
-              disabled={loading}
-              onChange={(e) => setDraftNext(e.target.value)}
-              onBlur={() => saveNextStep(f.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveNextStep(f.id);
-                if (e.key === "Escape") setEditNextId(null);
-              }}
-              style={{ maxWidth: 520 }}
-            />
-          ) : (
-            <>
-              <span
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  setEditNextId(f.id);
-                  setDraftNext(f.nextStep || "");
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                {f.nextStep || "—"}
-              </span>
+    {visible.map((f) => {
+      const { id, contactName, companyName, nextStep, dueAt, status } = f;
 
-              <button
-                className="btn"
-                title="Edit next step"
-                disabled={loading}
-                style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                onClick={() => {
-                  setEditNextId(f.id);
-                  setDraftNext(f.nextStep || "");
-                }}
-              >
-                ✎
-              </button>
-            </>
-          )}
+      const due = dueBadge(dueAt);
+      const dueClass =
+        due.kind === "overdue"
+          ? "chip chipOverdue"
+          : due.kind === "soon"
+          ? "chip chipSoon"
+          : "chip chipDue";
+
+      const chipClass =
+        status === "done"
+          ? "chip chipDone"
+          : status === "followup"
+          ? "chip chipOverdue"
+          : status === "waiting"
+          ? "chip chipSoon"
+          : status === "sent"
+          ? "chip chipDue"
+          : "chip chipOpen";
+
+      const cardClass =
+        due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
+
+      const attachRef = firstOverdueId === id;
+
+      return (
+        <div key={id} className={cardClass} ref={attachRef ? firstOverdueRef : undefined}>
+          {/* jouw card JSX hier */}
         </div>
+      );
+    })}
+  </div>
+)}
 
         <div style={{ fontWeight: 600, marginTop: 8 }}>{f.contactName}</div>
         <div style={{ opacity: 0.8 }}>{f.companyName}</div>
