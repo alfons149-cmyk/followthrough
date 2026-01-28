@@ -532,6 +532,53 @@ const api = useMemo(() => {
 
       return (
         <div key={f.id} className={cardClass} ref={attachRef ? firstOverdueRef : undefined}>
+          {/* Next step inline edit (als je dit hebt) */}
+          <div className="cardLine">
+            <b>Next:</b>{" "}
+            {editNextId === f.id ? (
+              <input
+                className="input"
+                value={draftNext}
+                autoFocus
+                disabled={loading}
+                onChange={(e) => setDraftNext(e.target.value)}
+                onBlur={() => saveNextStep(f.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveNextStep(f.id);
+                  if (e.key === "Escape") setEditNextId(null);
+                }}
+                style={{ maxWidth: 520 }}
+              />
+            ) : (
+              <>
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setEditNextId(f.id);
+                    setDraftNext(f.nextStep || "");
+                  }}
+                  style={{ cursor: "pointer" }}
+                >
+                  {f.nextStep || "—"}
+                </span>
+
+                <button
+                  className="btn"
+                  title="Edit next step"
+                  disabled={loading}
+                  style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                  onClick={() => {
+                    setEditNextId(f.id);
+                    setDraftNext(f.nextStep || "");
+                  }}
+                >
+                  ✎
+                </button>
+              </>
+            )}
+          </div>
+
           <div style={{ fontWeight: 600, marginTop: 8 }}>{f.contactName}</div>
           <div style={{ opacity: 0.8 }}>{f.companyName}</div>
 
