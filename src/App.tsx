@@ -149,7 +149,7 @@ function isOverdueAndNotDone(f: Followup) {
 
 export default function App() {
   const workspaceId = "ws_1";
-  const url = `/api/followups?workspaceId=${workspaceId}`;
+  const API_BASE = ""; // same-origin, dus calls gaan naar /api/...
 
   const [items, setItems] = useState<Followup[]>([]);
   const [loading, setLoading] = useState(false);
