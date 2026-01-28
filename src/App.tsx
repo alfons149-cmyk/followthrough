@@ -506,8 +506,6 @@ const api = useMemo(() => {
 ) : (
   <div className="list">
     {visible.map((f) => {
-      const { id, status } = f;
-
       const due = dueBadge(f.dueAt);
       const dueClass =
         due.kind === "overdue"
@@ -517,27 +515,23 @@ const api = useMemo(() => {
           : "chip chipDue";
 
       const chipClass =
-        status === "done"
+        f.status === "done"
           ? "chip chipDone"
-          : status === "followup"
+          : f.status === "followup"
           ? "chip chipOverdue"
-          : status === "waiting"
+          : f.status === "waiting"
           ? "chip chipSoon"
-          : status === "sent"
+          : f.status === "sent"
           ? "chip chipDue"
           : "chip chipOpen";
 
       const cardClass =
-        due.kind === "overdue" && status !== "done" ? "card cardOverdue" : "card";
+        due.kind === "overdue" && f.status !== "done" ? "card cardOverdue" : "card";
 
-      const attachRef = firstOverdueId === id;
+      const attachRef = firstOverdueId === f.id;
 
       return (
-        <div
-          key={id}
-          className={cardClass}
-          ref={attachRef ? firstOverdueRef : undefined}
-        >
+        <div key={f.id} className={cardClass} ref={attachRef ? firstOverdueRef : undefined}>
           <div style={{ fontWeight: 600, marginTop: 8 }}>{f.contactName}</div>
           <div style={{ opacity: 0.8 }}>{f.companyName}</div>
 
@@ -590,14 +584,37 @@ const api = useMemo(() => {
             </span>
 
             <span className={dueClass}>{due.label}</span>
-            <span className={chipClass}>{statusLabel(status)}</span>
+            <span className={chipClass}>{statusLabel(f.status)}</span>
 
             <span className="metaItem">
-              Id: <code>{id}</code>
+              Id: <code>{f.id}</code>
             </span>
           </div>
 
-          {/* hier horen ook je buttons (Move, +1d, Done/Reopen, etc.) */}
+          <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
+              Move
+            </button>
+            <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
+              +1d
+            </button>
+            <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
+              +3d
+            </button>
+            <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
+              +7d
+            </button>
+
+            {f.status !== "done" ? (
+              <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+                Done
+              </button>
+            ) : (
+              <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+                Reopen
+              </button>
+            )}
+          </div>
         </div>
       );
     })}
