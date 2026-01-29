@@ -7,7 +7,10 @@ export const followups = sqliteTable("followups", {
   contactName: text("contact_name").notNull(),
   companyName: text("company_name").notNull(),
   nextStep: text("next_step").notNull(),
-  dueAt: text("due_at").notNull(),
-  status: text("status").notNull(),
+  dueAt: text("due_at").notNull(),     // "YYYY-MM-DD"
+  status: text("status").notNull(),    // "open" | "sent" | "waiting" | "followup" | "done"
   createdAt: text("created_at").notNull(),
 });
+
+// Als je seed/workspaces/users gebruikt, voeg je ze later toe.
+// Voor nu: alleen followups zodat build weer groen wordt.
