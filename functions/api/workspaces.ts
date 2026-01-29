@@ -1,15 +1,9 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
-
-export const onRequestGet: PagesFunction = async () => {
-  return Response.json({ ok: true, items: [] });
-};
-
-
+import { getDb, type Env } from "./_db";
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
-  const db = getDb(env);
+  const db = getDb(env); // bind DB (en voorkomt "unused import")
+  // eventueel: await db.select()... later
 
-  const rows = await db.select().from(workspaces);
-
-  return Response.json({ workspaces: rows });
+  return Response.json({ ok: true, items: [] });
 };
