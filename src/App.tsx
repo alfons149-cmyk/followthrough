@@ -65,6 +65,33 @@ export default function App() {
     ]);
   }
 
+  useEffect(() => {
+  let cancelled = false;
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/followups?workspaceId=${workspaceId}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!cancelled) setItems(data.items || []);
+    } catch (e: any) {
+      if (!cancelled) setError(e?.message || "Failed to fetch");
+    } finally {
+      if (!cancelled) setLoading(false);
+    }
+  }
+
+  load();
+  return () => {
+    cancelled = true;
+  };
+}, [workspaceId]);
+
+
   function clearAll() {
     setItems([]);
     setError(null);
