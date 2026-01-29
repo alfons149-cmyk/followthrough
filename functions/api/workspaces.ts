@@ -1,6 +1,10 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { getDb, type Env } from "./_db";
-import { workspaces } from "../../src/db/schema";
+
+export const onRequestGet: PagesFunction = async () => {
+  return Response.json({ ok: true, items: [] });
+};
+
+
 
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   const db = getDb(env);
