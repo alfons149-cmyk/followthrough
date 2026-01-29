@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import "./App.css";
+import { useEffect } from "react";
 
 type Status = "open" | "sent" | "waiting" | "followup" | "done";
 
