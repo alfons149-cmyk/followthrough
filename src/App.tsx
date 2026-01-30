@@ -1,245 +1,85 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
-type Status = "open" | "sent" | "waiting" | "followup" | "done";
-
-type Followup = {
-  id: string;
-  workspaceId: string;
-  contactName: string;
-  companyName: string;
-  nextStep: string;
-  dueAt: string; // YYYY-MM-DD
-  status: Status;
-};
-
-function formatDate(s: string) {
-  return s || "—";
-}
+type HealthResult =
+  | { ok: true; [k: string]: unknown }
+  | { ok: false; error?: string; [k: string]: unknown };
 
 export default function App() {
-  const workspaceId = "ws_1";
+  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<HealthResult | null>(null);
+  const [error, setError] = useState<string>("");
 
-  // Local-only demo state (compile-clean baseline)
-  const [items, setItems] = useState<Followup[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
 
-  const [contactName, setContactName] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [nextStep, setNextStep] = useState("");
-  const [dueAt, setDueAt] = useState("");
+    (async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const needsTodayCount = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return items.filter((x) => x.status !== "done" && x.dueAt === today).length;
-  }, [items]);
+        const res = await fetch("/api/health", {
+          headers: { Accept: "application/json" },
+          cache: "no-store",
+        });
 
-  const overdueCount = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return items.filter((x) => x.status !== "done" && x.dueAt < today).length;
-  }, [items]);
+        const text = await res.text(); // eerst als tekst (handig bij HTML errors)
+        let data: any = null;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch {
+          data = { ok: false, error: "Non-JSON response", raw: text };
+        }
 
-  function seedDemoData() {
-    setError(null);
-    setItems([
-      {
-        id: "f_demo_1",
-        workspaceId,
-        contactName: "Alice Example",
-        companyName: "Example GmbH",
-        nextStep: "Send intro email",
-        dueAt: "2026-01-10",
-        status: "open",
-      },
-      {
-        id: "f_demo_2",
-        workspaceId,
-        contactName: "Bob Client",
-        companyName: "Client BV",
-        nextStep: "Call to confirm budget",
-        dueAt: "2026-01-05",
-        status: "waiting",
-      },
-    ]);
-  }
+        if (!cancelled) {
+          if (!res.ok) {
+            setError(`HTTP ${res.status} ${res.statusText}`);
+          }
+          setResult(data);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || String(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
 
-  function clearAll() {
-    setItems([]);
-    setError(null);
-  }
-
-  async function onCreate() {
-    setError(null);
-
-    // mini-validatie, zodat je UI niet “stil” faalt
-    if (!contactName.trim() || !companyName.trim() || !nextStep.trim() || !dueAt.trim()) {
-      setError("Please fill in: contact name, company, next step, due date.");
-      return;
-    }
-
-    // loading blijft alvast staan voor later (API)
-    setLoading(true);
-    try {
-      const id = `f_${crypto.randomUUID()}`;
-      const newItem: Followup = {
-        id,
-        workspaceId,
-        contactName: contactName.trim(),
-        companyName: companyName.trim(),
-        nextStep: nextStep.trim(),
-        dueAt: dueAt.trim(),
-        status: "open",
-      };
-      setItems((prev) => [newItem, ...prev]);
-
-      // reset form
-      setContactName("");
-      setCompanyName("");
-      setNextStep("");
-      setDueAt("");
-    } catch (e: any) {
-      setError(e?.message || "Create failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function toggleDone(id: string) {
-    setItems((prev) =>
-      prev.map((x) =>
-        x.id === id ? { ...x, status: x.status === "done" ? "open" : "done" } : x
-      )
-    );
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="page">
       <header className="header">
         <h1 className="title">FollowThrough</h1>
-        <p className="tagline">Compile-clean baseline — no API yet</p>
-
-        <div className="sub" style={{ opacity: 0.8 }}>
-          Workspace: <b>{workspaceId}</b> · API: <code>/api/followups</code>
-        </div>
+        <p className="tagline">Step 2 — API health check</p>
       </header>
 
-      {/* Error banner */}
-      {error && (
-        <div className="errorBanner">
-          <b>Error:</b> {error}
-        </div>
-      )}
-
-      {/* KPIs */}
-      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-        <span className="chip chipSoon">Need today: {needsTodayCount}</span>
-        <span className="chip chipOverdue">Overdue: {overdueCount}</span>
-      </div>
-
-      {/* Empty state */}
-      {items.length === 0 && (
-        <div className="empty">
-          <h2>Welcome to FollowThrough 👋</h2>
-          <p>This is the compile-clean version. Next step: re-add API safely.</p>
-
-          <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button className="btn" onClick={seedDemoData} disabled={loading}>
-              Try with example data
-            </button>
-            <button className="btn" onClick={clearAll} disabled={loading}>
-              Clear
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* List */}
-      {items.length > 0 && (
-        <div className="list">
-          {items.map((f) => (
-            <div key={f.id} className={f.status === "done" ? "card" : "card"}>
-              <div className="cardLine">
-                <b>Next:</b> <span>{f.nextStep || "—"}</span>
-              </div>
-
-              <div style={{ fontWeight: 600, marginTop: 8 }}>{f.contactName}</div>
-              <div style={{ opacity: 0.8 }}>{f.companyName}</div>
-
-              <div className="cardMeta" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <span className="metaItem">
-                  Due: <b>{formatDate(f.dueAt)}</b>
-                </span>
-                <span className="metaItem">
-                  Status: <code>{f.status}</code>
-                </span>
-                <span className="metaItem">
-                  Id: <code>{f.id}</code>
-                </span>
-              </div>
-
-              <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button className="btn" onClick={() => toggleDone(f.id)} disabled={loading}>
-                  {f.status === "done" ? "Reopen" : "Done"}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Create / Refresh */}
       <section className="panel">
-        <div className="grid">
-          <div className="field">
-            <label>Contact name</label>
-            <input
-              id="contactName"
-              className="input"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              disabled={loading}
-            />
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span className="chip chipOpen">
+            {loading ? "Checking /api/health…" : "Done"}
+          </span>
 
-          <div className="field">
-            <label>Company</label>
-            <input
-              className="input"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              disabled={loading}
-            />
-          </div>
+          {error ? (
+            <span className="chip chipOverdue">Error: {error}</span>
+          ) : result?.ok ? (
+            <span className="chip chipDone">API OK ✅</span>
+          ) : (
+            <span className="chip chipSoon">API not OK ⚠️</span>
+          )}
+        </div>
 
-          <div className="field">
-            <label>Next step</label>
-            <input
-              className="input"
-              value={nextStep}
-              onChange={(e) => setNextStep(e.target.value)}
-              disabled={loading}
-            />
-          </div>
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>Response</div>
+          <pre style={{ whiteSpace: "pre-wrap", margin: 0 }}>
+            {loading ? "…" : JSON.stringify(result, null, 2)}
+          </pre>
+        </div>
 
-          <div className="field">
-            <label>Due at (YYYY-MM-DD)</label>
-            <input
-              className="input"
-              value={dueAt}
-              onChange={(e) => setDueAt(e.target.value)}
-              disabled={loading}
-              placeholder="2026-01-31"
-            />
-          </div>
-
-          <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
-            Add follow-up
-          </button>
-
-          <button className="btn" onClick={seedDemoData} disabled={loading} style={{ marginLeft: 8 }}>
-            Seed demo
-          </button>
+        <div style={{ marginTop: 12, opacity: 0.8, fontSize: 13 }}>
+          URL tested: <code>/api/health</code>
         </div>
       </section>
     </div>
