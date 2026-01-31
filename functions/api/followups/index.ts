@@ -1,7 +1,8 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { and, desc, eq } from "drizzle-orm";
-import { followups } from "../../../db/schema";
-import { getDb, type Env } from "../../../_db";
+import { followups } from "../db/schema";
+import { getDb, type Env } from "../_db";
+
 
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
