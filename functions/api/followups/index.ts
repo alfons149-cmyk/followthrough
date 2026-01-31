@@ -41,7 +41,6 @@ return Response.json(
   { status: 400, headers: cors(origin) }
 );
 
-
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
   const body = (await request.json().catch(() => ({}))) as any;
