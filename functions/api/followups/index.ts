@@ -37,8 +37,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     .limit(200);
 
   const origin = request.headers.get("Origin") ?? "*";
-  return Response.json({ items: rows }, { headers: cors(origin) });
-};
+  const origin = request.headers.get("Origin") ?? "*";
+return Response.json(
+  { ok: false, error: "Missing workspaceId/ownerId" },
+  { status: 400, headers: cors(origin) }
+);
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
