@@ -1,5 +1,5 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { workspaces } from "../db/schema";
+import { followups } from "./db/schema";
 import { getDb, type Env } from "./api/_db";
 import { eq } from "drizzle-orm";
 
