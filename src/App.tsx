@@ -8,7 +8,7 @@ type Followup = {
   contactName: string;
   companyName: string;
   nextStep: string;
-  dueAt: string; // "YYYY-MM-DD" (zoals jij gebruikt)
+  dueAt: string; // YYYY-MM-DD
   status: "open" | "sent" | "waiting" | "followup" | "done" | string;
   createdAt?: string;
 };
@@ -21,11 +21,31 @@ type Workspace = {
 
 const WORKSPACE_ID = "ws_1";
 
-// Step 2: same-origin API base (werkt op Pages)
+// Step 3: same-origin API base
 const API_BASE = "";
 
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
+}
+
+const STATUS_ORDER = ["open", "sent", "waiting", "followup", "done"] as const;
+type KnownStatus = (typeof STATUS_ORDER)[number];
+
+function isKnownStatus(s: string): s is KnownStatus {
+  return (STATUS_ORDER as readonly string[]).includes(s);
+}
+
+function nextStatus(current: string): KnownStatus {
+  if (!isKnownStatus(current)) return "open";
+  const idx = STATUS_ORDER.indexOf(current);
+  return STATUS_ORDER[Math.min(idx + 1, STATUS_ORDER.length - 1)];
+}
+
+function addDays(ymd: string, days: number) {
+  // ymd: YYYY-MM-DD
+  const d = new Date(`${ymd}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 export default function App() {
@@ -38,9 +58,8 @@ export default function App() {
   // form
   const [contactName, setContactName] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [nextStep, setNextStep] = useState("Send intro email");
+  const [nextStepText, setNextStepText] = useState("Send intro email");
   const [dueAt, setDueAt] = useState(() => {
-    // vandaag + 3 dagen (simpel)
     const d = new Date();
     d.setDate(d.getDate() + 3);
     return d.toISOString().slice(0, 10);
@@ -60,7 +79,6 @@ export default function App() {
     setLoading(true);
     setErr(null);
     try {
-      // 1) Workspaces
       const wsRes = await fetch(apiUrl(`/api/workspaces`), {
         headers: { Accept: "application/json" },
       });
@@ -68,7 +86,6 @@ export default function App() {
       const wsData = await wsRes.json();
       setWorkspaces(wsData.items || []);
 
-      // 2) Followups
       const fuRes = await fetch(
         apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}`),
         { headers: { Accept: "application/json" } }
@@ -84,7 +101,6 @@ export default function App() {
   }
 
   useEffect(() => {
-    // auto-load
     refreshAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -101,15 +117,13 @@ export default function App() {
           ownerId: "u_1",
           contactName,
           companyName,
-          nextStep,
+          nextStep: nextStepText,
           dueAt,
           status: "open",
         }),
       });
       if (!res.ok) throw new Error(`Create failed (${res.status})`);
       await refreshAll();
-
-      // reset tiny bit
       setContactName("");
       setCompanyName("");
     } catch (e: any) {
@@ -119,11 +133,47 @@ export default function App() {
     }
   }
 
+  async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`Patch failed (${res.status})`);
+      await refreshAll();
+    } catch (e: any) {
+      setErr(e?.message || "Patch failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function advanceStatus(f: Followup) {
+    const ns = nextStatus(f.status);
+    patchFollowup(f.id, { status: ns });
+  }
+
+  function markDone(f: Followup) {
+    patchFollowup(f.id, { status: "done" });
+  }
+
+  function reopen(f: Followup) {
+    patchFollowup(f.id, { status: "open" });
+  }
+
+  function snooze(f: Followup, days: number) {
+    const base = f.dueAt && /^\d{4}-\d{2}-\d{2}$/.test(f.dueAt) ? f.dueAt : new Date().toISOString().slice(0, 10);
+    patchFollowup(f.id, { dueAt: addDays(base, days) });
+  }
+
   return (
     <div className="page">
       <header className="header">
         <h1 className="title">FollowThrough</h1>
-        <p className="tagline">Step 2 — UI talks to API (same-origin)</p>
+        <p className="tagline">Step 3 — PATCH actions (move/done/snooze)</p>
       </header>
 
       {err ? <div className="error">Error: {err}</div> : null}
@@ -162,7 +212,7 @@ export default function App() {
 
           <div className="field">
             <label>Next step</label>
-            <input className="input" value={nextStep} onChange={(e) => setNextStep(e.target.value)} />
+            <input className="input" value={nextStepText} onChange={(e) => setNextStepText(e.target.value)} />
           </div>
 
           <div className="field">
@@ -199,6 +249,31 @@ export default function App() {
 
                 <div style={{ marginTop: 8 }}>
                   <b>Next:</b> {f.nextStep || "—"}
+                </div>
+
+                <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
+                    Move
+                  </button>
+                  <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
+                    +1d
+                  </button>
+                  <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
+                    +3d
+                  </button>
+                  <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
+                    +7d
+                  </button>
+
+                  {f.status !== "done" ? (
+                    <button className="btn" onClick={() => markDone(f)} disabled={loading}>
+                      Done
+                    </button>
+                  ) : (
+                    <button className="btn" onClick={() => reopen(f)} disabled={loading}>
+                      Reopen
+                    </button>
+                  )}
                 </div>
 
                 <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
