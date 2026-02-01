@@ -20,13 +20,17 @@ type Workspace = {
 };
 
 const WORKSPACE_ID = "ws_1";
+const OWNER_ID = "u_1";
 
 // In productie (Cloudflare Pages) is same-origin correct.
-// (API_BASE leeg laten)
 const API_BASE = "";
 
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
+}
+
+function todayYMD() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export default function App() {
@@ -36,13 +40,19 @@ export default function App() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [items, setItems] = useState<Followup[]>([]);
 
+  // Form state
+  const [contactName, setContactName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [nextStep, setNextStep] = useState("");
+  const [dueAt, setDueAt] = useState(todayYMD());
+
   const needsTodayCount = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayYMD();
     return items.filter((f) => f.dueAt === today && f.status !== "done").length;
   }, [items]);
 
   const overdueCount = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayYMD();
     return items.filter((f) => f.dueAt < today && f.status !== "done").length;
   }, [items]);
 
@@ -74,6 +84,63 @@ export default function App() {
     }
   }
 
+  async function onCreate() {
+    setLoading(true);
+    setErr(null);
+
+    try {
+      const payload = {
+        workspaceId: WORKSPACE_ID,
+        ownerId: OWNER_ID,
+        contactName: contactName.trim(),
+        companyName: companyName.trim(),
+        nextStep: nextStep.trim(),
+        dueAt: (dueAt || "").trim(),
+        status: "open",
+      };
+
+      // minimale checks (client-side)
+      if (!payload.contactName) throw new Error("Please enter a contact name.");
+      if (!payload.nextStep) throw new Error("Please enter a next step.");
+      if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
+
+      const res = await fetch(apiUrl("/api/followups"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
+      }
+
+      // server returns { ok:true, id }
+      await res.json().catch(() => null);
+
+      // Clear form (hou datum staan, vaak handig)
+      setContactName("");
+      setCompanyName("");
+      setNextStep("");
+
+      // Refresh list
+      await refreshAll();
+    } catch (e: any) {
+      setErr(e?.message || "Create failed");
+      setLoading(false); // refreshAll zet hem ook, maar bij error willen we zeker uit loading
+    }
+  }
+
+  function clearForm() {
+    setContactName("");
+    setCompanyName("");
+    setNextStep("");
+    setDueAt(todayYMD());
+  }
+
   useEffect(() => {
     refreshAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,7 +150,7 @@ export default function App() {
     <div className="page">
       <header className="header">
         <h1 className="title">FollowThrough</h1>
-        <p className="tagline">Step 4 — Read-only API (GET workspaces + followups)</p>
+        <p className="tagline">Step 5 — GET + POST (create)</p>
       </header>
 
       {err ? (
@@ -115,6 +182,69 @@ export default function App() {
         </div>
       </section>
 
+      {/* Create */}
+      <section className="panel" style={{ marginBottom: 12 }}>
+        <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
+
+        <div className="grid">
+          <div className="field">
+            <label>Contact name</label>
+            <input
+              id="contactName"
+              className="input"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              disabled={loading}
+              placeholder="Alice Example"
+            />
+          </div>
+
+          <div className="field">
+            <label>Company</label>
+            <input
+              className="input"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              disabled={loading}
+              placeholder="Example GmbH"
+            />
+          </div>
+
+          <div className="field">
+            <label>Next step</label>
+            <input
+              className="input"
+              value={nextStep}
+              onChange={(e) => setNextStep(e.target.value)}
+              disabled={loading}
+              placeholder="Send intro email"
+            />
+          </div>
+
+          <div className="field">
+            <label>Due at (YYYY-MM-DD)</label>
+            <input
+              className="input"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+              disabled={loading}
+              placeholder="2026-01-31"
+            />
+          </div>
+        </div>
+
+        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
+            Add follow-up
+          </button>
+
+          <button className="btn" onClick={clearForm} disabled={loading}>
+            Clear
+          </button>
+        </div>
+      </section>
+
+      {/* List */}
       <section className="panel">
         <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
 
@@ -125,6 +255,13 @@ export default function App() {
         ) : items.length === 0 ? (
           <div className="empty">
             <p>No follow-ups yet.</p>
+            <button
+              className="btn"
+              onClick={() => document.getElementById("contactName")?.focus()}
+              disabled={loading}
+            >
+              Add your first follow-up
+            </button>
           </div>
         ) : (
           <div className="list">
