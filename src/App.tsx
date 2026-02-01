@@ -63,6 +63,10 @@ function nextStatus(s: Status): Status {
   return STATUS_ORDER[Math.min(i + 1, STATUS_ORDER.length - 1)];
 }
 
+function isValidYMD(s: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -76,15 +80,26 @@ export default function App() {
   const [nextStep, setNextStep] = useState("");
   const [dueAt, setDueAt] = useState(todayYMD());
 
+  // =========================
+  // Step 7: inline edit state (draft per item-id)
+  // =========================
+  const [editNextId, setEditNextId] = useState<string | null>(null);
+  const [editDueId, setEditDueId] = useState<string | null>(null);
+  const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
+  const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
+
+  const draftNext = (id: string) => draftNextById[id] ?? "";
+  const draftDue = (id: string) => draftDueById[id] ?? "";
+
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
     const today = todayYMD();
-    return items.filter((f) => f.status !== "done" && f.dueAt === today).length;
+    return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) === today).length;
   }, [items]);
 
   const overdueCount = useMemo(() => {
     const today = todayYMD();
-    return items.filter((f) => f.status !== "done" && f.dueAt < today).length;
+    return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
   }, [items]);
 
   // ---- API
@@ -103,10 +118,9 @@ export default function App() {
       }
 
       // followups
-      const fuRes = await fetch(
-        apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}`),
-        { headers: { Accept: "application/json" } }
-      );
+      const fuRes = await fetch(apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}`), {
+        headers: { Accept: "application/json" },
+      });
       if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
       const fuData = await fuRes.json();
       setItems(fuData.items || []);
@@ -173,17 +187,14 @@ export default function App() {
       throw new Error(`Patch failed (${res.status}) ${text ? "— " + text : ""}`);
     }
 
-    // jouw endpoint kan { ok:true } teruggeven; of { item }.
-    // We doen safest: refresh na patch.
     await res.json().catch(() => null);
   }
 
-  // ---- Actions (Step 6)
+  // ---- Actions (Move/Done/Reopen/Snooze)
   function transitionPlan(f: Followup) {
     const ns = nextStatus(f.status);
     const today = todayYMD();
 
-    // simpele planning
     if (f.status === "open" && ns === "sent") return { status: ns, dueAt: addDays(today, 3) };
     if (f.status === "sent" && ns === "waiting") return { status: ns, dueAt: addDays(today, 7) };
     if (f.status === "waiting" && ns === "followup") return { status: ns, dueAt: today };
@@ -235,11 +246,69 @@ export default function App() {
     setLoading(true);
     setErr(null);
     try {
-      const base = (f.dueAt || todayYMD()).slice(0, 10);
+      const base = ((f.dueAt || todayYMD()).slice(0, 10) || todayYMD()).trim();
       await patchFollowup(f.id, { dueAt: addDays(base, days) });
       await refreshAll();
     } catch (e: any) {
       setErr(e?.message || "Snooze failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // =========================
+  // Step 7: inline edit handlers
+  // =========================
+  function startEditNext(f: Followup) {
+    setEditDueId(null);
+    setEditNextId(f.id);
+    setDraftNextById((prev) => ({ ...prev, [f.id]: f.nextStep || "" }));
+  }
+
+  function cancelEditNext(id: string) {
+    setEditNextId((cur) => (cur === id ? null : cur));
+    // draft laten we staan, is ok voor "draft-variant"
+  }
+
+  async function saveEditNext(id: string) {
+    const v = (draftNext(id) || "").trim();
+    setEditNextId(null);
+    if (!v) return;
+
+    setLoading(true);
+    setErr(null);
+    try {
+      await patchFollowup(id, { nextStep: v });
+      await refreshAll();
+    } catch (e: any) {
+      setErr(e?.message || "Save next step failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function startEditDue(f: Followup) {
+    setEditNextId(null);
+    setEditDueId(f.id);
+    setDraftDueById((prev) => ({ ...prev, [f.id]: (f.dueAt || "").slice(0, 10) }));
+  }
+
+  function cancelEditDue(id: string) {
+    setEditDueId((cur) => (cur === id ? null : cur));
+  }
+
+  async function saveEditDue(id: string) {
+    const v = (draftDue(id) || "").trim();
+    setEditDueId(null);
+    if (!isValidYMD(v)) return;
+
+    setLoading(true);
+    setErr(null);
+    try {
+      await patchFollowup(id, { dueAt: v });
+      await refreshAll();
+    } catch (e: any) {
+      setErr(e?.message || "Save due date failed");
     } finally {
       setLoading(false);
     }
@@ -261,7 +330,7 @@ export default function App() {
     <div className="page">
       <header className="header">
         <h1 className="title">FollowThrough</h1>
-        <p className="tagline">Step 6 — GET + POST + PATCH (Move/Done/Snooze)</p>
+        <p className="tagline">Step 7 — Inline edit (✎) Next + Due</p>
       </header>
 
       {err ? (
@@ -374,7 +443,8 @@ export default function App() {
           <div className="list">
             {items.map((f) => {
               const today = todayYMD();
-              const overdue = f.status !== "done" && f.dueAt < today;
+              const due = (f.dueAt || "").slice(0, 10);
+              const overdue = f.status !== "done" && due && due < today;
               const cardClass = overdue ? "card cardOverdue" : "card";
 
               return (
@@ -382,16 +452,99 @@ export default function App() {
                   <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
                   <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-                  <div style={{ marginTop: 8 }}>
-                    <b>Next:</b> {f.nextStep || "—"}
+                  {/* NEXT step inline edit */}
+                  <div style={{ marginTop: 10 }}>
+                    <b>Next:</b>{" "}
+                    {editNextId === f.id ? (
+                      <input
+                        className="input"
+                        value={draftNext(f.id)}
+                        autoFocus
+                        disabled={loading}
+                        onChange={(e) =>
+                          setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                        }
+                        onBlur={() => saveEditNext(f.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveEditNext(f.id);
+                          if (e.key === "Escape") cancelEditNext(f.id);
+                        }}
+                        style={{ maxWidth: 520 }}
+                      />
+                    ) : (
+                      <>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => startEditNext(f)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {f.nextStep || "—"}
+                        </span>
+                        <button
+                          className="btn"
+                          title="Edit next step"
+                          disabled={loading}
+                          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                          onClick={() => startEditNext(f)}
+                        >
+                          ✎
+                        </button>
+                      </>
+                    )}
                   </div>
 
-                  <div className="cardMeta" style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  {/* META + DUE inline edit */}
+                  <div className="cardMeta" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
                     <span className="chip chipOpen">{statusLabel(f.status)}</span>
-                    <span className="chip chipDue">Due: {f.dueAt || "—"}</span>
+
+                    <span className="chip chipDue">
+                      Due:{" "}
+                      {editDueId === f.id ? (
+                        <input
+                          className="input"
+                          value={draftDue(f.id)}
+                          autoFocus
+                          disabled={loading}
+                          onChange={(e) =>
+                            setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                          }
+                          onBlur={() => saveEditDue(f.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEditDue(f.id);
+                            if (e.key === "Escape") cancelEditDue(f.id);
+                          }}
+                          style={{ width: 140 }}
+                          placeholder="YYYY-MM-DD"
+                        />
+                      ) : (
+                        <>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => startEditDue(f)}
+                            style={{ cursor: "pointer", fontWeight: 700 }}
+                            title="Click to edit due date"
+                          >
+                            {due || "—"}
+                          </span>
+                          <button
+                            className="btn"
+                            title="Edit due date"
+                            disabled={loading}
+                            style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                            onClick={() => startEditDue(f)}
+                          >
+                            ✎
+                          </button>
+                        </>
+                      )}
+                    </span>
+
                     {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
                   </div>
 
+                  {/* ACTIONS */}
                   <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button className="btn" onClick={() => onMove(f)} disabled={loading}>
                       Move
