@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
+type Status = "open" | "sent" | "waiting" | "followup" | "done";
+
 type Followup = {
   id: string;
   workspaceId: string;
@@ -9,7 +11,7 @@ type Followup = {
   companyName: string;
   nextStep: string;
   dueAt: string; // YYYY-MM-DD
-  status: string;
+  status: Status;
   createdAt?: string;
 };
 
@@ -22,8 +24,9 @@ type Workspace = {
 const WORKSPACE_ID = "ws_1";
 const OWNER_ID = "u_1";
 
-// In productie (Cloudflare Pages) is same-origin correct.
-const API_BASE = "";
+const STATUS_ORDER: Status[] = ["open", "sent", "waiting", "followup", "done"];
+
+const API_BASE = ""; // same-origin on Cloudflare Pages
 
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
@@ -33,6 +36,33 @@ function todayYMD() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function parseYMD(s: string) {
+  const v = (s || "").slice(0, 10);
+  const [y, m, d] = v.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+
+function addDays(ymd: string, days: number) {
+  const dt = parseYMD(ymd) ?? new Date();
+  dt.setHours(0, 0, 0, 0);
+  dt.setDate(dt.getDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
+function statusLabel(s: Status) {
+  if (s === "open") return "Open";
+  if (s === "sent") return "Sent";
+  if (s === "waiting") return "Waiting";
+  if (s === "followup") return "Follow-up";
+  return "Done";
+}
+
+function nextStatus(s: Status): Status {
+  const i = STATUS_ORDER.indexOf(s);
+  return STATUS_ORDER[Math.min(i + 1, STATUS_ORDER.length - 1)];
+}
+
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -40,36 +70,39 @@ export default function App() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [items, setItems] = useState<Followup[]>([]);
 
-  // Form state
+  // Form state (create)
   const [contactName, setContactName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [nextStep, setNextStep] = useState("");
   const [dueAt, setDueAt] = useState(todayYMD());
 
+  // ---- KPIs
   const needsTodayCount = useMemo(() => {
     const today = todayYMD();
-    return items.filter((f) => f.dueAt === today && f.status !== "done").length;
+    return items.filter((f) => f.status !== "done" && f.dueAt === today).length;
   }, [items]);
 
   const overdueCount = useMemo(() => {
     const today = todayYMD();
-    return items.filter((f) => f.dueAt < today && f.status !== "done").length;
+    return items.filter((f) => f.status !== "done" && f.dueAt < today).length;
   }, [items]);
 
+  // ---- API
   async function refreshAll() {
     setLoading(true);
     setErr(null);
 
     try {
-      // 1) workspaces
-      const wsRes = await fetch(apiUrl("/api/workspaces"), {
-        headers: { Accept: "application/json" },
-      });
-      if (!wsRes.ok) throw new Error(`Workspaces failed (${wsRes.status})`);
-      const wsData = await wsRes.json();
-      setWorkspaces(wsData.items || []);
+      // workspaces (optional)
+      const wsRes = await fetch(apiUrl("/api/workspaces"), { headers: { Accept: "application/json" } });
+      if (wsRes.ok) {
+        const wsData = await wsRes.json();
+        setWorkspaces(wsData.items || []);
+      } else {
+        setWorkspaces([]);
+      }
 
-      // 2) followups
+      // followups
       const fuRes = await fetch(
         apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}`),
         { headers: { Accept: "application/json" } }
@@ -96,20 +129,16 @@ export default function App() {
         companyName: companyName.trim(),
         nextStep: nextStep.trim(),
         dueAt: (dueAt || "").trim(),
-        status: "open",
+        status: "open" as Status,
       };
 
-      // minimale checks (client-side)
       if (!payload.contactName) throw new Error("Please enter a contact name.");
       if (!payload.nextStep) throw new Error("Please enter a next step.");
       if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
 
       const res = await fetch(apiUrl("/api/followups"), {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -118,19 +147,101 @@ export default function App() {
         throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
       }
 
-      // server returns { ok:true, id }
       await res.json().catch(() => null);
 
-      // Clear form (hou datum staan, vaak handig)
+      // clear form (date houden we)
       setContactName("");
       setCompanyName("");
       setNextStep("");
 
-      // Refresh list
       await refreshAll();
     } catch (e: any) {
       setErr(e?.message || "Create failed");
-      setLoading(false); // refreshAll zet hem ook, maar bij error willen we zeker uit loading
+      setLoading(false);
+    }
+  }
+
+  async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
+    const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Patch failed (${res.status}) ${text ? "— " + text : ""}`);
+    }
+
+    // jouw endpoint kan { ok:true } teruggeven; of { item }.
+    // We doen safest: refresh na patch.
+    await res.json().catch(() => null);
+  }
+
+  // ---- Actions (Step 6)
+  function transitionPlan(f: Followup) {
+    const ns = nextStatus(f.status);
+    const today = todayYMD();
+
+    // simpele planning
+    if (f.status === "open" && ns === "sent") return { status: ns, dueAt: addDays(today, 3) };
+    if (f.status === "sent" && ns === "waiting") return { status: ns, dueAt: addDays(today, 7) };
+    if (f.status === "waiting" && ns === "followup") return { status: ns, dueAt: today };
+    if (f.status === "followup" && ns === "done") return { status: ns };
+    return { status: ns };
+  }
+
+  async function onMove(f: Followup) {
+    setLoading(true);
+    setErr(null);
+    try {
+      const plan = transitionPlan(f);
+      await patchFollowup(f.id, plan);
+      await refreshAll();
+    } catch (e: any) {
+      setErr(e?.message || "Move failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onDone(f: Followup) {
+    setLoading(true);
+    setErr(null);
+    try {
+      await patchFollowup(f.id, { status: "done" });
+      await refreshAll();
+    } catch (e: any) {
+      setErr(e?.message || "Done failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onReopen(f: Followup) {
+    setLoading(true);
+    setErr(null);
+    try {
+      await patchFollowup(f.id, { status: "open" });
+      await refreshAll();
+    } catch (e: any) {
+      setErr(e?.message || "Reopen failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onSnooze(f: Followup, days: number) {
+    setLoading(true);
+    setErr(null);
+    try {
+      const base = (f.dueAt || todayYMD()).slice(0, 10);
+      await patchFollowup(f.id, { dueAt: addDays(base, days) });
+      await refreshAll();
+    } catch (e: any) {
+      setErr(e?.message || "Snooze failed");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -150,7 +261,7 @@ export default function App() {
     <div className="page">
       <header className="header">
         <h1 className="title">FollowThrough</h1>
-        <p className="tagline">Step 5 — GET + POST (create)</p>
+        <p className="tagline">Step 6 — GET + POST + PATCH (Move/Done/Snooze)</p>
       </header>
 
       {err ? (
@@ -255,35 +366,64 @@ export default function App() {
         ) : items.length === 0 ? (
           <div className="empty">
             <p>No follow-ups yet.</p>
-            <button
-              className="btn"
-              onClick={() => document.getElementById("contactName")?.focus()}
-              disabled={loading}
-            >
+            <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
               Add your first follow-up
             </button>
           </div>
         ) : (
           <div className="list">
-            {items.map((f) => (
-              <div key={f.id} className="card">
-                <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
-                <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
+            {items.map((f) => {
+              const today = todayYMD();
+              const overdue = f.status !== "done" && f.dueAt < today;
+              const cardClass = overdue ? "card cardOverdue" : "card";
 
-                <div style={{ marginTop: 8 }}>
-                  <b>Next:</b> {f.nextStep || "—"}
-                </div>
+              return (
+                <div key={f.id} className={cardClass}>
+                  <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
+                  <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-                <div className="cardMeta" style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <span className="chip chipOpen">{f.status}</span>
-                  <span className="chip chipDue">Due: {f.dueAt || "—"}</span>
-                </div>
+                  <div style={{ marginTop: 8 }}>
+                    <b>Next:</b> {f.nextStep || "—"}
+                  </div>
 
-                <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-                  Id: <code>{f.id}</code>
+                  <div className="cardMeta" style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <span className="chip chipOpen">{statusLabel(f.status)}</span>
+                    <span className="chip chipDue">Due: {f.dueAt || "—"}</span>
+                    {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
+                  </div>
+
+                  <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button className="btn" onClick={() => onMove(f)} disabled={loading}>
+                      Move
+                    </button>
+
+                    <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
+                      +1d
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
+                      +3d
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
+                      +7d
+                    </button>
+
+                    {f.status !== "done" ? (
+                      <button className="btn" onClick={() => onDone(f)} disabled={loading}>
+                        Done
+                      </button>
+                    ) : (
+                      <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
+                        Reopen
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
+                    Id: <code>{f.id}</code>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
