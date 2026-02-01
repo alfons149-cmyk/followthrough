@@ -1,6 +1,6 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { getDb, type Env } from "./_db";
-import { workspaces } from "../../db/schema";
+import { workspaces } from "../db/schema";
+import { getDb, type Env } from "./api/_db";
 import { eq } from "drizzle-orm";
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
