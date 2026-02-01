@@ -9,7 +9,7 @@ type Followup = {
   companyName: string;
   nextStep: string;
   dueAt: string; // YYYY-MM-DD
-  status: "open" | "sent" | "waiting" | "followup" | "done" | string;
+  status: string;
   createdAt?: string;
 };
 
@@ -21,31 +21,12 @@ type Workspace = {
 
 const WORKSPACE_ID = "ws_1";
 
-// Step 3: same-origin API base
+// In productie (Cloudflare Pages) is same-origin correct.
+// (API_BASE leeg laten)
 const API_BASE = "";
 
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
-}
-
-const STATUS_ORDER = ["open", "sent", "waiting", "followup", "done"] as const;
-type KnownStatus = (typeof STATUS_ORDER)[number];
-
-function isKnownStatus(s: string): s is KnownStatus {
-  return (STATUS_ORDER as readonly string[]).includes(s);
-}
-
-function nextStatus(current: string): KnownStatus {
-  if (!isKnownStatus(current)) return "open";
-  const idx = STATUS_ORDER.indexOf(current);
-  return STATUS_ORDER[Math.min(idx + 1, STATUS_ORDER.length - 1)];
-}
-
-function addDays(ymd: string, days: number) {
-  // ymd: YYYY-MM-DD
-  const d = new Date(`${ymd}T00:00:00`);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 export default function App() {
@@ -54,16 +35,6 @@ export default function App() {
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [items, setItems] = useState<Followup[]>([]);
-
-  // form
-  const [contactName, setContactName] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [nextStepText, setNextStepText] = useState("Send intro email");
-  const [dueAt, setDueAt] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 3);
-    return d.toISOString().slice(0, 10);
-  });
 
   const needsTodayCount = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -78,14 +49,17 @@ export default function App() {
   async function refreshAll() {
     setLoading(true);
     setErr(null);
+
     try {
-      const wsRes = await fetch(apiUrl(`/api/workspaces`), {
+      // 1) workspaces
+      const wsRes = await fetch(apiUrl("/api/workspaces"), {
         headers: { Accept: "application/json" },
       });
       if (!wsRes.ok) throw new Error(`Workspaces failed (${wsRes.status})`);
       const wsData = await wsRes.json();
       setWorkspaces(wsData.items || []);
 
+      // 2) followups
       const fuRes = await fetch(
         apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}`),
         { headers: { Accept: "application/json" } }
@@ -105,78 +79,21 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onCreate() {
-    setLoading(true);
-    setErr(null);
-    try {
-      const res = await fetch(apiUrl(`/api/followups`), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          workspaceId: WORKSPACE_ID,
-          ownerId: "u_1",
-          contactName,
-          companyName,
-          nextStep: nextStepText,
-          dueAt,
-          status: "open",
-        }),
-      });
-      if (!res.ok) throw new Error(`Create failed (${res.status})`);
-      await refreshAll();
-      setContactName("");
-      setCompanyName("");
-    } catch (e: any) {
-      setErr(e?.message || "Create failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
-    setLoading(true);
-    setErr(null);
-    try {
-      const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`Patch failed (${res.status})`);
-      await refreshAll();
-    } catch (e: any) {
-      setErr(e?.message || "Patch failed");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function advanceStatus(f: Followup) {
-    const ns = nextStatus(f.status);
-    patchFollowup(f.id, { status: ns });
-  }
-
-  function markDone(f: Followup) {
-    patchFollowup(f.id, { status: "done" });
-  }
-
-  function reopen(f: Followup) {
-    patchFollowup(f.id, { status: "open" });
-  }
-
-  function snooze(f: Followup, days: number) {
-    const base = f.dueAt && /^\d{4}-\d{2}-\d{2}$/.test(f.dueAt) ? f.dueAt : new Date().toISOString().slice(0, 10);
-    patchFollowup(f.id, { dueAt: addDays(base, days) });
-  }
-
   return (
     <div className="page">
       <header className="header">
         <h1 className="title">FollowThrough</h1>
-        <p className="tagline">Step 3 — PATCH actions (move/done/snooze)</p>
+        <p className="tagline">Step 4 — Read-only API (GET workspaces + followups)</p>
       </header>
 
-      {err ? <div className="error">Error: {err}</div> : null}
+      {err ? (
+        <div className="error">
+          Error: {err}{" "}
+          <button className="btn" onClick={refreshAll} disabled={loading} style={{ marginLeft: 8 }}>
+            Retry
+          </button>
+        </div>
+      ) : null}
 
       <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
         <span className="chip chipSoon">Need today: {needsTodayCount}</span>
@@ -199,39 +116,13 @@ export default function App() {
       </section>
 
       <section className="panel">
-        <div className="grid">
-          <div className="field">
-            <label>Contact name</label>
-            <input className="input" value={contactName} onChange={(e) => setContactName(e.target.value)} />
-          </div>
-
-          <div className="field">
-            <label>Company</label>
-            <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-          </div>
-
-          <div className="field">
-            <label>Next step</label>
-            <input className="input" value={nextStepText} onChange={(e) => setNextStepText(e.target.value)} />
-          </div>
-
-          <div className="field">
-            <label>Due at (YYYY-MM-DD)</label>
-            <input className="input" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
-          </div>
-        </div>
-
-        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="btn btnPrimary" onClick={onCreate} disabled={loading || !contactName.trim()}>
-            Add follow-up
-          </button>
-        </div>
-      </section>
-
-      <section className="panel" style={{ marginTop: 12 }}>
         <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
 
-        {items.length === 0 ? (
+        {loading && items.length === 0 ? (
+          <div className="empty">
+            <p>Loading…</p>
+          </div>
+        ) : items.length === 0 ? (
           <div className="empty">
             <p>No follow-ups yet.</p>
           </div>
@@ -242,38 +133,13 @@ export default function App() {
                 <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
                 <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-                <div className="cardMeta" style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <span className="chip chipOpen">{f.status}</span>
-                  <span className="chip chipDue">Due: {f.dueAt}</span>
-                </div>
-
                 <div style={{ marginTop: 8 }}>
                   <b>Next:</b> {f.nextStep || "—"}
                 </div>
 
-                <div className="cardActions" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button className="btn" onClick={() => advanceStatus(f)} disabled={loading}>
-                    Move
-                  </button>
-                  <button className="btn" onClick={() => snooze(f, 1)} disabled={loading}>
-                    +1d
-                  </button>
-                  <button className="btn" onClick={() => snooze(f, 3)} disabled={loading}>
-                    +3d
-                  </button>
-                  <button className="btn" onClick={() => snooze(f, 7)} disabled={loading}>
-                    +7d
-                  </button>
-
-                  {f.status !== "done" ? (
-                    <button className="btn" onClick={() => markDone(f)} disabled={loading}>
-                      Done
-                    </button>
-                  ) : (
-                    <button className="btn" onClick={() => reopen(f)} disabled={loading}>
-                      Reopen
-                    </button>
-                  )}
+                <div className="cardMeta" style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <span className="chip chipOpen">{f.status}</span>
+                  <span className="chip chipDue">Due: {f.dueAt || "—"}</span>
                 </div>
 
                 <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
