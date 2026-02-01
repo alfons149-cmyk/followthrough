@@ -1,18 +1,13 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { followups } from "./db/schema";
-import { getDb, type Env } from "./api/_db";
+import { getDb, type Env } from "./_db";
+import { workspaces } from "../db/schema";
 import { eq } from "drizzle-orm";
 
-export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
+export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
   const db = getDb(env);
-  const url = new URL(request.url);
 
-  // optioneel: ?ownerId=u_1
-  const ownerId = url.searchParams.get("ownerId");
+  // voorbeeld: alle workspaces (pas aan aan je schema)
+  const rows = await db.select().from(workspaces).limit(200);
 
-  const rows = ownerId
-    ? await db.select().from(workspaces).where(eq(workspaces.ownerId, ownerId))
-    : await db.select().from(workspaces);
-
-  return Response.json({ items: rows });
+  return Response.json({ ok: true, items: rows });
 };
