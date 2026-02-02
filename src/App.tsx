@@ -93,6 +93,18 @@ export default function App() {
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
   
+const visible = useMemo(() => {
+  const needle = q.trim().toLowerCase();
+
+  return items.filter((f) => {
+    const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
+
+    const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
+    const matchesSearch = !needle ? true : hay.includes(needle);
+
+    return matchesStatus && matchesSearch;
+  });
+}, [items, q, statusFilter]);
 
 
   // ---- KPIs
