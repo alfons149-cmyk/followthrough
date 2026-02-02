@@ -504,16 +504,14 @@ export default function App() {
       </div>
     ) : (
       <div className="list">
-        {visible.map((f) => (
-          const today = todayYMD();
-          const due = (f.dueAt || "").slice(0, 10);
-          const overdue = f.status !== "done" && due && due < today;
-          const cardClass = overdue ? "card cardOverdue" : "card";
+  {visible.map((f) => {
+    const today = todayYMD();
+    const due = (f.dueAt || "").slice(0, 10);
+    const overdue = f.status !== "done" && due && due < today;
+    const cardClass = overdue ? "card cardOverdue" : "card";
 
-          return (
-            <div key={f.id} className={cardClass}>
-              <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
-              <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
+    return (
+      <div key={f.id} className={cardClass}>
 
               {/* NEXT step inline edit */}
               <div style={{ marginTop: 10 }}>
