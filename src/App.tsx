@@ -510,9 +510,8 @@ export default function App() {
     const overdue = f.status !== "done" && due && due < today;
     const cardClass = overdue ? "card cardOverdue" : "card";
 
-    return (
-      <div key={f.id} className={cardClass}>
-
+      return (
+        <div key={f.id} className={cardClass}>
               {/* NEXT step inline edit */}
               <div style={{ marginTop: 10 }}>
                 <b>Next:</b>{" "}
@@ -637,12 +636,11 @@ export default function App() {
                   </button>
                 )}
               </div>
-
              <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-                Id: <code>{f.id}</code>
-              </div>
-            </div>
-          );
+            Id: <code>{f.id}</code>
+          </div>
+        </div>
+      );
         })}
       </div>
     )}
