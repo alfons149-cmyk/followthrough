@@ -90,6 +90,9 @@ export default function App() {
 
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
+
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
