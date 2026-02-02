@@ -208,7 +208,7 @@ export default function App() {
     if (f.status === "open" && ns === "sent") return { status: ns, dueAt: addDays(today, 3) };
     if (f.status === "sent" && ns === "waiting") return { status: ns, dueAt: addDays(today, 7) };
     if (f.status === "waiting" && ns === "followup") return { status: ns, dueAt: today };
-    if (f.status === "followup" && ns === "done") return { status: ns };
+    if (f.status === "done") return { status: "done" as const };
     return { status: ns };
   }
 
