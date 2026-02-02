@@ -447,6 +447,49 @@ const visible = useMemo(() => {
   <section className="panel">
     <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
 
+    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+  <div className="field" style={{ minWidth: 240 }}>
+    <label>Search</label>
+    <input
+      className="input"
+      value={q}
+      onChange={(e) => setQ(e.target.value)}
+      placeholder="Alex, Benefix, intro…"
+      disabled={loading}
+    />
+  </div>
+
+  <div className="field" style={{ minWidth: 160 }}>
+    <label>Status</label>
+    <select
+      className="select"
+      value={statusFilter}
+      onChange={(e) => setStatusFilter(e.target.value as any)}
+      disabled={loading}
+    >
+      <option value="all">All</option>
+      <option value="open">Open</option>
+      <option value="sent">Sent</option>
+      <option value="waiting">Waiting</option>
+      <option value="followup">Follow-up</option>
+      <option value="done">Done</option>
+    </select>
+  </div>
+
+  <div style={{ display: "flex", alignItems: "flex-end" }}>
+    <button
+      className="btn"
+      onClick={() => {
+        setQ("");
+        setStatusFilter("all");
+      }}
+      disabled={loading}
+    >
+      Clear filters
+    </button>
+  </div>
+</div>
+
     {loading && items.length === 0 ? (
       <div className="empty">
         <p>Loading…</p>
