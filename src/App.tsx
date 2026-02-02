@@ -555,31 +555,39 @@ export default function App() {
                   </div>
 
                   {/* ACTIONS */}
-                  <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button className="btn" onClick={() => onMove(f)} disabled={loading}>
-                      Move
-                    </button>
+                  <div
+  className="cardActions"
+  style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}
+>
+  <button className="btn" onClick={() => onMove(f)} disabled={loading}>
+    Move
+  </button>
 
-                    <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
-                      +1d
-                    </button>
-                    <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
-                      +3d
-                    </button>
-                    <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
-                      +7d
-                    </button>
+  <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
+    +1d
+  </button>
+  <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
+    +3d
+  </button>
+  <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
+    +7d
+  </button>
 
-                    {f.status !== "done" ? (
-                      <button className="btn" onClick={() => onDone(f)} disabled={loading}>
-                        Done
-                      </button>
-                    ) : (
-                      <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
-                        Reopen
-                      </button>
-                    )}
-                  </div>
+  {f.status !== "done" ? (
+    <button className="btn" onClick={() => onDone(f)} disabled={loading}>
+      Done
+    </button>
+  ) : (
+    <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
+      Reopen
+    </button>
+  )}
+</div>
+
+async function onMove(f: Followup) { await advanceStatus(f); }
+async function onSnooze(f: Followup, days: number) { await snooze(f, days); }
+async function onDone(f: Followup) { await markDone(f); }
+async function onReopen(f: Followup) { await reopen(f); }
 
                   <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
                     Id: <code>{f.id}</code>
