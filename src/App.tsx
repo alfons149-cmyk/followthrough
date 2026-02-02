@@ -92,9 +92,6 @@ export default function App() {
 
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
-  
-const visible = useMemo(() => {
-  const needle = q.trim().toLowerCase();
 
   return items.filter((f) => {
     const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
