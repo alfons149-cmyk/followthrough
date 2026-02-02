@@ -434,170 +434,169 @@ export default function App() {
         </div>
       </section>
 
-      {/* List */}
-      <section className="panel">
-        <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
+        {/* List */}
+  <section className="panel">
+    <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
 
-        {loading && items.length === 0 ? (
-          <div className="empty">
-            <p>Loading…</p>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="empty">
-            <p>No follow-ups yet.</p>
-            <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
-              Add your first follow-up
-            </button>
-          </div>
-        ) : (
-          <div className="list">
-            {items.map((f) => {
-              const today = todayYMD();
-              const due = (f.dueAt || "").slice(0, 10);
-              const overdue = f.status !== "done" && due && due < today;
-              const cardClass = overdue ? "card cardOverdue" : "card";
+    {loading && items.length === 0 ? (
+      <div className="empty">
+        <p>Loading…</p>
+      </div>
+    ) : items.length === 0 ? (
+      <div className="empty">
+        <p>No follow-ups yet.</p>
+        <button
+          className="btn"
+          onClick={() => document.getElementById("contactName")?.focus()}
+          disabled={loading}
+        >
+          Add your first follow-up
+        </button>
+      </div>
+    ) : (
+      <div className="list">
+        {items.map((f) => {
+          const today = todayYMD();
+          const due = (f.dueAt || "").slice(0, 10);
+          const overdue = f.status !== "done" && due && due < today;
+          const cardClass = overdue ? "card cardOverdue" : "card";
 
-              return (
-                <div key={f.id} className={cardClass}>
-                  <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
-                  <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
+          return (
+            <div key={f.id} className={cardClass}>
+              <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
+              <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-                  {/* NEXT step inline edit */}
-                  <div style={{ marginTop: 10 }}>
-                    <b>Next:</b>{" "}
-                    {editNextId === f.id ? (
-                      <input
-                        className="input"
-                        value={draftNext(f.id)}
-                        autoFocus
-                        disabled={loading}
-                        onChange={(e) =>
-                          setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                        }
-                        onBlur={() => saveEditNext(f.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveEditNext(f.id);
-                          if (e.key === "Escape") cancelEditNext(f.id);
-                        }}
-                        style={{ maxWidth: 520 }}
-                      />
-                    ) : (
-                      <>
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => startEditNext(f)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          {f.nextStep || "—"}
-                        </span>
-                        <button
-                          className="btn"
-                          title="Edit next step"
-                          disabled={loading}
-                          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                          onClick={() => startEditNext(f)}
-                        >
-                          ✎
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  {/* META + DUE inline edit */}
-                  <div className="cardMeta" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <span className="chip chipOpen">{statusLabel(f.status)}</span>
-
-                    <span className="chip chipDue">
-                      Due:{" "}
-                      {editDueId === f.id ? (
-                        <input
-                          className="input"
-                          value={draftDue(f.id)}
-                          autoFocus
-                          disabled={loading}
-                          onChange={(e) =>
-                            setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                          }
-                          onBlur={() => saveEditDue(f.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") saveEditDue(f.id);
-                            if (e.key === "Escape") cancelEditDue(f.id);
-                          }}
-                          style={{ width: 140 }}
-                          placeholder="YYYY-MM-DD"
-                        />
-                      ) : (
-                        <>
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => startEditDue(f)}
-                            style={{ cursor: "pointer", fontWeight: 700 }}
-                            title="Click to edit due date"
-                          >
-                            {due || "—"}
-                          </span>
-                          <button
-                            className="btn"
-                            title="Edit due date"
-                            disabled={loading}
-                            style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                            onClick={() => startEditDue(f)}
-                          >
-                            ✎
-                          </button>
-                        </>
-                      )}
+              {/* NEXT step inline edit */}
+              <div style={{ marginTop: 10 }}>
+                <b>Next:</b>{" "}
+                {editNextId === f.id ? (
+                  <input
+                    className="input"
+                    value={draftNext(f.id)}
+                    autoFocus
+                    disabled={loading}
+                    onChange={(e) =>
+                      setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                    }
+                    onBlur={() => saveEditNext(f.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEditNext(f.id);
+                      if (e.key === "Escape") cancelEditNext(f.id);
+                    }}
+                    style={{ maxWidth: 520 }}
+                  />
+                ) : (
+                  <>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => startEditNext(f)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {f.nextStep || "—"}
                     </span>
+                    <button
+                      className="btn"
+                      title="Edit next step"
+                      disabled={loading}
+                      style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                      onClick={() => startEditNext(f)}
+                    >
+                      ✎
+                    </button>
+                  </>
+                )}
+              </div>
 
-                    {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
-                  </div>
+              {/* META + DUE inline edit */}
+              <div
+                className="cardMeta"
+                style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}
+              >
+                <span className="chip chipOpen">{statusLabel(f.status)}</span>
 
-                  {/* ACTIONS */}
-                  <div
-  className="cardActions"
-  style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}
->
-  <button className="btn" onClick={() => onMove(f)} disabled={loading}>
-    Move
-  </button>
+                <span className="chip chipDue">
+                  Due:{" "}
+                  {editDueId === f.id ? (
+                    <input
+                      className="input"
+                      value={draftDue(f.id)}
+                      autoFocus
+                      disabled={loading}
+                      onChange={(e) =>
+                        setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                      }
+                      onBlur={() => saveEditDue(f.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEditDue(f.id);
+                        if (e.key === "Escape") cancelEditDue(f.id);
+                      }}
+                      style={{ width: 140 }}
+                      placeholder="YYYY-MM-DD"
+                    />
+                  ) : (
+                    <>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => startEditDue(f)}
+                        style={{ cursor: "pointer", fontWeight: 700 }}
+                        title="Click to edit due date"
+                      >
+                        {due || "—"}
+                      </span>
+                      <button
+                        className="btn"
+                        title="Edit due date"
+                        disabled={loading}
+                        style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                        onClick={() => startEditDue(f)}
+                      >
+                        ✎
+                      </button>
+                    </>
+                  )}
+                </span>
 
-  <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
-    +1d
-  </button>
-  <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
-    +3d
-  </button>
-  <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
-    +7d
-  </button>
+                {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
+              </div>
 
-  {f.status !== "done" ? (
-    <button className="btn" onClick={() => onDone(f)} disabled={loading}>
-      Done
-    </button>
-  ) : (
-    <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
-      Reopen
-    </button>
-  )}
-</div>
+              {/* ACTIONS */}
+              <div
+                className="cardActions"
+                style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}
+              >
+                <button className="btn" onClick={() => onMove(f)} disabled={loading}>
+                  Move
+                </button>
 
-async function onMove(f: Followup) { await advanceStatus(f); }
-async function onSnooze(f: Followup, days: number) { await snooze(f, days); }
-async function onDone(f: Followup) { await markDone(f); }
-async function onReopen(f: Followup) { await reopen(f); }
+                <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
+                  +1d
+                </button>
+                <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
+                  +3d
+                </button>
+                <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
+                  +7d
+                </button>
 
-                  <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-                    Id: <code>{f.id}</code>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
+                {f.status !== "done" ? (
+                  <button className="btn" onClick={() => onDone(f)} disabled={loading}>
+                    Done
+                  </button>
+                ) : (
+                  <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
+                    Reopen
+                  </button>
+                )}
+              </div>
+
+              <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
+                Id: <code>{f.id}</code>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </section>
