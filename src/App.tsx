@@ -83,15 +83,19 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
 
   // =========================
-  // Step 7: inline edit state (draft per item-id)
-  // =========================
-  const [editNextId, setEditNextId] = useState<string | null>(null);
-  const [editDueId, setEditDueId] = useState<string | null>(null);
-  const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
-  const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
+// Step 7: inline edit state (draft per item-id)
+// =========================
+const [editNextId, setEditNextId] = useState<string | null>(null);
+const [editDueId, setEditDueId] = useState<string | null>(null);
+const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
+const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 
-  const draftNext = (id: string) => draftNextById[id] ?? "";
-  const draftDue = (id: string) => draftDueById[id] ?? "";
+const draftNext = (id: string) => draftNextById[id] ?? "";
+const draftDue = (id: string) => draftDueById[id] ?? "";
+
+// ✅ FILTERED LIST (search + status)
+const visible = useMemo(() => {
+  const needle = (q || "").trim().toLowerCase();
 
   return items.filter((f) => {
     const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
@@ -102,7 +106,6 @@ export default function App() {
     return matchesStatus && matchesSearch;
   });
 }, [items, q, statusFilter]);
-
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
