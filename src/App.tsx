@@ -27,7 +27,6 @@ const OWNER_ID = "u_1";
 const STATUS_ORDER: Status[] = ["open", "sent", "waiting", "followup", "done"];
 
 const API_BASE = ""; // same-origin on Cloudflare Pages
-
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
 }
@@ -79,33 +78,33 @@ export default function App() {
   const [companyName, setCompanyName] = useState("");
   const [nextStep, setNextStep] = useState("");
   const [dueAt, setDueAt] = useState(todayYMD());
+
+  // Search/filter
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
 
-  // =========================
-// Step 7: inline edit state (draft per item-id)
-// =========================
-const [editNextId, setEditNextId] = useState<string | null>(null);
-const [editDueId, setEditDueId] = useState<string | null>(null);
-const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
-const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
+  // Step 7: inline edit state (draft per item-id)
+  const [editNextId, setEditNextId] = useState<string | null>(null);
+  const [editDueId, setEditDueId] = useState<string | null>(null);
+  const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
+  const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 
-const draftNext = (id: string) => draftNextById[id] ?? "";
-const draftDue = (id: string) => draftDueById[id] ?? "";
+  const draftNext = (id: string) => draftNextById[id] ?? "";
+  const draftDue = (id: string) => draftDueById[id] ?? "";
 
-// ✅ FILTERED LIST (search + status)
-const visible = useMemo(() => {
-  const needle = (q || "").trim().toLowerCase();
+  // ✅ FILTERED LIST (search + status)
+  const visible = useMemo(() => {
+    const needle = (q || "").trim().toLowerCase();
 
-  return items.filter((f) => {
-    const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
+    return items.filter((f) => {
+      const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
 
-    const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
-    const matchesSearch = !needle ? true : hay.includes(needle);
+      const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
+      const matchesSearch = !needle ? true : hay.includes(needle);
 
-    return matchesStatus && matchesSearch;
-  });
-}, [items, q, statusFilter]);
+      return matchesStatus && matchesSearch;
+    });
+  }, [items, q, statusFilter]);
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
@@ -187,27 +186,28 @@ const visible = useMemo(() => {
       await refreshAll();
     } catch (e: any) {
       setErr(e?.message || "Create failed");
+    } finally {
       setLoading(false);
     }
   }
 
   async function patchFollowup(
-  id: string,
-  body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
-) {
-  const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
-  });
+    id: string,
+    body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+  ) {
+    const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+    });
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Patch failed (${res.status}) ${text ? "— " + text : ""}`);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Patch failed (${res.status}) ${text ? "— " + text : ""}`);
+    }
+
+    await res.json().catch(() => null);
   }
-
-  await res.json().catch(() => null);
-}
 
   // ---- Actions (Move/Done/Reopen/Snooze)
   function transitionPlan(f: Followup) {
@@ -275,9 +275,7 @@ const visible = useMemo(() => {
     }
   }
 
-  // =========================
   // Step 7: inline edit handlers
-  // =========================
   function startEditNext(f: Followup) {
     setEditDueId(null);
     setEditNextId(f.id);
@@ -286,7 +284,6 @@ const visible = useMemo(() => {
 
   function cancelEditNext(id: string) {
     setEditNextId((cur) => (cur === id ? null : cur));
-    // draft laten we staan, is ok voor "draft-variant"
   }
 
   async function saveEditNext(id: string) {
@@ -443,98 +440,214 @@ const visible = useMemo(() => {
         </div>
       </section>
 
-        {/* List */}
-  <section className="panel">
-    <h3 style={{ marginTop: 0 }}>Follow-ups ({visible.length})</h3>
+      {/* List */}
+      <section className="panel">
+        <h3 style={{ marginTop: 0 }}>
+          Follow-ups ({visible.length})
+        </h3>
 
-    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-  <div className="field" style={{ minWidth: 240 }}>
-    <label>Search</label>
-    <input
-      className="input"
-      value={q}
-      onChange={(e) => setQ(e.target.value)}
-      placeholder="Alex, Benefix, intro…"
-      disabled={loading}
-    />
-  </div>
+        {/* Filters */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+          <div className="field" style={{ minWidth: 240 }}>
+            <label>Search</label>
+            <input
+              className="input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Alex, Benefix, intro…"
+              disabled={loading}
+            />
+          </div>
 
-  <div className="field" style={{ minWidth: 160 }}>
-    <label>Status</label>
-    <select
-      className="select"
-      value={statusFilter}
-      onChange={(e) => setStatusFilter(e.target.value as any)}
-      disabled={loading}
-    >
-      <option value="all">All</option>
-      <option value="open">Open</option>
-      <option value="sent">Sent</option>
-      <option value="waiting">Waiting</option>
-      <option value="followup">Follow-up</option>
-      <option value="done">Done</option>
-    </select>
-  </div>
+          <div className="field" style={{ minWidth: 160 }}>
+            <label>Status</label>
+            <select
+              className="select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              disabled={loading}
+            >
+              <option value="all">All</option>
+              <option value="open">Open</option>
+              <option value="sent">Sent</option>
+              <option value="waiting">Waiting</option>
+              <option value="followup">Follow-up</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
 
-  <div style={{ display: "flex", alignItems: "flex-end" }}>
-    <button
-      className="btn"
-      onClick={() => {
-        setQ("");
-        setStatusFilter("all");
-      }}
-      disabled={loading}
-    >
-      Clear filters
-    </button>
-  </div>
-</div>
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
+            <button
+              className="btn"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+              }}
+              disabled={loading}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
 
-    {loading && items.length === 0 ? (
-      <div className="empty">
-        <p>Loading…</p>
-      </div>
-    ) : items.length === 0 ? (
-      <div className="empty">
-        <p>No follow-ups yet.</p>
-        <button
-          className="btn"
-          onClick={() => document.getElementById("contactName")?.focus()}
-          disabled={loading}
-        >
-          Add your first follow-up
-        </button>
-      </div>
-    ) : (
-     <div className="list">
-  {visible.map((f) => {
-    const today = todayYMD();
-    const due = (f.dueAt || "").slice(0, 10);
-    const overdue = f.status !== "done" && due && due < today;
-    const cardClass = overdue ? "card cardOverdue" : "card";
+        {/* Empty/loading states */}
+        {loading && items.length === 0 ? (
+          <div className="empty">
+            <p>Loading…</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="empty">
+            <p>No follow-ups yet.</p>
+            <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
+              Add your first follow-up
+            </button>
+          </div>
+        ) : visible.length === 0 ? (
+          <div className="empty">
+            <h3>No matches</h3>
+            <p>Try clearing search or changing the status filter.</p>
+            <button
+              className="btn"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+              }}
+              disabled={loading}
+            >
+              Clear filters
+            </button>
+          </div>
+        ) : (
+          <div className="list">
+            {visible.map((f) => {
+              const today = todayYMD();
+              const due = (f.dueAt || "").slice(0, 10);
+              const overdue = f.status !== "done" && due && due < today;
+              const cardClass = overdue ? "card cardOverdue" : "card";
 
-    return (
-      <div key={f.id} className={cardClass}>
-        {/* ... jouw card content hierboven ... */}
+              return (
+                <div key={f.id} className={cardClass}>
+                  <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
+                  <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-        {/* ACTIONS */}
-       <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-  <button className="btn" onClick={() => onMove(f)} disabled={loading}>Move</button>
+                  {/* NEXT step inline edit */}
+                  <div style={{ marginTop: 10 }}>
+                    <b>Next:</b>{" "}
+                    {editNextId === f.id ? (
+                      <input
+                        className="input"
+                        value={draftNext(f.id)}
+                        autoFocus
+                        disabled={loading}
+                        onChange={(e) => setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                        onBlur={() => saveEditNext(f.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveEditNext(f.id);
+                          if (e.key === "Escape") cancelEditNext(f.id);
+                        }}
+                        style={{ maxWidth: 520 }}
+                      />
+                    ) : (
+                      <>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => startEditNext(f)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {f.nextStep || "—"}
+                        </span>
+                        <button
+                          className="btn"
+                          title="Edit next step"
+                          disabled={loading}
+                          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                          onClick={() => startEditNext(f)}
+                        >
+                          ✎
+                        </button>
+                      </>
+                    )}
+                  </div>
 
-  <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>+1d</button>
-  <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>+3d</button>
-  <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>+7d</button>
+                  {/* META + DUE inline edit */}
+                  <div className="cardMeta" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <span className="chip chipOpen">{statusLabel(f.status)}</span>
 
-  {f.status !== "done" ? (
-    <button className="btn" onClick={() => onDone(f)} disabled={loading}>Done</button>
-  ) : (
-    <button className="btn" onClick={() => onReopen(f)} disabled={loading}>Reopen</button>
-  )}
-</div>
+                    <span className="chip chipDue">
+                      Due:{" "}
+                      {editDueId === f.id ? (
+                        <input
+                          className="input"
+                          value={draftDue(f.id)}
+                          autoFocus
+                          disabled={loading}
+                          onChange={(e) => setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                          onBlur={() => saveEditDue(f.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEditDue(f.id);
+                            if (e.key === "Escape") cancelEditDue(f.id);
+                          }}
+                          style={{ width: 140 }}
+                          placeholder="YYYY-MM-DD"
+                        />
+                      ) : (
+                        <>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => startEditDue(f)}
+                            style={{ cursor: "pointer", fontWeight: 700 }}
+                            title="Click to edit due date"
+                          >
+                            {due || "—"}
+                          </span>
+                          <button
+                            className="btn"
+                            title="Edit due date"
+                            disabled={loading}
+                            style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                            onClick={() => startEditDue(f)}
+                          >
+                            ✎
+                          </button>
+                        </>
+                      )}
+                    </span>
 
-<div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-  Id: <code>{f.id}</code>
-</div>
+                    {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button className="btn" onClick={() => onMove(f)} disabled={loading}>
+                      Move
+                    </button>
+
+                    <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
+                      +1d
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
+                      +3d
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
+                      +7d
+                    </button>
+
+                    {f.status !== "done" ? (
+                      <button className="btn" onClick={() => onDone(f)} disabled={loading}>
+                        Done
+                      </button>
+                    ) : (
+                      <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
+                        Reopen
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
+                    Id: <code>{f.id}</code>
+                  </div>
                 </div>
               );
             })}
@@ -544,6 +657,3 @@ const visible = useMemo(() => {
     </div>
   );
 }
-
-
-
