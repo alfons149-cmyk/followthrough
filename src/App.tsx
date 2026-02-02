@@ -507,7 +507,7 @@ const visible = useMemo(() => {
       </div>
     ) : (
       <div className="list">
-        {items.map((f) => {
+        {visible.map((f) => (
           const today = todayYMD();
           const due = (f.dueAt || "").slice(0, 10);
           const overdue = f.status !== "done" && due && due < today;
