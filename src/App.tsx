@@ -627,16 +627,17 @@ export default function App() {
                 </button>
 
                 {f.status !== "done" ? (
-                  <button className="btn" onClick={() => onDone(f)} disabled={loading}>
-                    Done
-                  </button>
-                ) : (
-                  <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
-                    Reopen
-                  </button>
-                )}
-              </div>
-             <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
+  <button className="btn" onClick={() => onDone(f)} disabled={loading}>
+    Done
+  </button>
+) : (
+  <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
+    Reopen
+  </button>
+)}
+</div>
+
+<div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
   Id: <code>{f.id}</code>
 </div>
 </div>
