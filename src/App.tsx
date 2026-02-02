@@ -131,16 +131,6 @@ export default function App() {
     }
   }
 
-  async function patchFollowup(id: string, body: { status?: string; dueAt?: string; nextStep?: string }) {
-  const res = await fetch(`/api/followups/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`PATCH failed (${res.status})`);
-  return res.json();
-}
-
   async function onCreate() {
     setLoading(true);
     setErr(null);
