@@ -555,10 +555,10 @@ const visible = useMemo(() => {
   })}
 </div>
 )}
-      </section>
+            </section>
     </div>
-</div>
   );
 }
+
 
 
