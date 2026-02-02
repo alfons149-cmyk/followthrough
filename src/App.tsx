@@ -637,14 +637,15 @@ export default function App() {
                 )}
               </div>
              <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-            Id: <code>{f.id}</code>
-          </div>
-        </div>
-      );
-        })}
-      </div>
-    )}
-  </section>
-
-  );
+  Id: <code>{f.id}</code>
+</div>
+</div>
+);
+})}
+</div>
+)}
+</section>
+</div>
+);
 }
+
