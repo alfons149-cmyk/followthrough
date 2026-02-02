@@ -175,20 +175,23 @@ export default function App() {
     }
   }
 
-  async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
-    const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(body),
-    });
+  async function patchFollowup(
+  id: string,
+  body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+) {
+  const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(body),
+  });
 
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`Patch failed (${res.status}) ${text ? "— " + text : ""}`);
-    }
-
-    await res.json().catch(() => null);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Patch failed (${res.status}) ${text ? "— " + text : ""}`);
   }
+
+  await res.json().catch(() => null);
+}
 
   // ---- Actions (Move/Done/Reopen/Snooze)
   function transitionPlan(f: Followup) {
