@@ -555,8 +555,9 @@ const visible = useMemo(() => {
   })}
 </div>
 )}
-</section>
-</div>
-);
+      </section>
+    </div>
+  );
 }
+
 
