@@ -27,7 +27,6 @@ const OWNER_ID = "u_1";
 const STATUS_ORDER: Status[] = ["open", "sent", "waiting", "followup", "done"];
 
 const API_BASE = ""; // same-origin on Cloudflare Pages
-
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
 }
@@ -80,9 +79,11 @@ export default function App() {
   const [nextStep, setNextStep] = useState("");
   const [dueAt, setDueAt] = useState(todayYMD());
 
-  // =========================
+  // Search/filter
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
+
   // Step 7: inline edit state (draft per item-id)
-  // =========================
   const [editNextId, setEditNextId] = useState<string | null>(null);
   const [editDueId, setEditDueId] = useState<string | null>(null);
   const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
@@ -90,6 +91,20 @@ export default function App() {
 
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
+
+  // ✅ FILTERED LIST (search + status)
+  const visible = useMemo(() => {
+    const needle = (q || "").trim().toLowerCase();
+
+    return items.filter((f) => {
+      const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
+
+      const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
+      const matchesSearch = !needle ? true : hay.includes(needle);
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [items, q, statusFilter]);
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
@@ -171,11 +186,15 @@ export default function App() {
       await refreshAll();
     } catch (e: any) {
       setErr(e?.message || "Create failed");
+    } finally {
       setLoading(false);
     }
   }
 
-  async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
+  async function patchFollowup(
+    id: string,
+    body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+  ) {
     const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -198,7 +217,7 @@ export default function App() {
     if (f.status === "open" && ns === "sent") return { status: ns, dueAt: addDays(today, 3) };
     if (f.status === "sent" && ns === "waiting") return { status: ns, dueAt: addDays(today, 7) };
     if (f.status === "waiting" && ns === "followup") return { status: ns, dueAt: today };
-    if (f.status === "followup" && ns === "done") return { status: ns };
+    if (f.status === "done") return { status: "done" as const };
     return { status: ns };
   }
 
@@ -256,9 +275,7 @@ export default function App() {
     }
   }
 
-  // =========================
   // Step 7: inline edit handlers
-  // =========================
   function startEditNext(f: Followup) {
     setEditDueId(null);
     setEditNextId(f.id);
@@ -267,7 +284,6 @@ export default function App() {
 
   function cancelEditNext(id: string) {
     setEditNextId((cur) => (cur === id ? null : cur));
-    // draft laten we staan, is ok voor "draft-variant"
   }
 
   async function saveEditNext(id: string) {
@@ -426,8 +442,55 @@ export default function App() {
 
       {/* List */}
       <section className="panel">
-        <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
+        <h3 style={{ marginTop: 0 }}>
+          Follow-ups ({visible.length})
+        </h3>
 
+        {/* Filters */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+          <div className="field" style={{ minWidth: 240 }}>
+            <label>Search</label>
+            <input
+              className="input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Alex, Benefix, intro…"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="field" style={{ minWidth: 160 }}>
+            <label>Status</label>
+            <select
+              className="select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              disabled={loading}
+            >
+              <option value="all">All</option>
+              <option value="open">Open</option>
+              <option value="sent">Sent</option>
+              <option value="waiting">Waiting</option>
+              <option value="followup">Follow-up</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "flex-end" }}>
+            <button
+              className="btn"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+              }}
+              disabled={loading}
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+
+        {/* Empty/loading states */}
         {loading && items.length === 0 ? (
           <div className="empty">
             <p>Loading…</p>
@@ -439,9 +502,24 @@ export default function App() {
               Add your first follow-up
             </button>
           </div>
+        ) : visible.length === 0 ? (
+          <div className="empty">
+            <h3>No matches</h3>
+            <p>Try clearing search or changing the status filter.</p>
+            <button
+              className="btn"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+              }}
+              disabled={loading}
+            >
+              Clear filters
+            </button>
+          </div>
         ) : (
           <div className="list">
-            {items.map((f) => {
+            {visible.map((f) => {
               const today = todayYMD();
               const due = (f.dueAt || "").slice(0, 10);
               const overdue = f.status !== "done" && due && due < today;
@@ -461,9 +539,7 @@ export default function App() {
                         value={draftNext(f.id)}
                         autoFocus
                         disabled={loading}
-                        onChange={(e) =>
-                          setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                        }
+                        onChange={(e) => setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))}
                         onBlur={() => saveEditNext(f.id)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") saveEditNext(f.id);
@@ -506,9 +582,7 @@ export default function App() {
                           value={draftDue(f.id)}
                           autoFocus
                           disabled={loading}
-                          onChange={(e) =>
-                            setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                          }
+                          onChange={(e) => setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))}
                           onBlur={() => saveEditDue(f.id)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") saveEditDue(f.id);
@@ -583,4 +657,3 @@ export default function App() {
     </div>
   );
 }
-
