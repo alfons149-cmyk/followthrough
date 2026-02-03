@@ -106,12 +106,14 @@ export default function App() {
   }
 
   function toggleDone(id: string) {
-    setItems((prev) =>
-      prev.map((x) =>
-        x.id === id ? { ...x, status: x.status === "done" ? "open" : "done" } : x
-      )
-    );
-  }
+  setItems((prev) =>
+    prev.map((x) =>
+      x.id === id
+        ? { ...x, status: x.status === "done" ? "open" : "done" }
+        : x
+    )
+  );
+}
 
   return (
     <div className="page">
