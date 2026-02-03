@@ -1,6 +1,6 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { getDb, type Env } from "../_db";
-import { followups } from "../../../../src/db/schema";
+import { followups } from "../db/schema";
 import { eq } from "drizzle-orm";
 
 const cors = (origin?: string) => ({

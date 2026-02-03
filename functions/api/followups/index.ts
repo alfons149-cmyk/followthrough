@@ -1,7 +1,7 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { and, desc, eq } from "drizzle-orm";
-import { followups } from "../../../db/schema";
-import { getDb, type Env } from "../../../_db";
+import { followups } from "../db/schema";
+import { getDb, type Env } from "../_db";
 
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
@@ -41,10 +41,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
-  const body = (await request.json()) as any;
+  const origin = request.headers.get("Origin") ?? "*";
+
+  const body = (await request.json().catch(() => ({}))) as any;
 
   if (!body?.workspaceId || !body?.ownerId) {
-    return Response.json({ ok: false, error: "Missing workspaceId/ownerId" }, { status: 400 });
+    return Response.json(
+      { ok: false, error: "Missing workspaceId/ownerId" },
+      { status: 400, headers: cors(origin) }
+    );
   }
 
   const id = `f_${crypto.randomUUID()}`;
@@ -62,6 +67,5 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     createdAt,
   });
 
-  const origin = request.headers.get("Origin") ?? "*";
   return Response.json({ ok: true, id }, { headers: cors(origin) });
 };
