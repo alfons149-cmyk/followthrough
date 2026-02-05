@@ -344,4 +344,3 @@ export default function App() {
     <p>Test render</p>
   </div>
 );
-
