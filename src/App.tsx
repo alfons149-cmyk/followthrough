@@ -343,5 +343,4 @@ export default function App() {
     <h1>FollowThrough</h1>
     <p>Test render</p>
   </div>
-)
 );
