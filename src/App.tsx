@@ -27,6 +27,7 @@ const OWNER_ID = "u_1";
 const STATUS_ORDER: Status[] = ["open", "sent", "waiting", "followup", "done"];
 
 const API_BASE = ""; // same-origin on Cloudflare Pages
+
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
 }
@@ -79,11 +80,9 @@ export default function App() {
   const [nextStep, setNextStep] = useState("");
   const [dueAt, setDueAt] = useState(todayYMD());
 
-  // Search/filter
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
-
+  // =========================
   // Step 7: inline edit state (draft per item-id)
+  // =========================
   const [editNextId, setEditNextId] = useState<string | null>(null);
   const [editDueId, setEditDueId] = useState<string | null>(null);
   const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
@@ -91,20 +90,6 @@ export default function App() {
 
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
-
-  // ✅ FILTERED LIST (search + status)
-  const visible = useMemo(() => {
-    const needle = (q || "").trim().toLowerCase();
-
-    return items.filter((f) => {
-      const matchesStatus = statusFilter === "all" ? true : f.status === statusFilter;
-
-      const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
-      const matchesSearch = !needle ? true : hay.includes(needle);
-
-      return matchesStatus && matchesSearch;
-    });
-  }, [items, q, statusFilter]);
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
@@ -186,15 +171,11 @@ export default function App() {
       await refreshAll();
     } catch (e: any) {
       setErr(e?.message || "Create failed");
-    } finally {
       setLoading(false);
     }
   }
 
-  async function patchFollowup(
-    id: string,
-    body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
-  ) {
+  async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
     const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -217,7 +198,7 @@ export default function App() {
     if (f.status === "open" && ns === "sent") return { status: ns, dueAt: addDays(today, 3) };
     if (f.status === "sent" && ns === "waiting") return { status: ns, dueAt: addDays(today, 7) };
     if (f.status === "waiting" && ns === "followup") return { status: ns, dueAt: today };
-    if (f.status === "done") return { status: "done" as const };
+    if (f.status === "followup" && ns === "done") return { status: ns };
     return { status: ns };
   }
 
@@ -275,7 +256,9 @@ export default function App() {
     }
   }
 
+  // =========================
   // Step 7: inline edit handlers
+  // =========================
   function startEditNext(f: Followup) {
     setEditDueId(null);
     setEditNextId(f.id);
@@ -284,6 +267,7 @@ export default function App() {
 
   function cancelEditNext(id: string) {
     setEditNextId((cur) => (cur === id ? null : cur));
+    // draft laten we staan, is ok voor "draft-variant"
   }
 
   async function saveEditNext(id: string) {
@@ -330,18 +314,272 @@ export default function App() {
     }
   }
 
-  function toggleDone(id: string) {
-    setItems((prev) =>
-      prev.map((x) =>
-        x.id === id ? { ...x, status: x.status === "done" ? "open" : "done" } : x
-      )
-    );
+  function clearForm() {
+    setContactName("");
+    setCompanyName("");
+    setNextStep("");
+    setDueAt(todayYMD());
   }
 
-  return (
-  <div className="page">
-    <h1>FollowThrough</h1>
-    <p>Test render</p>
-  </div>
-);
+  useEffect(() => {
+    refreshAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  return (
+    <div className="page">
+      <header className="header">
+        <h1 className="title">FollowThrough</h1>
+        <p className="tagline">Step 7 — Inline edit (✎) Next + Due</p>
+      </header>
+
+      {err ? (
+        <div className="error">
+          Error: {err}{" "}
+          <button className="btn" onClick={refreshAll} disabled={loading} style={{ marginLeft: 8 }}>
+            Retry
+          </button>
+        </div>
+      ) : null}
+
+      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+        <span className="chip chipSoon">Need today: {needsTodayCount}</span>
+        <span className="chip chipOverdue">Overdue: {overdueCount}</span>
+      </div>
+
+      <section className="panel" style={{ marginBottom: 12 }}>
+        <div style={{ opacity: 0.8 }}>
+          Workspace: <b>{WORKSPACE_ID}</b> · API: <code>/api/followups</code>
+        </div>
+        <div style={{ marginTop: 8 }}>
+          Workspaces loaded: <b>{workspaces.length}</b>
+        </div>
+
+        <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="btn" onClick={refreshAll} disabled={loading}>
+            Refresh
+          </button>
+        </div>
+      </section>
+
+      {/* Create */}
+      <section className="panel" style={{ marginBottom: 12 }}>
+        <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
+
+        <div className="grid">
+          <div className="field">
+            <label>Contact name</label>
+            <input
+              id="contactName"
+              className="input"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              disabled={loading}
+              placeholder="Alice Example"
+            />
+          </div>
+
+          <div className="field">
+            <label>Company</label>
+            <input
+              className="input"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              disabled={loading}
+              placeholder="Example GmbH"
+            />
+          </div>
+
+          <div className="field">
+            <label>Next step</label>
+            <input
+              className="input"
+              value={nextStep}
+              onChange={(e) => setNextStep(e.target.value)}
+              disabled={loading}
+              placeholder="Send intro email"
+            />
+          </div>
+
+          <div className="field">
+            <label>Due at (YYYY-MM-DD)</label>
+            <input
+              className="input"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+              disabled={loading}
+              placeholder="2026-01-31"
+            />
+          </div>
+        </div>
+
+        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
+            Add follow-up
+          </button>
+
+          <button className="btn" onClick={clearForm} disabled={loading}>
+            Clear
+          </button>
+        </div>
+      </section>
+
+      {/* List */}
+      <section className="panel">
+        <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
+
+        {loading && items.length === 0 ? (
+          <div className="empty">
+            <p>Loading…</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="empty">
+            <p>No follow-ups yet.</p>
+            <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
+              Add your first follow-up
+            </button>
+          </div>
+        ) : (
+          <div className="list">
+            {items.map((f) => {
+              const today = todayYMD();
+              const due = (f.dueAt || "").slice(0, 10);
+              const overdue = f.status !== "done" && due && due < today;
+              const cardClass = overdue ? "card cardOverdue" : "card";
+
+              return (
+                <div key={f.id} className={cardClass}>
+                  <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
+                  <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
+
+                  {/* NEXT step inline edit */}
+                  <div style={{ marginTop: 10 }}>
+                    <b>Next:</b>{" "}
+                    {editNextId === f.id ? (
+                      <input
+                        className="input"
+                        value={draftNext(f.id)}
+                        autoFocus
+                        disabled={loading}
+                        onChange={(e) =>
+                          setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                        }
+                        onBlur={() => saveEditNext(f.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveEditNext(f.id);
+                          if (e.key === "Escape") cancelEditNext(f.id);
+                        }}
+                        style={{ maxWidth: 520 }}
+                      />
+                    ) : (
+                      <>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => startEditNext(f)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {f.nextStep || "—"}
+                        </span>
+                        <button
+                          className="btn"
+                          title="Edit next step"
+                          disabled={loading}
+                          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                          onClick={() => startEditNext(f)}
+                        >
+                          ✎
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* META + DUE inline edit */}
+                  <div className="cardMeta" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <span className="chip chipOpen">{statusLabel(f.status)}</span>
+
+                    <span className="chip chipDue">
+                      Due:{" "}
+                      {editDueId === f.id ? (
+                        <input
+                          className="input"
+                          value={draftDue(f.id)}
+                          autoFocus
+                          disabled={loading}
+                          onChange={(e) =>
+                            setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                          }
+                          onBlur={() => saveEditDue(f.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEditDue(f.id);
+                            if (e.key === "Escape") cancelEditDue(f.id);
+                          }}
+                          style={{ width: 140 }}
+                          placeholder="YYYY-MM-DD"
+                        />
+                      ) : (
+                        <>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => startEditDue(f)}
+                            style={{ cursor: "pointer", fontWeight: 700 }}
+                            title="Click to edit due date"
+                          >
+                            {due || "—"}
+                          </span>
+                          <button
+                            className="btn"
+                            title="Edit due date"
+                            disabled={loading}
+                            style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                            onClick={() => startEditDue(f)}
+                          >
+                            ✎
+                          </button>
+                        </>
+                      )}
+                    </span>
+
+                    {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button className="btn" onClick={() => onMove(f)} disabled={loading}>
+                      Move
+                    </button>
+
+                    <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
+                      +1d
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
+                      +3d
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
+                      +7d
+                    </button>
+
+                    {f.status !== "done" ? (
+                      <button className="btn" onClick={() => onDone(f)} disabled={loading}>
+                        Done
+                      </button>
+                    ) : (
+                      <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
+                        Reopen
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
+                    Id: <code>{f.id}</code>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
