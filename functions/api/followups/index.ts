@@ -94,8 +94,15 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     .orderBy(desc(followups.dueAt))
     .limit(200);
 
-  const origin = request.headers.get("Origin") ?? "*";
-  return Response.json({ items: rows }, { headers: cors(origin) });
+   const origin = request.headers.get("Origin") ?? "*";
+  
+  const includeRisk = url.searchParams.get("includeRisk") === "1";
+
+  const items = includeRisk
+    ? rows.map((r: any) => ({ ...r, risk: riskForFollowup(r) }))
+    : rows;
+
+  return Response.json({ items }, { headers: cors(origin) });
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
