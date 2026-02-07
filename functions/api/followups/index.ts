@@ -77,7 +77,7 @@ function riskForFollowup(f: any) {
 
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const db = getDb(env);
-  const url = new URL(request.url);
+  const url = new URL(request.url);   // ← deze MOET er staan
 
   const workspaceId = url.searchParams.get("workspaceId") ?? "ws_1";
   const status = url.searchParams.get("status");
@@ -94,8 +94,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
     .orderBy(desc(followups.dueAt))
     .limit(200);
 
-   const origin = request.headers.get("Origin") ?? "*";
-  
+  const origin = request.headers.get("Origin") ?? "*";
+
   const includeRisk = url.searchParams.get("includeRisk") === "1";
 
   const items = includeRisk
