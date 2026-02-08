@@ -558,6 +558,13 @@ export default function App() {
                     {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
                   </div>
 
+                  {f.risk ? (
+  <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
+    Risk: {f.risk.level} ({f.risk.score})
+  </span>
+) : null}
+
+
                   {/* ACTIONS */}
                   <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button className="btn" onClick={() => onMove(f)} disabled={loading}>
