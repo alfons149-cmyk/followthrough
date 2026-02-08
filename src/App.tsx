@@ -3,6 +3,12 @@ import "./App.css";
 
 type Status = "open" | "sent" | "waiting" | "followup" | "done";
 
+type Workspace = {
+  id: string;
+  name: string;
+  createdAt?: string;
+};
+
 type FollowupRisk = {
   score: number;
   level: "low" | "medium" | "high";
@@ -20,16 +26,6 @@ type Followup = {
   dueAt: string;
   status: Status;
   createdAt?: string;
-  risk?: FollowupRisk;
-};
-
-type Workspace = {
-  id: string;
-  name: string;
-  createdAt?: string;
-};
-
-  // ✅ toevoegen:
   risk?: FollowupRisk;
 };
 
