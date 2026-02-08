@@ -153,7 +153,6 @@ const dashboardList = useMemo(() => {
   // risk filter
   if (riskFilter !== "all") {
     list = list.filter((f) => f.risk?.level === riskFilter);
-  }
 
   // sort
   const riskScore = (f: any) => (typeof f?.risk?.score === "number" ? f.risk.score : -1);
