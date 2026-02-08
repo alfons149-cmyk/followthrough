@@ -21,6 +21,12 @@ type Followup = {
   status: Status;
   createdAt?: string;
 
+  type Workspace = {
+  id: string;
+  name: string;
+  createdAt?: string;
+};
+
   // ✅ toevoegen:
   risk?: FollowupRisk;
 };
