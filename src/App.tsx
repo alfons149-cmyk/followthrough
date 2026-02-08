@@ -91,13 +91,17 @@ export default function App() {
   // =========================
   // Step 7: inline edit state (draft per item-id)
   // =========================
-  const [editNextId, setEditNextId] = useState<string | null>(null);
-  const [editDueId, setEditDueId] = useState<string | null>(null);
-  const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
-  const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
+ // Inline edit state
+const [editNextId, setEditNextId] = useState<string | null>(null);
+const [editDueId, setEditDueId] = useState<string | null>(null);
+const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
+const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
+  // Risk dashboard state
+const [riskFilter, setRiskFilter] = useState<"all" | "high" | "medium" | "low">("all");
+const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
