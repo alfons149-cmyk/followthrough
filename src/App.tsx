@@ -414,19 +414,21 @@ async function onCreate() {
         </div>
       ) : null}
 
-      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-        <span className="chip chipSoon">Need today: {needsTodayCount}</span>
-        <span className="chip chipOverdue">Overdue: {overdueCount}</span>
-      </div>
-
-      <div className="topStatus">
-  WS: {WORKSPACE_ID} · Items: {items.length}
-  <button onClick={refreshAll}>↻</button>
+     <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+  <span className="chip chipSoon">Need today: {needsTodayCount}</span>
+  <span className="chip chipOverdue">Overdue: {overdueCount}</span>
 </div>
 
-      {/* Create */}
-      <section className="panel" style={{ marginBottom: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
+<div className="topStatus">
+  WS: {WORKSPACE_ID} · Items: {items.length}
+  <button onClick={refreshAll} disabled={loading} title="Refresh">
+    {loading ? "…" : "↻"}
+  </button>
+</div>
+
+{/* Create */}
+<section className="panel" style={{ marginBottom: 12 }}>
+  <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
 
         <div className="grid">
           <div className="field">
