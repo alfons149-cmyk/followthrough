@@ -21,6 +21,18 @@ type Workspace = {
   createdAt?: string;
 };
 
+type FollowupRisk = {
+  score: number;
+  level: "low" | "medium" | "high";
+  reasons: string[];
+  suggestion: string;
+};
+
+type Followup = {
+  // ... jouw velden
+  risk?: FollowupRisk;
+};
+
 const WORKSPACE_ID = "ws_1";
 const OWNER_ID = "u_1";
 
