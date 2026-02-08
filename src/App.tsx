@@ -115,78 +115,84 @@ export default function App() {
   }, [items]);
 
   // ---- API
-  async function refreshAll() {
-    setLoading(true);
-    setErr(null);
+ async function refreshAll() {
+  setLoading(true);
+  setErr(null);
 
-    try {
-      // workspaces (optional)
-      const wsRes = await fetch(apiUrl("/api/workspaces"), { headers: { Accept: "application/json" } });
-      if (wsRes.ok) {
-        const wsData = await wsRes.json();
-        setWorkspaces(wsData.items || []);
-      } else {
-        setWorkspaces([]);
-      }
+  try {
+    // workspaces (optional)
+    const wsRes = await fetch(apiUrl("/api/workspaces"), {
+      headers: { Accept: "application/json" },
+    });
 
-      // followups
-     const fuRes = await fetch(
-  apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
-  { headers: { Accept: "application/json" } }
-);
-      if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
-      const fuData = await fuRes.json();
-      setItems(fuData.items || []);
-    } catch (e: any) {
-      setErr(e?.message || "Failed to fetch");
-    } finally {
-      setLoading(false);
+    if (wsRes.ok) {
+      const wsData = await wsRes.json().catch(() => ({} as any));
+      setWorkspaces(Array.isArray(wsData.items) ? wsData.items : []);
+    } else {
+      setWorkspaces([]);
     }
+
+    // followups (+ risk)
+    const fuRes = await fetch(
+      apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
+      { headers: { Accept: "application/json" } }
+    );
+
+    if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
+
+    const fuData = await fuRes.json().catch(() => ({} as any));
+    setItems(Array.isArray(fuData.items) ? fuData.items : []);
+  } catch (e: any) {
+    setErr(e?.message || "Failed to fetch");
+  } finally {
+    setLoading(false);
   }
+}
 
-  async function onCreate() {
-    setLoading(true);
-    setErr(null);
+async function onCreate() {
+  setLoading(true);
+  setErr(null);
 
-    try {
-      const payload = {
-        workspaceId: WORKSPACE_ID,
-        ownerId: OWNER_ID,
-        contactName: contactName.trim(),
-        companyName: companyName.trim(),
-        nextStep: nextStep.trim(),
-        dueAt: (dueAt || "").trim(),
-        status: "open" as Status,
-      };
+  try {
+    const payload = {
+      workspaceId: WORKSPACE_ID,
+      ownerId: OWNER_ID,
+      contactName: contactName.trim(),
+      companyName: companyName.trim(),
+      nextStep: nextStep.trim(),
+      dueAt: (dueAt || "").trim(),
+      status: "open" as Status,
+    };
 
-      if (!payload.contactName) throw new Error("Please enter a contact name.");
-      if (!payload.nextStep) throw new Error("Please enter a next step.");
-      if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
+    if (!payload.contactName) throw new Error("Please enter a contact name.");
+    if (!payload.nextStep) throw new Error("Please enter a next step.");
+    if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
+    if (!isValidYMD(payload.dueAt)) throw new Error("Due date must be YYYY-MM-DD.");
 
-      const res = await fetch(apiUrl("/api/followups"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch(apiUrl("/api/followups"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
-      }
-
-      await res.json().catch(() => null);
-
-      // clear form (date houden we)
-      setContactName("");
-      setCompanyName("");
-      setNextStep("");
-
-      await refreshAll();
-    } catch (e: any) {
-      setErr(e?.message || "Create failed");
-      setLoading(false);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
     }
+
+    await res.json().catch(() => null);
+
+    setContactName("");
+    setCompanyName("");
+    setNextStep("");
+
+    await refreshAll();
+  } catch (e: any) {
+    setErr(e?.message || "Create failed");
+  } finally {
+    setLoading(false);
   }
+}
 
   async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
     const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
