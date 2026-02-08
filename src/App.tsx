@@ -489,7 +489,7 @@ async function onCreate() {
 
       {/* List */}
       <section className="panel">
-        <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
+        <h3 style={{ marginTop: 0 }}>Follow-ups ({dashboardList.length})</h3>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
   <div className="field" style={{ minWidth: 220 }}>
