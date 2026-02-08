@@ -175,8 +175,9 @@ const dashboardList = useMemo(() => {
   return list;
 }, [items, riskFilter, sortMode, statusFilter, q]);
 
-  // ---- API
- async function refreshAll() {
+// ---- API
+async function refreshAll() {
+
   setLoading(true);
   setErr(null);
 
