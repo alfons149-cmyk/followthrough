@@ -160,20 +160,6 @@ const dashboardList = useMemo(() => {
 
   return list;
 }, [items, riskFilter, sortMode, statusFilter, q]);
-  
-  // 5) sort
-  const riskScore = (f: any) => (typeof f?.risk?.score === "number" ? f.risk.score : -1);
-  const dueKey = (f: any) => (f?.dueAt || "").slice(0, 10) || "9999-99-99";
-  const createdKey = (f: any) => (f?.createdAt || "");
-
-  list.sort((a, b) => {
-    if (sortMode === "risk") return riskScore(b) - riskScore(a);         // hoog → laag
-    if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));   // vroeg → laat
-    return createdKey(b).localeCompare(createdKey(a));                   // nieuw → oud
-  });
-
-  return list;
-}, [items, riskFilter, sortMode, statusFilter, q]);
 
 // ---- API
 async function refreshAll() {
