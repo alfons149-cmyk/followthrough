@@ -17,11 +17,13 @@ type Followup = {
   contactName: string;
   companyName: string;
   nextStep: string;
-  dueAt: string; // YYYY-MM-DD
+  dueAt: string;
   status: Status;
   createdAt?: string;
+  risk?: FollowupRisk;
+};
 
-  type Workspace = {
+type Workspace = {
   id: string;
   name: string;
   createdAt?: string;
