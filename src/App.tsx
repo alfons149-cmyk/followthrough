@@ -563,7 +563,12 @@ export default function App() {
     Risk: {f.risk.level} ({f.risk.score})
   </span>
 ) : null}
-
+                  {f.risk ? (
+  <div style={{ marginTop: 8, opacity: 0.8, fontSize: 12 }}>
+    <div><b>Why:</b> {f.risk.reasons.join(" · ")}</div>
+    <div><b>Next:</b> {f.risk.suggestion}</div>
+  </div>
+) : null}
 
                   {/* ACTIONS */}
                   <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
