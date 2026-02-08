@@ -126,7 +126,6 @@ export default function App() {
   apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
   { headers: { Accept: "application/json" } }
 );
-      });
       if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
       const fuData = await fuRes.json();
       setItems(fuData.items || []);
