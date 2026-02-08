@@ -28,11 +28,6 @@ type FollowupRisk = {
   suggestion: string;
 };
 
-type Followup = {
-  // ... jouw velden
-  risk?: FollowupRisk;
-};
-
 const WORKSPACE_ID = "ws_1";
 const OWNER_ID = "u_1";
 
