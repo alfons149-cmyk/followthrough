@@ -491,6 +491,65 @@ async function onCreate() {
       <section className="panel">
         <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
 
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+  <div className="field" style={{ minWidth: 220 }}>
+    <label>Search</label>
+    <input
+      className="input"
+      value={q}
+      onChange={(e) => setQ(e.target.value)}
+      placeholder="Search…"
+      disabled={loading}
+    />
+  </div>
+
+  <div className="field" style={{ minWidth: 160 }}>
+    <label>Status</label>
+    <select
+      className="select"
+      value={statusFilter}
+      onChange={(e) => setStatusFilter(e.target.value as any)}
+      disabled={loading}
+    >
+      <option value="all">All</option>
+      <option value="open">Open</option>
+      <option value="sent">Sent</option>
+      <option value="waiting">Waiting</option>
+      <option value="followup">Follow-up</option>
+      <option value="done">Done</option>
+    </select>
+  </div>
+
+  <div className="field" style={{ minWidth: 140 }}>
+    <label>Risk</label>
+    <select
+      className="select"
+      value={riskFilter}
+      onChange={(e) => setRiskFilter(e.target.value as any)}
+      disabled={loading}
+    >
+      <option value="all">All</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  </div>
+
+  <div className="field" style={{ minWidth: 140 }}>
+    <label>Sort</label>
+    <select
+      className="select"
+      value={sortMode}
+      onChange={(e) => setSortMode(e.target.value as any)}
+      disabled={loading}
+    >
+      <option value="risk">Risk</option>
+      <option value="due">Due</option>
+      <option value="created">Created</option>
+    </select>
+  </div>
+</div>
+
         {loading && items.length === 0 ? (
           <div className="empty">
             <p>Loading…</p>
