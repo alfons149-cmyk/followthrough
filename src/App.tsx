@@ -114,6 +114,59 @@ const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
     return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
   }, [items]);
 
+  const riskCounts = useMemo(() => {
+  const counts = { high: 0, medium: 0, low: 0, none: 0 };
+  for (const f of items) {
+    const level = f.risk?.level;
+    if (level === "high") counts.high++;
+    else if (level === "medium") counts.medium++;
+    else if (level === "low") counts.low++;
+    else counts.none++;
+  }
+  return counts;
+}, [items]);
+
+const dashboardList = useMemo(() => {
+  // 1) start met items
+  let list = [...items];
+
+  // 2) statusFilter (als jij die gebruikt)
+  // als je statusFilter niet hebt, haal dit blok weg
+  if (typeof statusFilter !== "undefined" && statusFilter !== "all") {
+    list = list.filter((f) => f.status === statusFilter);
+  }
+
+  // 3) search (als jij q gebruikt)
+  // als je q niet hebt, haal dit blok weg
+  if (typeof q !== "undefined") {
+    const needle = (q || "").trim().toLowerCase();
+    if (needle) {
+      list = list.filter((f) => {
+        const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
+        return hay.includes(needle);
+      });
+    }
+  }
+
+  // 4) riskFilter
+  if (riskFilter !== "all") {
+    list = list.filter((f) => f.risk?.level === riskFilter);
+  }
+
+  // 5) sort
+  const riskScore = (f: any) => (typeof f?.risk?.score === "number" ? f.risk.score : -1);
+  const dueKey = (f: any) => (f?.dueAt || "").slice(0, 10) || "9999-99-99";
+  const createdKey = (f: any) => (f?.createdAt || "");
+
+  list.sort((a, b) => {
+    if (sortMode === "risk") return riskScore(b) - riskScore(a);         // hoog → laag
+    if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));   // vroeg → laat
+    return createdKey(b).localeCompare(createdKey(a));                   // nieuw → oud
+  });
+
+  return list;
+}, [items, riskFilter, sortMode, statusFilter, q]);
+
   // ---- API
  async function refreshAll() {
   setLoading(true);
