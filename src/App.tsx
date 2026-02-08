@@ -81,6 +81,9 @@ export default function App() {
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [items, setItems] = useState<Followup[]>([]);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
+
 
   // Form state (create)
   const [contactName, setContactName] = useState("");
@@ -105,16 +108,16 @@ const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
-    const today = todayYMD();
-    return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) === today).length;
-  }, [items]);
+  const today = todayYMD();
+  return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) === today).length;
+}, [items]);
 
-  const overdueCount = useMemo(() => {
-    const today = todayYMD();
-    return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
-  }, [items]);
+const overdueCount = useMemo(() => {
+  const today = todayYMD();
+  return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
+}, [items]);
 
-  const riskCounts = useMemo(() => {
+const riskCounts = useMemo(() => {
   const counts = { high: 0, medium: 0, low: 0, none: 0 };
   for (const f of items) {
     const level = f.risk?.level;
@@ -127,32 +130,30 @@ const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
 }, [items]);
 
 const dashboardList = useMemo(() => {
-  // 1) start met items
   let list = [...items];
 
-  // 2) statusFilter (als jij die gebruikt)
-  // als je statusFilter niet hebt, haal dit blok weg
-  if (typeof statusFilter !== "undefined" && statusFilter !== "all") {
+  // status filter
+  if (statusFilter !== "all") {
     list = list.filter((f) => f.status === statusFilter);
   }
 
-  // 3) search (als jij q gebruikt)
-  // als je q niet hebt, haal dit blok weg
-  if (typeof q !== "undefined") {
-    const needle = (q || "").trim().toLowerCase();
-    if (needle) {
-      list = list.filter((f) => {
-        const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
-        return hay.includes(needle);
-      });
-    }
+  // search
+  const needle = (q || "").trim().toLowerCase();
+  if (needle) {
+    list = list.filter((f) => {
+      const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
+      return hay.includes(needle);
+    });
   }
 
-  // 4) riskFilter
+  // risk filter
   if (riskFilter !== "all") {
     list = list.filter((f) => f.risk?.level === riskFilter);
   }
 
+  return list;
+}, [items, statusFilter, q, riskFilter])
+  
   // 5) sort
   const riskScore = (f: any) => (typeof f?.risk?.score === "number" ? f.risk.score : -1);
   const dueKey = (f: any) => (f?.dueAt || "").slice(0, 10) || "9999-99-99";
