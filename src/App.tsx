@@ -123,35 +123,25 @@ const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
   }, [items]);
 
   // ---- API
-  async function refreshAll() {
-    setLoading(true);
-    setErr(null);
+ async function refreshAll() {
+  setLoading(true);
+  setErr(null);
 
-    try {
-      // workspaces (optional)
-      const wsRes = await fetch(apiUrl("/api/workspaces"), { headers: { Accept: "application/json" } });
-      if (wsRes.ok) {
-        const wsData = await wsRes.json();
-        setWorkspaces(wsData.items || []);
-      } else {
-        setWorkspaces([]);
-      }
+  try {
+    const fuRes = await fetch(
+      apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
+      { headers: { Accept: "application/json" } }
+    );
 
-      // followups
-     const fuRes = await fetch(
-  apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
-  { headers: { Accept: "application/json" } }
-);
-      });
-      if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
-      const fuData = await fuRes.json();
-      setItems(fuData.items || []);
-    } catch (e: any) {
-      setErr(e?.message || "Failed to fetch");
-    } finally {
-      setLoading(false);
-    }
+    if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
+    const fuData = await fuRes.json();
+    setItems(fuData.items || []);
+  } catch (e: any) {
+    setErr(e?.message || "Failed to fetch");
+  } finally {
+    setLoading(false);
   }
+}
 
 async function onCreate() {
   setLoading(true);
