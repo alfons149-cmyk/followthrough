@@ -146,9 +146,6 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
-  // Risk dashboard state
-const [riskFilter, setRiskFilter] = useState<"all" | "high" | "medium" | "low">("all");
-const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
