@@ -397,19 +397,22 @@ async function onCreate() {
 }, [items]);
 
   return (
+  <div className="page">
     <header className="appTopbar">
-  <div className="appTopbarLeft">
-    <h1 className="appTitle">FollowThrough</h1>
-    <div className="appSubtitle">Risk Dashboard · Inline edit Next + Due</div>
-  </div>
+      <div className="appTopbarLeft">
+        <h1 className="appTitle">FollowThrough</h1>
+        <div className="appSubtitle">Risk Dashboard · Inline edit Next + Due</div>
+      </div>
 
-  <div className="appTopbarRight">
-    <div className="appMeta">WS: <b>{WORKSPACE_ID}</b> · Items: <b>{items.length}</b></div>
-    <button className="iconBtn" onClick={refreshAll} disabled={loading} title="Refresh">
-      {loading ? "…" : "↻"}
-    </button>
-  </div>
-</header>
+      <div className="appTopbarRight">
+        <div className="appMeta">
+          WS: <b>{WORKSPACE_ID}</b> · Items: <b>{items.length}</b>
+        </div>
+        <button className="iconBtn" onClick={refreshAll} disabled={loading} title="Refresh">
+          {loading ? "…" : "↻"}
+        </button>
+      </div>
+    </header>
 
 <div className="kpiBar">
   <span className="kpiChip kpiSoon">Need today: {needsTodayCount}</span>
