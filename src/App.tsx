@@ -79,6 +79,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [items, setItems] = useState<Followup[]>([]);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
@@ -116,8 +117,25 @@ const overdueCount = useMemo(() => {
   return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
 }, [items]);
 
-  // statusFilter
-  if (statusFilter !== "all") list = list.filter((f) => f.status === statusFilter);
+const riskCounts = useMemo(() => {
+  const counts = { high: 0, medium: 0, low: 0, none: 0 };
+  for (const f of items) {
+    const level = f.risk?.level;
+    if (level === "high") counts.high++;
+    else if (level === "medium") counts.medium++;
+    else if (level === "low") counts.low++;
+    else counts.none++;
+  }
+  return counts;
+}, [items]);
+
+const dashboardList = useMemo(() => {
+  let list = [...items];
+
+  // status filter
+  if (statusFilter !== "all") {
+    list = list.filter((f) => f.status === statusFilter);
+  }
 
   // search
   const needle = (q || "").trim().toLowerCase();
@@ -128,30 +146,45 @@ const overdueCount = useMemo(() => {
     });
   }
 
-  // riskFilter
-  if (riskFilter !== "all") list = list.filter((f) => f.risk?.level === riskFilter);
+  // risk filter
+  if (riskFilter !== "all") {
+    list = list.filter((f) => f.risk?.level === riskFilter);
+  }
 
-  // sort
+  return list;
+}, [items, statusFilter, q, riskFilter])
+  
+  // 5) sort
   const riskScore = (f: any) => (typeof f?.risk?.score === "number" ? f.risk.score : -1);
   const dueKey = (f: any) => (f?.dueAt || "").slice(0, 10) || "9999-99-99";
   const createdKey = (f: any) => (f?.createdAt || "");
 
   list.sort((a, b) => {
-    if (sortMode === "risk") return riskScore(b) - riskScore(a);
-    if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));
-    return createdKey(b).localeCompare(createdKey(a));
+    if (sortMode === "risk") return riskScore(b) - riskScore(a);         // hoog → laag
+    if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));   // vroeg → laat
+    return createdKey(b).localeCompare(createdKey(a));                   // nieuw → oud
   });
 
   return list;
-}, [items, q, statusFilter, riskFilter, sortMode]);
+}, [items, riskFilter, sortMode, statusFilter, q]);
 
-// ---- API
-async function refreshAll() {
-
+  // ---- API
+ async function refreshAll() {
   setLoading(true);
   setErr(null);
 
   try {
+    // workspaces (optional)
+    const wsRes = await fetch(apiUrl("/api/workspaces"), {
+      headers: { Accept: "application/json" },
+    });
+
+    if (wsRes.ok) {
+      const wsData = await wsRes.json().catch(() => ({} as any));
+      setWorkspaces(Array.isArray(wsData.items) ? wsData.items : []);
+    } else {
+      setWorkspaces([]);
+    }
 
     // followups (+ risk)
     const fuRes = await fetch(
@@ -366,18 +399,6 @@ async function onCreate() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const riskCounts = useMemo(() => {
-  const counts = { high: 0, medium: 0, low: 0, none: 0 };
-  for (const f of items) {
-    const level = f.risk?.level;
-    if (level === "high") counts.high++;
-    else if (level === "medium") counts.medium++;
-    else if (level === "low") counts.low++;
-    else counts.none++;
-  }
-  return counts;
-}, [items]);
-
   return (
     <div className="page">
       <header className="header">
@@ -397,6 +418,10 @@ async function onCreate() {
      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
   <span className="chip chipSoon">Need today: {needsTodayCount}</span>
   <span className="chip chipOverdue">Overdue: {overdueCount}</span>
+
+  <span className="chip chipRisk chipRisk-high">High: {riskCounts.high}</span>
+  <span className="chip chipRisk chipRisk-medium">Med: {riskCounts.medium}</span>
+  <span className="chip chipRisk chipRisk-low">Low: {riskCounts.low}</span>
 </div>
 
 <div className="topStatus">
@@ -470,114 +495,29 @@ async function onCreate() {
 
       {/* List */}
       <section className="panel">
-        <h3 style={{ marginTop: 0 }}>Follow-ups ({dashboardList.length})</h3>
-
-        <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-  <span className="chip chipRisk chipRisk-high">High: {riskCounts.high}</span>
-  <span className="chip chipRisk chipRisk-medium">Medium: {riskCounts.medium}</span>
-  <span className="chip chipRisk chipRisk-low">Low: {riskCounts.low}</span>
-</div>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-  <div className="field" style={{ minWidth: 220 }}>
-    <label>Search</label>
-    <input
-      className="input"
-      value={q}
-      onChange={(e) => setQ(e.target.value)}
-      placeholder="Search…"
-      disabled={loading}
-    />
-  </div>
-
-  <div className="field" style={{ minWidth: 160 }}>
-    <label>Status</label>
-    <select
-      className="select"
-      value={statusFilter}
-      onChange={(e) => setStatusFilter(e.target.value as any)}
-      disabled={loading}
-    >
-      <option value="all">All</option>
-      <option value="open">Open</option>
-      <option value="sent">Sent</option>
-      <option value="waiting">Waiting</option>
-      <option value="followup">Follow-up</option>
-      <option value="done">Done</option>
-    </select>
-  </div>
-
-  <div className="field" style={{ minWidth: 140 }}>
-    <label>Risk</label>
-    <select
-      className="select"
-      value={riskFilter}
-      onChange={(e) => setRiskFilter(e.target.value as any)}
-      disabled={loading}
-    >
-      <option value="all">All</option>
-      <option value="high">High</option>
-      <option value="medium">Medium</option>
-      <option value="low">Low</option>
-    </select>
-  </div>
-
-  <div className="field" style={{ minWidth: 140 }}>
-    <label>Sort</label>
-    <select
-      className="select"
-      value={sortMode}
-      onChange={(e) => setSortMode(e.target.value as any)}
-      disabled={loading}
-    >
-      <option value="risk">Risk</option>
-      <option value="due">Due</option>
-      <option value="created">Created</option>
-    </select>
-  </div>
-</div>
+        <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
 
         {loading && items.length === 0 ? (
-  <div className="empty">
-    <p>Loading…</p>
-  </div>
-) : items.length === 0 ? (
-  <div className="empty">
-    <p>No follow-ups yet.</p>
-    <button
-      className="btn"
-      onClick={() => document.getElementById("contactName")?.focus()}
-      disabled={loading}
-    >
-      Add your first follow-up
-    </button>
-  </div>
-) : dashboardList.length === 0 ? (
-  <div className="empty">
-    <p>No results for these filters.</p>
-    <button
-      className="btn"
-      onClick={() => {
-        setQ("");
-        setStatusFilter("all");
-        setRiskFilter("all");
-        setSortMode("risk");
-      }}
-      disabled={loading}
-    >
-      Clear filters
-    </button>
-  </div>
-) : (
-  <div className="list">
-    {dashboardList.map((f) => {
-      const today = todayYMD();
-      const due = (f.dueAt || "").slice(0, 10);
-      const overdue = f.status !== "done" && due && due < today;
-      const cardClass = overdue ? "card cardOverdue" : "card";
+          <div className="empty">
+            <p>Loading…</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="empty">
+            <p>No follow-ups yet.</p>
+            <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
+              Add your first follow-up
+            </button>
+          </div>
+        ) : (
+          <div className="list">
+            {items.map((f) => {
+              const today = todayYMD();
+              const due = (f.dueAt || "").slice(0, 10);
+              const overdue = f.status !== "done" && due && due < today;
+              const cardClass = overdue ? "card cardOverdue" : "card";
 
-      return (
-        <div key={f.id} className={cardClass}>
+              return (
+                <div key={f.id} className={cardClass}>
                   <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
                   <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
