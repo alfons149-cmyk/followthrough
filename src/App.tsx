@@ -69,6 +69,15 @@ function isValidYMD(s: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
+function errorMessage(e: unknown, fallback: string): string {
+  console.error("App error:", e);
+
+  if (e instanceof Error) return e.message;
+  if (typeof e === "string") return e;
+
+  return fallback;
+}
+
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -111,6 +120,15 @@ const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
   }, [items]);
 
   // ---- API
+
+  async function safeFetch<T>(promise: Promise<T>, fallbackError: string): Promise<T> {
+  try {
+    return await promise;
+  } catch (e) {
+    throw new Error(errorMessage(e, fallbackError));
+  }
+}
+  
 async function refreshAll() {
   setLoading(true);
   setErr(null);
