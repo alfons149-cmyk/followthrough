@@ -152,17 +152,6 @@ async function refreshAll() {
   setErr(null);
 
   try {
-    // workspaces (optional)
-    const wsRes = await fetch(apiUrl("/api/workspaces"), {
-      headers: { Accept: "application/json" },
-    });
-
-    if (wsRes.ok) {
-      const wsData = await wsRes.json().catch(() => ({} as any));
-      setWorkspaces(Array.isArray(wsData.items) ? wsData.items : []);
-    } else {
-      setWorkspaces([]);
-    }
 
     // followups (+ risk)
     const fuRes = await fetch(
