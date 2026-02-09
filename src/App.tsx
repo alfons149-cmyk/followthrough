@@ -569,13 +569,17 @@ async function onCreate() {
 </div>
 
         {loading && items.length === 0 ? (
-          <div className="empty">
-            <p>Loading…</p>
-          </div>
-       ) : items.length === 0 ? (
+  <div className="empty">
+    <p>Loading…</p>
+  </div>
+) : items.length === 0 ? (
   <div className="empty">
     <p>No follow-ups yet.</p>
-    <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
+    <button
+      className="btn"
+      onClick={() => document.getElementById("contactName")?.focus()}
+      disabled={loading}
+    >
       Add your first follow-up
     </button>
   </div>
@@ -598,13 +602,13 @@ async function onCreate() {
 ) : (
   <div className="list">
     {dashboardList.map((f) => {
-              const today = todayYMD();
-              const due = (f.dueAt || "").slice(0, 10);
-              const overdue = f.status !== "done" && due && due < today;
-              const cardClass = overdue ? "card cardOverdue" : "card";
+      const today = todayYMD();
+      const due = (f.dueAt || "").slice(0, 10);
+      const overdue = f.status !== "done" && due && due < today;
+      const cardClass = overdue ? "card cardOverdue" : "card";
 
-              return (
-                <div key={f.id} className={cardClass}>
+      return (
+        <div key={f.id} className={cardClass}>
                   <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
                   <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
