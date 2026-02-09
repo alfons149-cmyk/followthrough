@@ -120,6 +120,15 @@ const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
   }, [items]);
 
   // ---- API
+
+  async function safeFetch<T>(promise: Promise<T>, fallbackError: string): Promise<T> {
+  try {
+    return await promise;
+  } catch (e) {
+    throw new Error(errorMessage(e, fallbackError));
+  }
+}
+  
 async function refreshAll() {
   setLoading(true);
   setErr(null);
