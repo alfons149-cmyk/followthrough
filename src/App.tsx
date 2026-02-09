@@ -123,7 +123,7 @@ const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
   }, [items]);
 
   // ---- API
- async function refreshAll() {
+async function refreshAll() {
   setLoading(true);
   setErr(null);
 
