@@ -117,13 +117,17 @@ const dashboardList = useMemo(() => {
   const createdKey = (f: Followup) => f.createdAt || "";
 
   list.sort((a, b) => {
+  if (sortMode === "risk") {
+    const highFirst = (x: Followup) => (x.risk?.level === "high" ? 0 : 1);
     const hf = highFirst(a) - highFirst(b);
     if (hf !== 0) return hf;
 
-    if (sortMode === "risk") return riskScore(b) - riskScore(a);
-    if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));
-    return createdKey(b).localeCompare(createdKey(a));
-  });
+    return riskScore(b) - riskScore(a); // binnen high/non-high: score hoog->laag
+  }
+
+  if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));
+  return createdKey(b).localeCompare(createdKey(a));
+});
 
   return list;
 }, [items, q, statusFilter, riskFilter, sortMode]);
