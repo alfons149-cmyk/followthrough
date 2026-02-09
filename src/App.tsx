@@ -588,6 +588,33 @@ async function onCreate() {
   </div>
 
   {/* Empty / list states */}
+    </div> {/* einde toolbarRow */}
+
+  {/* 🔥 PLAK HIER: High risk banner */}
+  {riskCounts.high > 0 && riskFilter !== "high" ? (
+    <div className="highRiskBanner">
+      <span className="chip chipRisk chipRisk-high">
+        High risk: {riskCounts.high}
+      </span>
+      <span style={{ opacity: 0.8 }}>Needs attention first</span>
+
+      <button
+        className="btn"
+        onClick={() => {
+          setRiskFilter("high");
+          setSortMode("risk");
+        }}
+        disabled={loading}
+        style={{ marginLeft: "auto" }}
+      >
+        Show high risk
+      </button>
+    </div>
+  ) : null}
+
+  {/* Empty / list states */}
+  {loading && items.length === 0 ? (
+  
   {loading && items.length === 0 ? (
     <div className="empty">
       <p>Loading…</p>
