@@ -5,7 +5,7 @@ import { getDb, type Env } from "../_db";
 
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Accept",
   "Access-Control-Max-Age": "86400",
   Vary: "Origin",
@@ -118,6 +118,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     );
   }
 
+  const status = ["open", "sent", "waiting", "followup", "done"].includes(body.status)
+    ? body.status
+    : "open";
+
+  const dueAt = typeof body.dueAt === "string" ? body.dueAt.slice(0, 10) : "";
+
   const id = `f_${crypto.randomUUID()}`;
   const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
 
@@ -128,8 +134,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
     contactName: body.contactName ?? "",
     companyName: body.companyName ?? "",
     nextStep: body.nextStep ?? "",
-    dueAt: body.dueAt ?? "",
-    status: body.status ?? "open",
+    dueAt,
+    status,
     createdAt,
   });
 
