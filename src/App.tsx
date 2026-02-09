@@ -3,18 +3,6 @@ import "./App.css";
 
 type Status = "open" | "sent" | "waiting" | "followup" | "done";
 
-type Workspace = {
-  id: string;
-  name: string;
-  createdAt?: string;
-};
-
-type Workspace = {
-  id: string;
-  name: string;
-  createdAt?: string;
-};
-
 type FollowupRisk = {
   score: number;
   level: "low" | "medium" | "high";
@@ -137,12 +125,11 @@ async function refreshAll() {
     const fuData = await fuRes.json();
     setItems(fuData.items || []);
   } catch (e: unknown) {
-    setErr((e as any)?.message || "Failed to fetch");
+    setErr(e?.message || "Failed to fetch");
   } finally {
     setLoading(false);
   }
 }
-
 async function onCreate() {
   setLoading(true);
   setErr(null);
