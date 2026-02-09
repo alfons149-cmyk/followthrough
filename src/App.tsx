@@ -532,6 +532,59 @@ async function onCreate() {
   </div>
 </div>
 
+        <div className="toolbarRow">
+  <div className="field" style={{ minWidth: 240 }}>
+    <label>Search</label>
+    <input className="input" value={q} onChange={(e) => setQ(e.target.value)} disabled={loading} />
+  </div>
+
+  <div className="field" style={{ minWidth: 170 }}>
+    <label>Status</label>
+    <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} disabled={loading}>
+      <option value="all">All</option>
+      <option value="open">Open</option>
+      <option value="sent">Sent</option>
+      <option value="waiting">Waiting</option>
+      <option value="followup">Follow-up</option>
+      <option value="done">Done</option>
+    </select>
+  </div>
+
+  <div className="field" style={{ minWidth: 140 }}>
+    <label>Risk</label>
+    <select className="select" value={riskFilter} onChange={(e) => setRiskFilter(e.target.value as any)} disabled={loading}>
+      <option value="all">All</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  </div>
+
+  <div className="field" style={{ minWidth: 140 }}>
+    <label>Sort</label>
+    <select className="select" value={sortMode} onChange={(e) => setSortMode(e.target.value as any)} disabled={loading}>
+      <option value="risk">Risk</option>
+      <option value="due">Due</option>
+      <option value="created">Created</option>
+    </select>
+  </div>
+
+  <div className="toolbarRight">
+    <button
+      className="btn"
+      onClick={() => {
+        setQ("");
+        setStatusFilter("all");
+        setRiskFilter("all");
+        setSortMode("risk");
+      }}
+      disabled={loading}
+    >
+      Clear filters
+    </button>
+  </div>
+</div>
+
         {loading && items.length === 0 ? (
   <div className="empty">
     <p>Loading…</p>
