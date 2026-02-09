@@ -431,3 +431,85 @@ code{
 }
 .onboarding h3 { margin: 0 0 8px; }
 .onboarding ol { margin: 0; padding-left: 18px; line-height: 1.5; }
+
+/* ===== Clean SaaS layout ===== */
+
+.appTopbar{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  padding: 6px 4px 10px;
+}
+
+.appTitle{
+  margin:0;
+  font-size:44px;
+  letter-spacing:-0.5px;
+}
+
+.appSubtitle{
+  margin-top:6px;
+  opacity:.7;
+  font-size:14px;
+}
+
+.appTopbarRight{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding-bottom:6px;
+}
+
+.appMeta{
+  opacity:.75;
+  font-size:13px;
+}
+
+.iconBtn{
+  width:38px;
+  height:38px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,.12);
+  background:#fff;
+  cursor:pointer;
+}
+.iconBtn:disabled{ opacity:.5; cursor:not-allowed; }
+
+.kpiBar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin: 8px 0 16px;
+}
+
+.kpiChip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.10);
+  background:#fff;
+  font-size:13px;
+}
+
+.kpiSoon{ }
+.kpiOverdue{ }
+
+.kpiRiskHigh{ font-weight:600; }
+.kpiRiskMed{ font-weight:600; }
+.kpiRiskLow{ font-weight:600; }
+
+.toolbarRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+  margin-bottom:12px;
+}
+
+.toolbarRight{
+  display:flex;
+  align-items:flex-end;
+}
