@@ -132,10 +132,10 @@ const riskCounts = useMemo(() => {
 const dashboardList = useMemo(() => {
   let list = [...items];
 
-  if (statusFilter !== "all") {
-    list = list.filter((f) => f.status === statusFilter);
-  }
+  // statusFilter
+  if (statusFilter !== "all") list = list.filter((f) => f.status === statusFilter);
 
+  // search
   const needle = (q || "").trim().toLowerCase();
   if (needle) {
     list = list.filter((f) => {
@@ -144,10 +144,10 @@ const dashboardList = useMemo(() => {
     });
   }
 
-  if (riskFilter !== "all") {
-    list = list.filter((f) => f.risk?.level === riskFilter);
-  }
+  // riskFilter
+  if (riskFilter !== "all") list = list.filter((f) => f.risk?.level === riskFilter);
 
+  // sort
   const riskScore = (f: any) => (typeof f?.risk?.score === "number" ? f.risk.score : -1);
   const dueKey = (f: any) => (f?.dueAt || "").slice(0, 10) || "9999-99-99";
   const createdKey = (f: any) => (f?.createdAt || "");
@@ -159,7 +159,7 @@ const dashboardList = useMemo(() => {
   });
 
   return list;
-}, [items, riskFilter, sortMode, statusFilter, q]);
+}, [items, q, statusFilter, riskFilter, sortMode]);
 
 // ---- API
 async function refreshAll() {
