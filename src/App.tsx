@@ -378,21 +378,6 @@ async function onCreate() {
         <span className="chip chipOverdue">Overdue: {overdueCount}</span>
       </div>
 
-      <section className="panel" style={{ marginBottom: 12 }}>
-        <div style={{ opacity: 0.8 }}>
-          Workspace: <b>{WORKSPACE_ID}</b> · API: <code>/api/followups</code>
-        </div>
-        <div style={{ marginTop: 8 }}>
-          Workspaces loaded: <b>{workspaces.length}</b>
-        </div>
-
-        <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="btn" onClick={refreshAll} disabled={loading}>
-            Refresh
-          </button>
-        </div>
-      </section>
-
 {/* Create */}
 <section className="panel" style={{ marginBottom: 12 }}>
   <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
