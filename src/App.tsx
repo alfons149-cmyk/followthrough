@@ -410,6 +410,10 @@ async function onCreate() {
       <header className="header">
         <h1 className="title">FollowThrough</h1>
         <p className="tagline">Step 7 — Inline edit (✎) Next + Due</p>
+
+        <div style={{ marginTop: 6, opacity: 0.8 }}>
+  Workspaces loaded: <b>{workspaces.length}</b>
+</div>
       </header>
 
       {err ? (
