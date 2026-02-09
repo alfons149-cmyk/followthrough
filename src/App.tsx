@@ -83,8 +83,50 @@ export default function App() {
   const [err, setErr] = useState<string | null>(null);
 
   const [items, setItems] = useState<Followup[]>([]);
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
+const [q, setQ] = useState("");
+const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
+const [riskFilter, setRiskFilter] = useState<"all" | "high" | "medium" | "low">("all");
+const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
+
+const dashboardList = useMemo(() => {
+  let list = [...items];
+
+  // status
+  if (statusFilter !== "all") {
+    list = list.filter((f) => f.status === statusFilter);
+  }
+
+  // search
+  const needle = q.trim().toLowerCase();
+  if (needle) {
+    list = list.filter((f) => {
+      const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
+      return hay.includes(needle);
+    });
+  }
+
+  // risk
+  if (riskFilter !== "all") {
+    list = list.filter((f) => f.risk?.level === riskFilter);
+  }
+
+  // 🔥 high risk altijd eerst
+  const highFirst = (f: Followup) => (f.risk?.level === "high" ? 0 : 1);
+  const riskScore = (f: Followup) => (typeof f.risk?.score === "number" ? f.risk.score : -1);
+  const dueKey = (f: Followup) => (f.dueAt || "").slice(0, 10) || "9999-99-99";
+  const createdKey = (f: Followup) => f.createdAt || "";
+
+  list.sort((a, b) => {
+    const hf = highFirst(a) - highFirst(b);
+    if (hf !== 0) return hf;
+
+    if (sortMode === "risk") return riskScore(b) - riskScore(a);
+    if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));
+    return createdKey(b).localeCompare(createdKey(a));
+  });
+
+  return list;
+}, [items, q, statusFilter, riskFilter, sortMode]);
 
 
   // Form state (create)
