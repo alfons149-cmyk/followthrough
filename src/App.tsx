@@ -125,10 +125,11 @@ async function refreshAll() {
     const fuData = await fuRes.json();
     setItems(fuData.items || []);
   } catch (e: unknown) {
-    setErr(e?.message || "Failed to fetch");
-  } finally {
-    setLoading(false);
-  }
+  const msg = e instanceof Error ? e.message : "Failed to fetch";
+  setErr(msg);
+} finally {
+  setLoading(false);
+}
 }
 async function onCreate() {
   setLoading(true);
@@ -168,8 +169,8 @@ async function onCreate() {
     setNextStep("");
 
     await refreshAll();
-  } catch (e: any) {
-    setErr(e?.message || "Create failed");
+  } catch (e: unknown) {
+    setErr(e instanceof Error ? e.message : "Create failed");
   } finally {
     setLoading(false);
   }
@@ -209,7 +210,7 @@ async function onCreate() {
       const plan = transitionPlan(f);
       await patchFollowup(f.id, plan);
       await refreshAll();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setErr(e?.message || "Move failed");
     } finally {
       setLoading(false);
@@ -235,8 +236,8 @@ async function onCreate() {
     try {
       await patchFollowup(f.id, { status: "open" });
       await refreshAll();
-    } catch (e: any) {
-      setErr(e?.message || "Reopen failed");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Reopen failed");
     } finally {
       setLoading(false);
     }
@@ -307,8 +308,8 @@ async function onCreate() {
     try {
       await patchFollowup(id, { dueAt: v });
       await refreshAll();
-    } catch (e: any) {
-      setErr(e?.message || "Save due date failed");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Save due date failed");
     } finally {
       setLoading(false);
     }
