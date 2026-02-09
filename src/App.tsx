@@ -109,21 +109,29 @@ const dashboardList = useMemo(() => {
   if (riskFilter !== "all") {
     list = list.filter((f) => f.risk?.level === riskFilter);
   }
+  
+  // 🔥 risk-group: high(0) → medium(1) → low(2) → none(3)
+const riskGroup = (f: Followup) => {
+  const lvl = f.risk?.level;
+  if (lvl === "high") return 0;
+  if (lvl === "medium") return 1;
+  if (lvl === "low") return 2;
+  return 3;
+};
 
-  // 🔥 high risk altijd eerst
-  const highFirst = (f: Followup) => (f.risk?.level === "high" ? 0 : 1);
-  const riskScore = (f: Followup) => (typeof f.risk?.score === "number" ? f.risk.score : -1);
-  const dueKey = (f: Followup) => (f.dueAt || "").slice(0, 10) || "9999-99-99";
-  const createdKey = (f: Followup) => f.createdAt || "";
+const riskScore = (f: Followup) => (typeof f.risk?.score === "number" ? f.risk.score : -1);
+const dueKey = (f: Followup) => (f.dueAt || "").slice(0, 10) || "9999-99-99";
+const createdKey = (f: Followup) => f.createdAt || "";
 
-  list.sort((a, b) => {
-    const hf = highFirst(a) - highFirst(b);
-    if (hf !== 0) return hf;
+// ✅ “Intelligent” sort: risk-groep eerst, daarna jouw gekozen sortMode
+list.sort((a, b) => {
+  const g = riskGroup(a) - riskGroup(b);
+  if (g !== 0) return g;
 
-    if (sortMode === "risk") return riskScore(b) - riskScore(a);
-    if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));
-    return createdKey(b).localeCompare(createdKey(a));
-  });
+  if (sortMode === "risk") return riskScore(b) - riskScore(a);        // hoog→laag binnen groep
+  if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));  // vroeg→laat
+  return createdKey(b).localeCompare(createdKey(a));                  // nieuw→oud
+});
 
   return list;
 }, [items, q, statusFilter, riskFilter, sortMode]);
@@ -397,53 +405,44 @@ async function onCreate() {
 }, [items]);
 
   return (
+  <div className="page">
     <header className="appTopbar">
-  <div className="appTopbarLeft">
-    <h1 className="appTitle">FollowThrough</h1>
-    <div className="appSubtitle">Risk Dashboard · Inline edit Next + Due</div>
-  </div>
-
-  <div className="appTopbarRight">
-    <div className="appMeta">WS: <b>{WORKSPACE_ID}</b> · Items: <b>{items.length}</b></div>
-    <button className="iconBtn" onClick={refreshAll} disabled={loading} title="Refresh">
-      {loading ? "…" : "↻"}
-    </button>
-  </div>
-</header>
-
-<div className="kpiBar">
-  <span className="kpiChip kpiSoon">Need today: {needsTodayCount}</span>
-  <span className="kpiChip kpiOverdue">Overdue: {overdueCount}</span>
-
-  <span className="kpiChip kpiRiskHigh">High: {riskCounts.high}</span>
-  <span className="kpiChip kpiRiskMed">Med: {riskCounts.medium}</span>
-  <span className="kpiChip kpiRiskLow">Low: {riskCounts.low}</span>
-</div>
-
-    <div className="page">
-      <header className="header">
-        <h1 className="title">FollowThrough</h1>
-        <p className="tagline">Step 7 — Inline edit (✎) Next + Due</p>
-      </header>
-
-      {err ? (
-        <div className="error">
-          Error: {err}{" "}
-          <button className="btn" onClick={refreshAll} disabled={loading} style={{ marginLeft: 8 }}>
-            Retry
-          </button>
-        </div>
-      ) : null}
-
-      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-        <span className="chip chipSoon">Need today: {needsTodayCount}</span>
-        <span className="chip chipOverdue">Overdue: {overdueCount}</span>
+      <div className="appTopbarLeft">
+        <h1 className="appTitle">FollowThrough</h1>
+        <div className="appSubtitle">Risk Dashboard · Inline edit Next + Due</div>
       </div>
 
-{/* Create */}
-<section className="panel" style={{ marginBottom: 12 }}>
-  <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
+      <div className="appTopbarRight">
+        <div className="appMeta">
+          WS: <b>{WORKSPACE_ID}</b> · Items: <b>{items.length}</b>
+        </div>
+        <button className="iconBtn" onClick={refreshAll} disabled={loading} title="Refresh">
+          {loading ? "…" : "↻"}
+        </button>
+      </div>
+    </header>
 
+{err ? (
+      <div className="error">
+        Error: {err}{" "}
+        <button className="btn" onClick={refreshAll} disabled={loading} style={{ marginLeft: 8 }}>
+          Retry
+        </button>
+      </div>
+    ) : null}
+
+    <div className="kpiBar">
+      <span className="kpiChip kpiSoon">Need today: {needsTodayCount}</span>
+      <span className="kpiChip kpiOverdue">Overdue: {overdueCount}</span>
+
+      <span className="kpiChip kpiRiskHigh">High: {riskCounts.high}</span>
+      <span className="kpiChip kpiRiskMed">Med: {riskCounts.medium}</span>
+      <span className="kpiChip kpiRiskLow">Low: {riskCounts.low}</span>
+    </div>
+
+    {/* Create */}
+    <section className="panel" style={{ marginBottom: 12 }}>
+      <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
         <div className="grid">
           <div className="field">
             <label>Contact name</label>
@@ -503,311 +502,268 @@ async function onCreate() {
       </section>
 
       {/* List */}
-      <section className="panel">
-        <h3 style={{ marginTop: 0 }}>Follow-ups ({dashboardList.length})</h3>
+<section className="panel">
+  <h3 style={{ marginTop: 0 }}>Follow-ups ({dashboardList.length})</h3>
 
-        <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-  <span className="chip chipRisk chipRisk-high">High: {riskCounts.high}</span>
-  <span className="chip chipRisk chipRisk-medium">Medium: {riskCounts.medium}</span>
-  <span className="chip chipRisk chipRisk-low">Low: {riskCounts.low}</span>
-</div>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-  <div className="field" style={{ minWidth: 220 }}>
-    <label>Search</label>
-    <input
-      className="input"
-      value={q}
-      onChange={(e) => setQ(e.target.value)}
-      placeholder="Search…"
-      disabled={loading}
-    />
+  {/* Risk KPI chips (1x) */}
+  <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+    <span className="chip chipRisk chipRisk-high">High: {riskCounts.high}</span>
+    <span className="chip chipRisk chipRisk-medium">Medium: {riskCounts.medium}</span>
+    <span className="chip chipRisk chipRisk-low">Low: {riskCounts.low}</span>
   </div>
 
-  <div className="field" style={{ minWidth: 160 }}>
-    <label>Status</label>
-    <select
-      className="select"
-      value={statusFilter}
-      onChange={(e) => setStatusFilter(e.target.value as any)}
-      disabled={loading}
-    >
-      <option value="all">All</option>
-      <option value="open">Open</option>
-      <option value="sent">Sent</option>
-      <option value="waiting">Waiting</option>
-      <option value="followup">Follow-up</option>
-      <option value="done">Done</option>
-    </select>
+  {/* Filters (1x) */}
+  <div className="toolbarRow">
+    <div className="field" style={{ minWidth: 240 }}>
+      <label>Search</label>
+      <input
+        className="input"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        disabled={loading}
+        placeholder="Search…"
+      />
+    </div>
+
+    <div className="field" style={{ minWidth: 170 }}>
+      <label>Status</label>
+      <select
+        className="select"
+        value={statusFilter}
+        onChange={(e) => setStatusFilter(e.target.value as any)}
+        disabled={loading}
+      >
+        <option value="all">All</option>
+        <option value="open">Open</option>
+        <option value="sent">Sent</option>
+        <option value="waiting">Waiting</option>
+        <option value="followup">Follow-up</option>
+        <option value="done">Done</option>
+      </select>
+    </div>
+
+    <div className="field" style={{ minWidth: 140 }}>
+      <label>Risk</label>
+      <select
+        className="select"
+        value={riskFilter}
+        onChange={(e) => setRiskFilter(e.target.value as any)}
+        disabled={loading}
+      >
+        <option value="all">All</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+
+    <div className="field" style={{ minWidth: 140 }}>
+      <label>Sort</label>
+      <select
+        className="select"
+        value={sortMode}
+        onChange={(e) => setSortMode(e.target.value as any)}
+        disabled={loading}
+      >
+        <option value="risk">Risk</option>
+        <option value="due">Due</option>
+        <option value="created">Created</option>
+      </select>
+    </div>
+
+    <div className="toolbarRight">
+      <button
+        className="btn"
+        onClick={() => {
+          setQ("");
+          setStatusFilter("all");
+          setRiskFilter("all");
+          setSortMode("risk");
+        }}
+        disabled={loading}
+      >
+        Clear filters
+      </button>
+    </div>
   </div>
 
-  <div className="field" style={{ minWidth: 140 }}>
-    <label>Risk</label>
-    <select
-      className="select"
-      value={riskFilter}
-      onChange={(e) => setRiskFilter(e.target.value as any)}
-      disabled={loading}
-    >
-      <option value="all">All</option>
-      <option value="high">High</option>
-      <option value="medium">Medium</option>
-      <option value="low">Low</option>
-    </select>
-  </div>
+  {/* Empty / list states */}
+  {loading && items.length === 0 ? (
+    <div className="empty">
+      <p>Loading…</p>
+    </div>
+  ) : items.length === 0 ? (
+    <div className="empty">
+      <p>No follow-ups yet.</p>
+      <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
+        Add your first follow-up
+      </button>
+    </div>
+  ) : dashboardList.length === 0 ? (
+    <div className="empty">
+      <p>No results for these filters.</p>
+      <button
+        className="btn"
+        onClick={() => {
+          setQ("");
+          setStatusFilter("all");
+          setRiskFilter("all");
+          setSortMode("risk");
+        }}
+        disabled={loading}
+      >
+        Clear filters
+      </button>
+    </div>
+  ) : (
+    <div className="list">
+      {dashboardList.map((f) => {
+        const today = todayYMD();
+        const due = (f.dueAt || "").slice(0, 10);
+        const overdue = f.status !== "done" && due && due < today;
+        const cardClass = overdue ? "card cardOverdue" : "card";
 
-  <div className="field" style={{ minWidth: 140 }}>
-    <label>Sort</label>
-    <select
-      className="select"
-      value={sortMode}
-      onChange={(e) => setSortMode(e.target.value as any)}
-      disabled={loading}
-    >
-      <option value="risk">Risk</option>
-      <option value="due">Due</option>
-      <option value="created">Created</option>
-    </select>
-  </div>
-</div>
+        return (
+          <div key={f.id} className={cardClass}>
+            <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
+            <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-        <div className="toolbarRow">
-  <div className="field" style={{ minWidth: 240 }}>
-    <label>Search</label>
-    <input className="input" value={q} onChange={(e) => setQ(e.target.value)} disabled={loading} />
-  </div>
+            {/* NEXT step inline edit */}
+            <div style={{ marginTop: 10 }}>
+              <b>Next:</b>{" "}
+              {editNextId === f.id ? (
+                <input
+                  className="input"
+                  value={draftNext(f.id)}
+                  autoFocus
+                  disabled={loading}
+                  onChange={(e) => setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                  onBlur={() => saveEditNext(f.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveEditNext(f.id);
+                    if (e.key === "Escape") cancelEditNext(f.id);
+                  }}
+                  style={{ maxWidth: 520 }}
+                />
+              ) : (
+                <>
+                  <span role="button" tabIndex={0} onClick={() => startEditNext(f)} style={{ cursor: "pointer" }}>
+                    {f.nextStep || "—"}
+                  </span>
+                  <button
+                    className="btn"
+                    title="Edit next step"
+                    disabled={loading}
+                    style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                    onClick={() => startEditNext(f)}
+                  >
+                    ✎
+                  </button>
+                </>
+              )}
+            </div>
 
-  <div className="field" style={{ minWidth: 170 }}>
-    <label>Status</label>
-    <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} disabled={loading}>
-      <option value="all">All</option>
-      <option value="open">Open</option>
-      <option value="sent">Sent</option>
-      <option value="waiting">Waiting</option>
-      <option value="followup">Follow-up</option>
-      <option value="done">Done</option>
-    </select>
-  </div>
+            {/* META + DUE inline edit */}
+            <div className="cardMeta" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <span className="chip chipOpen">{statusLabel(f.status)}</span>
 
-  <div className="field" style={{ minWidth: 140 }}>
-    <label>Risk</label>
-    <select className="select" value={riskFilter} onChange={(e) => setRiskFilter(e.target.value as any)} disabled={loading}>
-      <option value="all">All</option>
-      <option value="high">High</option>
-      <option value="medium">Medium</option>
-      <option value="low">Low</option>
-    </select>
-  </div>
-
-  <div className="field" style={{ minWidth: 140 }}>
-    <label>Sort</label>
-    <select className="select" value={sortMode} onChange={(e) => setSortMode(e.target.value as any)} disabled={loading}>
-      <option value="risk">Risk</option>
-      <option value="due">Due</option>
-      <option value="created">Created</option>
-    </select>
-  </div>
-
-  <div className="toolbarRight">
-    <button
-      className="btn"
-      onClick={() => {
-        setQ("");
-        setStatusFilter("all");
-        setRiskFilter("all");
-        setSortMode("risk");
-      }}
-      disabled={loading}
-    >
-      Clear filters
-    </button>
-  </div>
-</div>
-
-        {loading && items.length === 0 ? (
-  <div className="empty">
-    <p>Loading…</p>
-  </div>
-) : items.length === 0 ? (
-  <div className="empty">
-    <p>No follow-ups yet.</p>
-    <button
-      className="btn"
-      onClick={() => document.getElementById("contactName")?.focus()}
-      disabled={loading}
-    >
-      Add your first follow-up
-    </button>
-  </div>
-) : dashboardList.length === 0 ? (
-  <div className="empty">
-    <p>No results for these filters.</p>
-    <button
-      className="btn"
-      onClick={() => {
-        setQ("");
-        setStatusFilter("all");
-        setRiskFilter("all");
-        setSortMode("risk");
-      }}
-      disabled={loading}
-    >
-      Clear filters
-    </button>
-  </div>
-) : (
-  <div className="list">
-    {dashboardList.map((f) => {
-      const today = todayYMD();
-      const due = (f.dueAt || "").slice(0, 10);
-      const overdue = f.status !== "done" && due && due < today;
-      const cardClass = overdue ? "card cardOverdue" : "card";
-
-      return (
-        <div key={f.id} className={cardClass}>
-                  <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
-                  <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
-
-                  {/* NEXT step inline edit */}
-                  <div style={{ marginTop: 10 }}>
-                    <b>Next:</b>{" "}
-                    {editNextId === f.id ? (
-                      <input
-                        className="input"
-                        value={draftNext(f.id)}
-                        autoFocus
-                        disabled={loading}
-                        onChange={(e) =>
-                          setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                        }
-                        onBlur={() => saveEditNext(f.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") saveEditNext(f.id);
-                          if (e.key === "Escape") cancelEditNext(f.id);
-                        }}
-                        style={{ maxWidth: 520 }}
-                      />
-                    ) : (
-                      <>
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => startEditNext(f)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          {f.nextStep || "—"}
-                        </span>
-                        <button
-                          className="btn"
-                          title="Edit next step"
-                          disabled={loading}
-                          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                          onClick={() => startEditNext(f)}
-                        >
-                          ✎
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  {/* META + DUE inline edit */}
-                  <div className="cardMeta" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <span className="chip chipOpen">{statusLabel(f.status)}</span>
-
-                    <span className="chip chipDue">
-                      Due:{" "}
-                      {editDueId === f.id ? (
-                        <input
-                          className="input"
-                          value={draftDue(f.id)}
-                          autoFocus
-                          disabled={loading}
-                          onChange={(e) =>
-                            setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                          }
-                          onBlur={() => saveEditDue(f.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") saveEditDue(f.id);
-                            if (e.key === "Escape") cancelEditDue(f.id);
-                          }}
-                          style={{ width: 140 }}
-                          placeholder="YYYY-MM-DD"
-                        />
-                      ) : (
-                        <>
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => startEditDue(f)}
-                            style={{ cursor: "pointer", fontWeight: 700 }}
-                            title="Click to edit due date"
-                          >
-                            {due || "—"}
-                          </span>
-                          <button
-                            className="btn"
-                            title="Edit due date"
-                            disabled={loading}
-                            style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                            onClick={() => startEditDue(f)}
-                          >
-                            ✎
-                          </button>
-                        </>
-                      )}
+              <span className="chip chipDue">
+                Due:{" "}
+                {editDueId === f.id ? (
+                  <input
+                    className="input"
+                    value={draftDue(f.id)}
+                    autoFocus
+                    disabled={loading}
+                    onChange={(e) => setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                    onBlur={() => saveEditDue(f.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEditDue(f.id);
+                      if (e.key === "Escape") cancelEditDue(f.id);
+                    }}
+                    style={{ width: 140 }}
+                    placeholder="YYYY-MM-DD"
+                  />
+                ) : (
+                  <>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => startEditDue(f)}
+                      style={{ cursor: "pointer", fontWeight: 700 }}
+                      title="Click to edit due date"
+                    >
+                      {due || "—"}
                     </span>
-
-                    {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
-                  </div>
-
-                  {f.risk ? (
-  <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
-    Risk: {f.risk.level} ({f.risk.score})
-  </span>
-) : null}
-                  {f.risk ? (
-  <div style={{ marginTop: 8, opacity: 0.8, fontSize: 12 }}>
-    <div><b>Why:</b> {f.risk.reasons.join(" · ")}</div>
-    <div><b>Next:</b> {f.risk.suggestion}</div>
-  </div>
-) : null}
-
-                  {/* ACTIONS */}
-                  <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button className="btn" onClick={() => onMove(f)} disabled={loading}>
-                      Move
+                    <button
+                      className="btn"
+                      title="Edit due date"
+                      disabled={loading}
+                      style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                      onClick={() => startEditDue(f)}
+                    >
+                      ✎
                     </button>
+                  </>
+                )}
+              </span>
 
-                    <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
-                      +1d
-                    </button>
-                    <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
-                      +3d
-                    </button>
-                    <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
-                      +7d
-                    </button>
+              {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
+            </div>
 
-                    {f.status !== "done" ? (
-                      <button className="btn" onClick={() => onDone(f)} disabled={loading}>
-                        Done
-                      </button>
-                    ) : (
-                      <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
-                        Reopen
-                      </button>
-                    )}
-                  </div>
+            {f.risk ? (
+              <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
+                Risk: {f.risk.level} ({f.risk.score})
+              </span>
+            ) : null}
 
-                  <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-                    Id: <code>{f.id}</code>
-                  </div>
+            {f.risk ? (
+              <div style={{ marginTop: 8, opacity: 0.8, fontSize: 12 }}>
+                <div>
+                  <b>Why:</b> {f.risk.reasons.join(" · ")}
                 </div>
-              );
-            })}
+                <div>
+                  <b>Next:</b> {f.risk.suggestion}
+                </div>
+              </div>
+            ) : null}
+
+            {/* ACTIONS */}
+            <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button className="btn" onClick={() => onMove(f)} disabled={loading}>
+                Move
+              </button>
+
+              <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
+                +1d
+              </button>
+              <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
+                +3d
+              </button>
+              <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
+                +7d
+              </button>
+
+              {f.status !== "done" ? (
+                <button className="btn" onClick={() => onDone(f)} disabled={loading}>
+                  Done
+                </button>
+              ) : (
+                <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
+                  Reopen
+                </button>
+              )}
+            </div>
+
+            <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
+              Id: <code>{f.id}</code>
+            </div>
           </div>
-        )}
-      </section>
+        );
+      })}
+    </div>
+  )}
+</section>
     </div>
   );
 }
