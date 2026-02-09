@@ -3,6 +3,12 @@ import "./App.css";
 
 type Status = "open" | "sent" | "waiting" | "followup" | "done";
 
+type Workspace = {
+  id: string;
+  name: string;
+  createdAt?: string;
+};
+
 type FollowupRisk = {
   score: number;
   level: "low" | "medium" | "high";
@@ -17,11 +23,9 @@ type Followup = {
   contactName: string;
   companyName: string;
   nextStep: string;
-  dueAt: string; // YYYY-MM-DD
+  dueAt: string;
   status: Status;
   createdAt?: string;
-
-  // ✅ toevoegen:
   risk?: FollowupRisk;
 };
 
@@ -75,8 +79,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [items, setItems] = useState<Followup[]>([]);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
+
 
   // Form state (create)
   const [contactName, setContactName] = useState("");
@@ -87,99 +93,127 @@ export default function App() {
   // =========================
   // Step 7: inline edit state (draft per item-id)
   // =========================
-  const [editNextId, setEditNextId] = useState<string | null>(null);
-  const [editDueId, setEditDueId] = useState<string | null>(null);
-  const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
-  const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
+ // Inline edit state
+const [editNextId, setEditNextId] = useState<string | null>(null);
+const [editDueId, setEditDueId] = useState<string | null>(null);
+const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
+const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
+  // Risk dashboard state
+const [riskFilter, setRiskFilter] = useState<"all" | "high" | "medium" | "low">("all");
+const [sortMode, setSortMode] = useState<"risk" | "due" | "created">("risk");
 
   // ---- KPIs
   const needsTodayCount = useMemo(() => {
-    const today = todayYMD();
-    return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) === today).length;
-  }, [items]);
+  const today = todayYMD();
+  return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) === today).length;
+}, [items]);
 
-  const overdueCount = useMemo(() => {
-    const today = todayYMD();
-    return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
-  }, [items]);
+const overdueCount = useMemo(() => {
+  const today = todayYMD();
+  return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
+}, [items]);
 
-  // ---- API
-  async function refreshAll() {
-    setLoading(true);
-    setErr(null);
+  // statusFilter
+  if (statusFilter !== "all") list = list.filter((f) => f.status === statusFilter);
 
-    try {
-      // workspaces (optional)
-      const wsRes = await fetch(apiUrl("/api/workspaces"), { headers: { Accept: "application/json" } });
-      if (wsRes.ok) {
-        const wsData = await wsRes.json();
-        setWorkspaces(wsData.items || []);
-      } else {
-        setWorkspaces([]);
-      }
-
-      // followups
-     const fuRes = await fetch(
-  apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
-  { headers: { Accept: "application/json" } }
-);
-      });
-      if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
-      const fuData = await fuRes.json();
-      setItems(fuData.items || []);
-    } catch (e: any) {
-      setErr(e?.message || "Failed to fetch");
-    } finally {
-      setLoading(false);
-    }
+  // search
+  const needle = (q || "").trim().toLowerCase();
+  if (needle) {
+    list = list.filter((f) => {
+      const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
+      return hay.includes(needle);
+    });
   }
 
-  async function onCreate() {
-    setLoading(true);
-    setErr(null);
+  // riskFilter
+  if (riskFilter !== "all") list = list.filter((f) => f.risk?.level === riskFilter);
 
-    try {
-      const payload = {
-        workspaceId: WORKSPACE_ID,
-        ownerId: OWNER_ID,
-        contactName: contactName.trim(),
-        companyName: companyName.trim(),
-        nextStep: nextStep.trim(),
-        dueAt: (dueAt || "").trim(),
-        status: "open" as Status,
-      };
+  // sort
+  const riskScore = (f: any) => (typeof f?.risk?.score === "number" ? f.risk.score : -1);
+  const dueKey = (f: any) => (f?.dueAt || "").slice(0, 10) || "9999-99-99";
+  const createdKey = (f: any) => (f?.createdAt || "");
 
-      if (!payload.contactName) throw new Error("Please enter a contact name.");
-      if (!payload.nextStep) throw new Error("Please enter a next step.");
-      if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
+  list.sort((a, b) => {
+    if (sortMode === "risk") return riskScore(b) - riskScore(a);
+    if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));
+    return createdKey(b).localeCompare(createdKey(a));
+  });
 
-      const res = await fetch(apiUrl("/api/followups"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(payload),
-      });
+  return list;
+}, [items, q, statusFilter, riskFilter, sortMode]);
 
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
-      }
+// ---- API
+async function refreshAll() {
 
-      await res.json().catch(() => null);
+  setLoading(true);
+  setErr(null);
 
-      // clear form (date houden we)
-      setContactName("");
-      setCompanyName("");
-      setNextStep("");
+  try {
 
-      await refreshAll();
-    } catch (e: any) {
-      setErr(e?.message || "Create failed");
-      setLoading(false);
-    }
+    // followups (+ risk)
+    const fuRes = await fetch(
+      apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
+      { headers: { Accept: "application/json" } }
+    );
+
+    if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
+
+    const fuData = await fuRes.json().catch(() => ({} as any));
+    setItems(Array.isArray(fuData.items) ? fuData.items : []);
+  } catch (e: any) {
+    setErr(e?.message || "Failed to fetch");
+  } finally {
+    setLoading(false);
   }
+}
+
+async function onCreate() {
+  setLoading(true);
+  setErr(null);
+
+  try {
+    const payload = {
+      workspaceId: WORKSPACE_ID,
+      ownerId: OWNER_ID,
+      contactName: contactName.trim(),
+      companyName: companyName.trim(),
+      nextStep: nextStep.trim(),
+      dueAt: (dueAt || "").trim(),
+      status: "open" as Status,
+    };
+
+    if (!payload.contactName) throw new Error("Please enter a contact name.");
+    if (!payload.nextStep) throw new Error("Please enter a next step.");
+    if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
+    if (!isValidYMD(payload.dueAt)) throw new Error("Due date must be YYYY-MM-DD.");
+
+    const res = await fetch(apiUrl("/api/followups"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
+    }
+
+    await res.json().catch(() => null);
+
+    setContactName("");
+    setCompanyName("");
+    setNextStep("");
+
+    await refreshAll();
+  } catch (e: any) {
+    setErr(e?.message || "Create failed");
+  } finally {
+    setLoading(false);
+  }
+}
 
   async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
     const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
@@ -332,6 +366,18 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const riskCounts = useMemo(() => {
+  const counts = { high: 0, medium: 0, low: 0, none: 0 };
+  for (const f of items) {
+    const level = f.risk?.level;
+    if (level === "high") counts.high++;
+    else if (level === "medium") counts.medium++;
+    else if (level === "low") counts.low++;
+    else counts.none++;
+  }
+  return counts;
+}, [items]);
+
   return (
     <div className="page">
       <header className="header">
@@ -348,29 +394,21 @@ export default function App() {
         </div>
       ) : null}
 
-      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-        <span className="chip chipSoon">Need today: {needsTodayCount}</span>
-        <span className="chip chipOverdue">Overdue: {overdueCount}</span>
-      </div>
+     <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+  <span className="chip chipSoon">Need today: {needsTodayCount}</span>
+  <span className="chip chipOverdue">Overdue: {overdueCount}</span>
+</div>
 
-      <section className="panel" style={{ marginBottom: 12 }}>
-        <div style={{ opacity: 0.8 }}>
-          Workspace: <b>{WORKSPACE_ID}</b> · API: <code>/api/followups</code>
-        </div>
-        <div style={{ marginTop: 8 }}>
-          Workspaces loaded: <b>{workspaces.length}</b>
-        </div>
+<div className="topStatus">
+  WS: {WORKSPACE_ID} · Items: {items.length}
+  <button onClick={refreshAll} disabled={loading} title="Refresh">
+    {loading ? "…" : "↻"}
+  </button>
+</div>
 
-        <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="btn" onClick={refreshAll} disabled={loading}>
-            Refresh
-          </button>
-        </div>
-      </section>
-
-      {/* Create */}
-      <section className="panel" style={{ marginBottom: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
+{/* Create */}
+<section className="panel" style={{ marginBottom: 12 }}>
+  <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
 
         <div className="grid">
           <div className="field">
@@ -432,29 +470,114 @@ export default function App() {
 
       {/* List */}
       <section className="panel">
-        <h3 style={{ marginTop: 0 }}>Follow-ups ({items.length})</h3>
+        <h3 style={{ marginTop: 0 }}>Follow-ups ({dashboardList.length})</h3>
+
+        <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+  <span className="chip chipRisk chipRisk-high">High: {riskCounts.high}</span>
+  <span className="chip chipRisk chipRisk-medium">Medium: {riskCounts.medium}</span>
+  <span className="chip chipRisk chipRisk-low">Low: {riskCounts.low}</span>
+</div>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+  <div className="field" style={{ minWidth: 220 }}>
+    <label>Search</label>
+    <input
+      className="input"
+      value={q}
+      onChange={(e) => setQ(e.target.value)}
+      placeholder="Search…"
+      disabled={loading}
+    />
+  </div>
+
+  <div className="field" style={{ minWidth: 160 }}>
+    <label>Status</label>
+    <select
+      className="select"
+      value={statusFilter}
+      onChange={(e) => setStatusFilter(e.target.value as any)}
+      disabled={loading}
+    >
+      <option value="all">All</option>
+      <option value="open">Open</option>
+      <option value="sent">Sent</option>
+      <option value="waiting">Waiting</option>
+      <option value="followup">Follow-up</option>
+      <option value="done">Done</option>
+    </select>
+  </div>
+
+  <div className="field" style={{ minWidth: 140 }}>
+    <label>Risk</label>
+    <select
+      className="select"
+      value={riskFilter}
+      onChange={(e) => setRiskFilter(e.target.value as any)}
+      disabled={loading}
+    >
+      <option value="all">All</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  </div>
+
+  <div className="field" style={{ minWidth: 140 }}>
+    <label>Sort</label>
+    <select
+      className="select"
+      value={sortMode}
+      onChange={(e) => setSortMode(e.target.value as any)}
+      disabled={loading}
+    >
+      <option value="risk">Risk</option>
+      <option value="due">Due</option>
+      <option value="created">Created</option>
+    </select>
+  </div>
+</div>
 
         {loading && items.length === 0 ? (
-          <div className="empty">
-            <p>Loading…</p>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="empty">
-            <p>No follow-ups yet.</p>
-            <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
-              Add your first follow-up
-            </button>
-          </div>
-        ) : (
-          <div className="list">
-            {items.map((f) => {
-              const today = todayYMD();
-              const due = (f.dueAt || "").slice(0, 10);
-              const overdue = f.status !== "done" && due && due < today;
-              const cardClass = overdue ? "card cardOverdue" : "card";
+  <div className="empty">
+    <p>Loading…</p>
+  </div>
+) : items.length === 0 ? (
+  <div className="empty">
+    <p>No follow-ups yet.</p>
+    <button
+      className="btn"
+      onClick={() => document.getElementById("contactName")?.focus()}
+      disabled={loading}
+    >
+      Add your first follow-up
+    </button>
+  </div>
+) : dashboardList.length === 0 ? (
+  <div className="empty">
+    <p>No results for these filters.</p>
+    <button
+      className="btn"
+      onClick={() => {
+        setQ("");
+        setStatusFilter("all");
+        setRiskFilter("all");
+        setSortMode("risk");
+      }}
+      disabled={loading}
+    >
+      Clear filters
+    </button>
+  </div>
+) : (
+  <div className="list">
+    {dashboardList.map((f) => {
+      const today = todayYMD();
+      const due = (f.dueAt || "").slice(0, 10);
+      const overdue = f.status !== "done" && due && due < today;
+      const cardClass = overdue ? "card cardOverdue" : "card";
 
-              return (
-                <div key={f.id} className={cardClass}>
+      return (
+        <div key={f.id} className={cardClass}>
                   <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
                   <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
@@ -601,4 +724,3 @@ export default function App() {
     </div>
   );
 }
-
