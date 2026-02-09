@@ -572,16 +572,32 @@ async function onCreate() {
           <div className="empty">
             <p>Loading…</p>
           </div>
-        ) : items.length === 0 ? (
-          <div className="empty">
-            <p>No follow-ups yet.</p>
-            <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
-              Add your first follow-up
-            </button>
-          </div>
-        ) : (
-          <div className="list">
-          {dashboardList.map((f) => {
+       ) : items.length === 0 ? (
+  <div className="empty">
+    <p>No follow-ups yet.</p>
+    <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
+      Add your first follow-up
+    </button>
+  </div>
+) : dashboardList.length === 0 ? (
+  <div className="empty">
+    <p>No results for these filters.</p>
+    <button
+      className="btn"
+      onClick={() => {
+        setQ("");
+        setStatusFilter("all");
+        setRiskFilter("all");
+        setSortMode("risk");
+      }}
+      disabled={loading}
+    >
+      Clear filters
+    </button>
+  </div>
+) : (
+  <div className="list">
+    {dashboardList.map((f) => {
               const today = todayYMD();
               const due = (f.dueAt || "").slice(0, 10);
               const overdue = f.status !== "done" && due && due < today;
