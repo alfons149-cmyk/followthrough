@@ -136,8 +136,8 @@ async function refreshAll() {
     if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
     const fuData = await fuRes.json();
     setItems(fuData.items || []);
-  } catch (e: any) {
-    setErr(e?.message || "Failed to fetch");
+  } catch (e: unknown) {
+    setErr((e as any)?.message || "Failed to fetch");
   } finally {
     setLoading(false);
   }
