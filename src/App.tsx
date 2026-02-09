@@ -414,39 +414,27 @@ async function onCreate() {
       </div>
     </header>
 
-<div className="kpiBar">
-  <span className="kpiChip kpiSoon">Need today: {needsTodayCount}</span>
-  <span className="kpiChip kpiOverdue">Overdue: {overdueCount}</span>
-
-  <span className="kpiChip kpiRiskHigh">High: {riskCounts.high}</span>
-  <span className="kpiChip kpiRiskMed">Med: {riskCounts.medium}</span>
-  <span className="kpiChip kpiRiskLow">Low: {riskCounts.low}</span>
-</div>
-
-    <div className="page">
-      <header className="header">
-        <h1 className="title">FollowThrough</h1>
-        <p className="tagline">Step 7 — Inline edit (✎) Next + Due</p>
-      </header>
-
-      {err ? (
-        <div className="error">
-          Error: {err}{" "}
-          <button className="btn" onClick={refreshAll} disabled={loading} style={{ marginLeft: 8 }}>
-            Retry
-          </button>
-        </div>
-      ) : null}
-
-      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-        <span className="chip chipSoon">Need today: {needsTodayCount}</span>
-        <span className="chip chipOverdue">Overdue: {overdueCount}</span>
+{err ? (
+      <div className="error">
+        Error: {err}{" "}
+        <button className="btn" onClick={refreshAll} disabled={loading} style={{ marginLeft: 8 }}>
+          Retry
+        </button>
       </div>
+    ) : null}
 
-{/* Create */}
-<section className="panel" style={{ marginBottom: 12 }}>
-  <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
+    <div className="kpiBar">
+      <span className="kpiChip kpiSoon">Need today: {needsTodayCount}</span>
+      <span className="kpiChip kpiOverdue">Overdue: {overdueCount}</span>
 
+      <span className="kpiChip kpiRiskHigh">High: {riskCounts.high}</span>
+      <span className="kpiChip kpiRiskMed">Med: {riskCounts.medium}</span>
+      <span className="kpiChip kpiRiskLow">Low: {riskCounts.low}</span>
+    </div>
+
+    {/* Create */}
+    <section className="panel" style={{ marginBottom: 12 }}>
+      <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
         <div className="grid">
           <div className="field">
             <label>Contact name</label>
