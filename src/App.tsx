@@ -501,7 +501,7 @@ async function onCreate() {
         </div>
       </section>
 
-      {/* List */}
+     {/* List */}
 <section className="panel">
   <h3 style={{ marginTop: 0 }}>Follow-ups ({dashboardList.length})</h3>
 
@@ -587,17 +587,11 @@ async function onCreate() {
     </div>
   </div>
 
-  {/* Empty / list states */}
-    </div> {/* einde toolbarRow */}
-
-  {/* 🔥 PLAK HIER: High risk banner */}
+  {/* 🔥 High-risk banner */}
   {riskCounts.high > 0 && riskFilter !== "high" ? (
     <div className="highRiskBanner">
-      <span className="chip chipRisk chipRisk-high">
-        High risk: {riskCounts.high}
-      </span>
+      <span className="chip chipRisk chipRisk-high">High risk: {riskCounts.high}</span>
       <span style={{ opacity: 0.8 }}>Needs attention first</span>
-
       <button
         className="btn"
         onClick={() => {
@@ -614,15 +608,17 @@ async function onCreate() {
 
   {/* Empty / list states */}
   {loading && items.length === 0 ? (
-  
-  {loading && items.length === 0 ? (
     <div className="empty">
       <p>Loading…</p>
     </div>
   ) : items.length === 0 ? (
     <div className="empty">
       <p>No follow-ups yet.</p>
-      <button className="btn" onClick={() => document.getElementById("contactName")?.focus()} disabled={loading}>
+      <button
+        className="btn"
+        onClick={() => document.getElementById("contactName")?.focus()}
+        disabled={loading}
+      >
         Add your first follow-up
       </button>
     </div>
@@ -664,7 +660,9 @@ async function onCreate() {
                   value={draftNext(f.id)}
                   autoFocus
                   disabled={loading}
-                  onChange={(e) => setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                  onChange={(e) =>
+                    setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                  }
                   onBlur={() => saveEditNext(f.id)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") saveEditNext(f.id);
@@ -674,7 +672,12 @@ async function onCreate() {
                 />
               ) : (
                 <>
-                  <span role="button" tabIndex={0} onClick={() => startEditNext(f)} style={{ cursor: "pointer" }}>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => startEditNext(f)}
+                    style={{ cursor: "pointer" }}
+                  >
                     {f.nextStep || "—"}
                   </span>
                   <button
@@ -702,7 +705,9 @@ async function onCreate() {
                     value={draftDue(f.id)}
                     autoFocus
                     disabled={loading}
-                    onChange={(e) => setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                    onChange={(e) =>
+                      setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                    }
                     onBlur={() => saveEditDue(f.id)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") saveEditDue(f.id);
@@ -739,46 +744,29 @@ async function onCreate() {
             </div>
 
             {f.risk ? (
-              <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
-                Risk: {f.risk.level} ({f.risk.score})
-              </span>
-            ) : null}
+              <>
+                <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
+                  Risk: {f.risk.level} ({f.risk.score})
+                </span>
 
-            {f.risk ? (
-              <div style={{ marginTop: 8, opacity: 0.8, fontSize: 12 }}>
-                <div>
-                  <b>Why:</b> {f.risk.reasons.join(" · ")}
+                <div style={{ marginTop: 8, opacity: 0.8, fontSize: 12 }}>
+                  <div><b>Why:</b> {f.risk.reasons.join(" · ")}</div>
+                  <div><b>Next:</b> {f.risk.suggestion}</div>
                 </div>
-                <div>
-                  <b>Next:</b> {f.risk.suggestion}
-                </div>
-              </div>
+              </>
             ) : null}
 
             {/* ACTIONS */}
             <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button className="btn" onClick={() => onMove(f)} disabled={loading}>
-                Move
-              </button>
-
-              <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
-                +1d
-              </button>
-              <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
-                +3d
-              </button>
-              <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
-                +7d
-              </button>
+              <button className="btn" onClick={() => onMove(f)} disabled={loading}>Move</button>
+              <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>+1d</button>
+              <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>+3d</button>
+              <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>+7d</button>
 
               {f.status !== "done" ? (
-                <button className="btn" onClick={() => onDone(f)} disabled={loading}>
-                  Done
-                </button>
+                <button className="btn" onClick={() => onDone(f)} disabled={loading}>Done</button>
               ) : (
-                <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
-                  Reopen
-                </button>
+                <button className="btn" onClick={() => onReopen(f)} disabled={loading}>Reopen</button>
               )}
             </div>
 
