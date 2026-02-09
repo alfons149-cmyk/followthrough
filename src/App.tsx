@@ -413,10 +413,6 @@ async function onCreate() {
      <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
   <span className="chip chipSoon">Need today: {needsTodayCount}</span>
   <span className="chip chipOverdue">Overdue: {overdueCount}</span>
-
-  <span className="chip chipRisk chipRisk-high">High: {riskCounts.high}</span>
-  <span className="chip chipRisk chipRisk-medium">Med: {riskCounts.medium}</span>
-  <span className="chip chipRisk chipRisk-low">Low: {riskCounts.low}</span>
 </div>
 
 <div className="topStatus">
