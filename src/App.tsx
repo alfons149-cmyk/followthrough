@@ -288,7 +288,7 @@ async function onCreate() {
     try {
       await patchFollowup(f.id, { status: "done" });
       await refreshAll();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setErr(e?.message || "Done failed");
     } finally {
       setLoading(false);
@@ -315,7 +315,7 @@ async function onCreate() {
       const base = ((f.dueAt || todayYMD()).slice(0, 10) || todayYMD()).trim();
       await patchFollowup(f.id, { dueAt: addDays(base, days) });
       await refreshAll();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setErr(e?.message || "Snooze failed");
     } finally {
       setLoading(false);
@@ -346,7 +346,7 @@ async function onCreate() {
     try {
       await patchFollowup(id, { nextStep: v });
       await refreshAll();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setErr(e?.message || "Save next step failed");
     } finally {
       setLoading(false);
