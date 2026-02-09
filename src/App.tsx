@@ -109,24 +109,28 @@ const dashboardList = useMemo(() => {
   if (riskFilter !== "all") {
     list = list.filter((f) => f.risk?.level === riskFilter);
   }
+  
+  // 🔥 risk-group: high(0) → medium(1) → low(2) → none(3)
+const riskGroup = (f: Followup) => {
+  const lvl = f.risk?.level;
+  if (lvl === "high") return 0;
+  if (lvl === "medium") return 1;
+  if (lvl === "low") return 2;
+  return 3;
+};
 
-  // 🔥 high risk altijd eerst
-  const highFirst = (f: Followup) => (f.risk?.level === "high" ? 0 : 1);
-  const riskScore = (f: Followup) => (typeof f.risk?.score === "number" ? f.risk.score : -1);
-  const dueKey = (f: Followup) => (f.dueAt || "").slice(0, 10) || "9999-99-99";
-  const createdKey = (f: Followup) => f.createdAt || "";
+const riskScore = (f: Followup) => (typeof f.risk?.score === "number" ? f.risk.score : -1);
+const dueKey = (f: Followup) => (f.dueAt || "").slice(0, 10) || "9999-99-99";
+const createdKey = (f: Followup) => f.createdAt || "";
 
-  list.sort((a, b) => {
-  if (sortMode === "risk") {
-    const highFirst = (x: Followup) => (x.risk?.level === "high" ? 0 : 1);
-    const hf = highFirst(a) - highFirst(b);
-    if (hf !== 0) return hf;
+// ✅ “Intelligent” sort: risk-groep eerst, daarna jouw gekozen sortMode
+list.sort((a, b) => {
+  const g = riskGroup(a) - riskGroup(b);
+  if (g !== 0) return g;
 
-    return riskScore(b) - riskScore(a); // binnen high/non-high: score hoog->laag
-  }
-
-  if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));
-  return createdKey(b).localeCompare(createdKey(a));
+  if (sortMode === "risk") return riskScore(b) - riskScore(a);        // hoog→laag binnen groep
+  if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));  // vroeg→laat
+  return createdKey(b).localeCompare(createdKey(a));                  // nieuw→oud
 });
 
   return list;
