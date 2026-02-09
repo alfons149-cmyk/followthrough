@@ -110,7 +110,7 @@ const dashboardList = useMemo(() => {
     list = list.filter((f) => f.risk?.level === riskFilter);
   }
   
-  // 🔥 risk-group: high(0) → medium(1) → low(2) → none(3)
+  // risk-group: high(0) → medium(1) → low(2) → none(3)
 const riskGroup = (f: Followup) => {
   const lvl = f.risk?.level;
   if (lvl === "high") return 0;
