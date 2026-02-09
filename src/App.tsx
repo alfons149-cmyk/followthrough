@@ -503,6 +503,12 @@ async function onCreate() {
       <section className="panel">
         <h3 style={{ marginTop: 0 }}>Follow-ups ({dashboardList.length})</h3>
 
+        <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+  <span className="chip chipRisk chipRisk-high">High: {riskCounts.high}</span>
+  <span className="chip chipRisk chipRisk-medium">Medium: {riskCounts.medium}</span>
+  <span className="chip chipRisk chipRisk-low">Low: {riskCounts.low}</span>
+</div>
+
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
   <div className="field" style={{ minWidth: 220 }}>
     <label>Search</label>
