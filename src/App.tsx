@@ -70,8 +70,11 @@ function isValidYMD(s: string) {
 }
 
 function errorMessage(e: unknown, fallback: string): string {
+  console.error("App error:", e);
+
   if (e instanceof Error) return e.message;
   if (typeof e === "string") return e;
+
   return fallback;
 }
 
