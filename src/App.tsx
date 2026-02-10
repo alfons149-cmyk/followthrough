@@ -358,7 +358,8 @@ async function onCreate() {
       await patchFollowup(id, { nextStep: v });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e?.message || "Save next step failed");
+      setErr(errorMessage(e) ||  "Save next step failed");
+
     } finally {
       setLoading(false);
     }
