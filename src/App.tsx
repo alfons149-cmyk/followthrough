@@ -286,7 +286,7 @@ async function onCreate() {
       await patchFollowup(f.id, plan);
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e?.message || "Move failed");
+      setErr(errorMessage(e) || "Move failed");
     } finally {
       setLoading(false);
     }
