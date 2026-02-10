@@ -326,7 +326,8 @@ async function onCreate() {
       await patchFollowup(f.id, { dueAt: addDays(base, days) });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e?.message || "Snooze failed");
+      setErr(errorMessage(e) || "Snooze failed");
+
     } finally {
       setLoading(false);
     }
