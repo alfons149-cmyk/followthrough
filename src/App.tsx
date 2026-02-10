@@ -38,6 +38,16 @@ function todayYMD() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function errorMessage(e: unknown) {
+  if (e instanceof Error) return e.message;
+  if (typeof e === "string") return e;
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return "Unknown error";
+  }
+}
+
 function parseYMD(s: string) {
   const v = (s || "").slice(0, 10);
   const [y, m, d] = v.split("-").map(Number);
