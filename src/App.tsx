@@ -299,7 +299,7 @@ async function onCreate() {
       await patchFollowup(f.id, { status: "done" });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e?.message || "Done failed");
+      setErr(e?.message || "Move failed");
     } finally {
       setLoading(false);
     }
