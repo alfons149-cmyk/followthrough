@@ -19,3 +19,14 @@ export const workspaces = sqliteTable("workspaces", {
   name: text("name").notNull(),
   createdAt: text("created_at").notNull(),
 });
+
+// API Keys table
+export const apiKeys = sqliteTable("api_keys", {
+  id: text("id").primaryKey(),
+  keyHash: text("key_hash").notNull(),
+  workspaceId: text("workspace_id").notNull(),
+  ownerId: text("owner_id").notNull(),
+  label: text("label"),
+  createdAt: text("created_at").notNull(),
+  revokedAt: text("revoked_at"),
+});

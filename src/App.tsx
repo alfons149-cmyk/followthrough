@@ -38,6 +38,16 @@ function todayYMD() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function errorMessage(e: unknown) {
+  if (e instanceof Error) return e.message;
+  if (typeof e === "string") return e;
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return "Unknown error";
+  }
+}
+
 function parseYMD(s: string) {
   const v = (s || "").slice(0, 10);
   const [y, m, d] = v.split("-").map(Number);
@@ -276,7 +286,7 @@ async function onCreate() {
       await patchFollowup(f.id, plan);
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e?.message || "Move failed");
+      setErr(errorMessage(e) || "Move failed");
     } finally {
       setLoading(false);
     }
@@ -316,7 +326,8 @@ async function onCreate() {
       await patchFollowup(f.id, { dueAt: addDays(base, days) });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e?.message || "Snooze failed");
+      setErr(errorMessage(e) || "Snooze failed");
+
     } finally {
       setLoading(false);
     }
@@ -347,7 +358,8 @@ async function onCreate() {
       await patchFollowup(id, { nextStep: v });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e?.message || "Save next step failed");
+      setErr(errorMessage(e) ||  "Save next step failed");
+
     } finally {
       setLoading(false);
     }
