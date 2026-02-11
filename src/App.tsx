@@ -3,6 +3,10 @@ import "./App.css";
 
 type Status = "open" | "sent" | "waiting" | "followup" | "done";
 
+type StatusFilter = Status | "all";
+type RiskFilter = "all" | "high" | "medium" | "low";
+type SortMode = "risk" | "due" | "created";
+
 type FollowupRisk = {
   score: number;
   level: "low" | "medium" | "high";
