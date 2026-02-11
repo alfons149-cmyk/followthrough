@@ -529,7 +529,7 @@ async function onCreate() {
       <select
         className="select"
         value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value as any)}
+        onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
         disabled={loading}
       >
         <option value="all">All</option>
@@ -546,7 +546,7 @@ async function onCreate() {
       <select
         className="select"
         value={riskFilter}
-        onChange={(e) => setRiskFilter(e.target.value as any)}
+        onChange={(e) => setRiskFilter(e.target.value as RiskFilter)}
         disabled={loading}
       >
         <option value="all">All</option>
@@ -561,7 +561,7 @@ async function onCreate() {
       <select
         className="select"
         value={sortMode}
-        onChange={(e) => setSortMode(e.target.value as any)}
+        onChange={(e) => setSortMode(e.target.value as SortMode)}
         disabled={loading}
       >
         <option value="risk">Risk</option>
