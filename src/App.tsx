@@ -88,9 +88,9 @@ export default function App() {
 
   const [items, setItems] = useState<Followup[]>([]);
 const [q, setQ] = useState("");
-const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
-onChange={(e) => setRiskFilter(e.target.value as "all" | "high" | "medium" | "low")}
-onChange={(e) => setSortMode(e.target.value as "risk" | "due" | "created")}
+const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
+const [sortMode, setSortMode] = useState<SortMode>("risk");
 
 const dashboardList = useMemo(() => {
   let list = [...items];
