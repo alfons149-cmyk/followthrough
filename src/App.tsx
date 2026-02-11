@@ -38,13 +38,16 @@ function todayYMD() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function errorMessage (e: unknown) {
-  if (e instanceof Error) return e.message;
+function errorMessage(e: unknown, fallback = "Unknown error"): string {
+  console.error("App error:", e);
+
+  if (e instanceof Error) return e.message || fallback;
   if (typeof e === "string") return e;
+
   try {
     return JSON.stringify(e);
   } catch {
-    return "Unknown error";
+    return fallback;
   }
 }
 
