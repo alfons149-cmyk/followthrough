@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
@@ -39,16 +38,13 @@ function todayYMD() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function errorMessage(e: unknown, fallback = "Unknown error"): string {
-  console.error("App error:", e);
-
-  if (e instanceof Error) return e.message || fallback;
+function errorMessage (e: unknown) {
+  if (e instanceof Error) return e.message;
   if (typeof e === "string") return e;
-
   try {
     return JSON.stringify(e);
   } catch {
-    return fallback;
+    return "Unknown error";
   }
 }
 
@@ -81,6 +77,15 @@ function nextStatus(s: Status): Status {
 
 function isValidYMD(s: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+function errorMessage(e: unknown, fallback: string): string {
+  console.error("App error:", e);
+
+  if (e instanceof Error) return e.message;
+  if (typeof e === "string") return e;
+
+  return fallback;
 }
 
 export default function App() {
