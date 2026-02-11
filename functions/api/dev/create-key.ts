@@ -1,7 +1,4 @@
-import type { PagesFunction } from "@cloudflare/workers-types";
-import { getDb, type Env } from "./_db";
-import { apiKeys } from "../../db/schema";
-import { sha256Hex } from "../../_auth";
+
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   // heel basic "dev guard": alleen toestaan als header klopt
