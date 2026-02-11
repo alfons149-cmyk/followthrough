@@ -284,17 +284,17 @@ async function onCreate() {
   }
 
   async function onDone(f: Followup) {
-    setLoading(true);
-    setErr(null);
-    try {
-      await patchFollowup(f.id, { status: "done" });
-      await refreshAll();
-    } catch (e: unknown) {
-      setErr(e?.message || "Done failed");
-    } finally {
-      setLoading(false);
-    }
+  setLoading(true);
+  setErr(null);
+  try {
+    await patchFollowup(f.id, { status: "done" });
+    await refreshAll();
+  } catch (e: unknown) {
+    setErr(e instanceof Error ? e.message : "Done failed");
+  } finally {
+    setLoading(false);
   }
+}
 
   async function onReopen(f: Followup) {
     setLoading(true);
