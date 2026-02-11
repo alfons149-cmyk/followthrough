@@ -38,7 +38,7 @@ function todayYMD() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function errorMessage(e: unknown) {
+function errorMessage (e: unknown) {
   if (e instanceof Error) return e.message;
   if (typeof e === "string") return e;
   try {
@@ -178,13 +178,6 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 
   // ---- API
 
-  async function safeFetch<T>(promise: Promise<T>, fallbackError: string): Promise<T> {
-  try {
-    return await promise;
-  } catch (e) {
-    throw new Error(errorMessage(e, fallbackError));
-  }
-}
   
 async function refreshAll() {
   setLoading(true);
