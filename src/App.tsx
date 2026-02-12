@@ -184,10 +184,16 @@ async function refreshAll() {
   setErr(null);
 
   try {
-    const fuRes = await fetch(
-      apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
-      { headers: { Accept: "application/json" } }
-    );
+    const apiKey = getApiKey();
+const fuRes = await fetch(
+  apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
+  {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+  }
+);
 
     if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
     const fuData = await fuRes.json();
