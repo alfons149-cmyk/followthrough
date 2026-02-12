@@ -1,8 +1,8 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { and, desc, eq } from "drizzle-orm";
-import { followups } from "../db/schema/index";
-import { getDb, type Env } from "../../_db";
-import { getAuthContext } from "../../_auth";
+import { followups } from "../db/schema/index.ts";
+import { getDb, type Env } from "../../_db.ts";
+import { getAuthContext } from "../../_auth.ts";
 
 /* ---------------- CORS ---------------- */
 
