@@ -225,11 +225,17 @@ async function onCreate() {
     if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
     if (!isValidYMD(payload.dueAt)) throw new Error("Due date must be YYYY-MM-DD.");
 
-    const res = await fetch(apiUrl("/api/followups"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const apiKey = getApiKey();
+
+const res = await fetch(apiUrl("/api/followups"), {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Authorization: `Bearer ${apiKey}`,
+  },
+  body: JSON.stringify(payload),
+});
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
