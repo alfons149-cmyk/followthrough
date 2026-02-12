@@ -3,10 +3,14 @@ import { getDb, type Env } from "../_db.ts";
 import { apiKeys } from "../db/schema";
 import { sha256Hex } from "../../_auth";
 
+export const onRequestOptions: PagesFunction<Env> = async () => {
+  return new Response(null, { status: 204 });
+};
+
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   // heel basic "dev guard": alleen toestaan als header klopt
-  const guard = request.headers.get("x-dev-guard");
-  if (guard !== "yes") return new Response("Not found", { status: 404 });
+  const guard = request.headers.get("x-dev-guard") ?? "";
+if (guard !== env.DEV_GUARD) return new Response("Not found", { status: 404 });
 
   const db = getDb(env);
   const body = await request.json().catch(() => ({} as any));
