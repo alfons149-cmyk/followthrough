@@ -1,5 +1,5 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { getDb, type Env } from "../../_db.ts";
+import { getDb, type Env } from "../_db";
 import { apiKeys } from "../db/schema/index.ts";
 import { sha256Hex } from "../../_auth.ts";
 
