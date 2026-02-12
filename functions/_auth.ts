@@ -1,6 +1,6 @@
 import { eq, and, isNull } from "drizzle-orm";
-import { getDb, type Env } from "./_db";
-import { apiKeys } from "./api/db/schema/index";
+import { getDb, type Env } from "./_db.ts";
+import { apiKeys } from "./api/db/schema/index.ts";
 
 export type AuthContext = {
   workspaceId: string;
