@@ -5,8 +5,8 @@ import { sha256Hex } from "../../_auth";
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   // heel basic "dev guard": alleen toestaan als header klopt
-  const guard = request.headers.get("x-dev-guard");
-  if (guard !== "yes") return new Response("Not found", { status: 404 });
+  const guard = request.headers.get("x-dev-guard") ?? "";
+if (guard !== env.DEV_GUARD) return new Response("Not found", { status: 404 });
 
   const db = getDb(env);
   const body = await request.json().catch(() => ({} as any));
