@@ -6145,6 +6145,47 @@ var apiKeys = sqliteTable("api_keys", {
   createdAt: text("created_at").notNull(),
   revokedAt: text("revoked_at")
 });
+var cors = /* @__PURE__ */ __name2((origin) => ({
+  "Access-Control-Allow-Origin": origin || "*",
+  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Accept",
+  "Access-Control-Max-Age": "86400",
+  Vary: "Origin"
+}), "cors");
+var onRequestOptions = /* @__PURE__ */ __name2(async ({ request }) => {
+  return new Response(null, { status: 204, headers: cors(request.headers.get("Origin") || void 0) });
+}, "onRequestOptions");
+var onRequestPatch = /* @__PURE__ */ __name2(async ({ env, request, params }) => {
+  const db = getDb(env);
+  const id = String(params.id || "");
+  if (!id) {
+    return Response.json({ ok: false, error: "Missing id" }, { status: 400, headers: cors(request.headers.get("Origin") || void 0) });
+  }
+  const body = await request.json().catch(() => ({}));
+  const update = {};
+  if (typeof body.status === "string") update.status = body.status;
+  if (typeof body.dueAt === "string") update.dueAt = body.dueAt;
+  if (typeof body.nextStep === "string") update.nextStep = body.nextStep;
+  if (Object.keys(update).length === 0) {
+    return Response.json(
+      { ok: false, error: "Nothing to update" },
+      { status: 400, headers: cors(request.headers.get("Origin") || void 0) }
+    );
+  }
+  await db.update(followups).set(update).where(eq(followups.id, id));
+  return Response.json({ ok: true }, { headers: cors(request.headers.get("Origin") || void 0) });
+}, "onRequestPatch");
+var onRequestGet = /* @__PURE__ */ __name2(async () => {
+  return Response.json({ ok: true, method: "GET", route: "/api/_debug" });
+}, "onRequestGet");
+var onRequestPost = /* @__PURE__ */ __name2(async ({ request }) => {
+  let body = null;
+  try {
+    body = await request.json();
+  } catch {
+  }
+  return Response.json({ ok: true, method: "POST", route: "/api/_debug", body });
+}, "onRequestPost");
 function unauthorized(msg = "Unauthorized") {
   return new Response(JSON.stringify({ ok: false, error: msg }), {
     status: 401,
@@ -6187,9 +6228,12 @@ async function getAuthContext(env, request) {
 }
 __name(getAuthContext, "getAuthContext");
 __name2(getAuthContext, "getAuthContext");
-var onRequestPost = /* @__PURE__ */ __name2(async ({ env, request }) => {
-  const guard = request.headers.get("x-dev-guard");
-  if (guard !== "yes") return new Response("Not found", { status: 404 });
+var onRequestOptions2 = /* @__PURE__ */ __name2(async () => {
+  return new Response(null, { status: 204 });
+}, "onRequestOptions");
+var onRequestPost2 = /* @__PURE__ */ __name2(async ({ env, request }) => {
+  const guard = request.headers.get("x-dev-guard") ?? "";
+  if (guard !== env.DEV_GUARD) return new Response("Not found", { status: 404 });
   const db = getDb(env);
   const body = await request.json().catch(() => ({}));
   const workspaceId = body.workspaceId ?? "ws_1";
@@ -6210,47 +6254,6 @@ var onRequestPost = /* @__PURE__ */ __name2(async ({ env, request }) => {
   });
   return Response.json({ ok: true, apiKey: apiKeyPlain, workspaceId, ownerId });
 }, "onRequestPost");
-var cors = /* @__PURE__ */ __name2((origin) => ({
-  "Access-Control-Allow-Origin": origin || "*",
-  "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Accept",
-  "Access-Control-Max-Age": "86400",
-  Vary: "Origin"
-}), "cors");
-var onRequestOptions = /* @__PURE__ */ __name2(async ({ request }) => {
-  return new Response(null, { status: 204, headers: cors(request.headers.get("Origin") || void 0) });
-}, "onRequestOptions");
-var onRequestPatch = /* @__PURE__ */ __name2(async ({ env, request, params }) => {
-  const db = getDb(env);
-  const id = String(params.id || "");
-  if (!id) {
-    return Response.json({ ok: false, error: "Missing id" }, { status: 400, headers: cors(request.headers.get("Origin") || void 0) });
-  }
-  const body = await request.json().catch(() => ({}));
-  const update = {};
-  if (typeof body.status === "string") update.status = body.status;
-  if (typeof body.dueAt === "string") update.dueAt = body.dueAt;
-  if (typeof body.nextStep === "string") update.nextStep = body.nextStep;
-  if (Object.keys(update).length === 0) {
-    return Response.json(
-      { ok: false, error: "Nothing to update" },
-      { status: 400, headers: cors(request.headers.get("Origin") || void 0) }
-    );
-  }
-  await db.update(followups).set(update).where(eq(followups.id, id));
-  return Response.json({ ok: true }, { headers: cors(request.headers.get("Origin") || void 0) });
-}, "onRequestPatch");
-var onRequestGet = /* @__PURE__ */ __name2(async () => {
-  return Response.json({ ok: true, method: "GET", route: "/api/_debug" });
-}, "onRequestGet");
-var onRequestPost2 = /* @__PURE__ */ __name2(async ({ request }) => {
-  let body = null;
-  try {
-    body = await request.json();
-  } catch {
-  }
-  return Response.json({ ok: true, method: "POST", route: "/api/_debug", body });
-}, "onRequestPost");
 var cors2 = /* @__PURE__ */ __name2((origin) => ({
   "Access-Control-Allow-Origin": origin || "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -6258,7 +6261,7 @@ var cors2 = /* @__PURE__ */ __name2((origin) => ({
   "Access-Control-Max-Age": "86400",
   Vary: "Origin"
 }), "cors");
-var onRequestOptions2 = /* @__PURE__ */ __name2(async ({ request }) => {
+var onRequestOptions3 = /* @__PURE__ */ __name2(async ({ request }) => {
   const origin = request.headers.get("Origin") ?? "*";
   return new Response(null, { status: 204, headers: cors2(origin) });
 }, "onRequestOptions");
@@ -6371,13 +6374,6 @@ var onRequestGet4 = /* @__PURE__ */ __name2(async ({ env }) => {
 }, "onRequestGet");
 var routes = [
   {
-    routePath: "/api/dev/create-key",
-    mountPath: "/api/dev",
-    method: "POST",
-    middlewares: [],
-    modules: [onRequestPost]
-  },
-  {
     routePath: "/api/followups/:id",
     mountPath: "/api/followups",
     method: "OPTIONS",
@@ -6403,6 +6399,20 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
+    modules: [onRequestPost]
+  },
+  {
+    routePath: "/api/dev",
+    mountPath: "/api/dev",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions2]
+  },
+  {
+    routePath: "/api/dev",
+    mountPath: "/api/dev",
+    method: "POST",
+    middlewares: [],
     modules: [onRequestPost2]
   },
   {
@@ -6417,7 +6427,7 @@ var routes = [
     mountPath: "/api/followups",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions2]
+    modules: [onRequestOptions3]
   },
   {
     routePath: "/api/followups",
