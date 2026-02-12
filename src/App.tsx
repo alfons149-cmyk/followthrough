@@ -175,7 +175,9 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
   }, [items]);
 
   // ---- API
-
+function getApiKey() {
+  return localStorage.getItem("VD_API_KEY") || "";
+}
   
 async function refreshAll() {
   setLoading(true);
