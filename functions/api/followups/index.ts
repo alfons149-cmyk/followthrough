@@ -1,6 +1,6 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { and, desc, eq } from "drizzle-orm";
-import { followups } from "../db/schema";
+import { followups } from "../db/schema/index";
 import { getDb, type Env } from "../../_db";
 import { getAuthContext } from "../../_auth";
 
