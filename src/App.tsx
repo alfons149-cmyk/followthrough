@@ -238,10 +238,6 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
   }, [items]);
 
   // ---- API
-function getApiKey() {
-  return localStorage.getItem("VD_API_KEY") || "";
-}
-  
 const fuData = await apiGet<{ items: Followup[] }>(
   `/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`
 );
