@@ -237,7 +237,7 @@ const res = await fetch(apiUrl("/api/followups"), {
   },
   body: JSON.stringify(payload),
 });
-
+    
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
