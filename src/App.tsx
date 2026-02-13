@@ -242,9 +242,10 @@ function getApiKey() {
   return localStorage.getItem("VD_API_KEY") || "";
 }
   
-async function refreshAll() {
-  setLoading(true);
-  setErr(null);
+const fuData = await apiGet<{ items: Followup[] }>(
+  `/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`
+);
+setItems(fuData.items || []);
 
   try {
     const data = await apiGet<{ items: Followup[] }>(
