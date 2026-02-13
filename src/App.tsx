@@ -247,28 +247,17 @@ async function refreshAll() {
   setErr(null);
 
   try {
-  const apiKey = getApiKey();
-
-  const fuRes = await fetch(
-    apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
-    {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-    }
-  );
-
-    if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
-    const fuData = await fuRes.json();
-    setItems(fuData.items || []);
+    const data = await apiGet<{ items: Followup[] }>(
+      `/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`
+    );
+    setItems(data?.items || []);
   } catch (e: unknown) {
-  const msg = e instanceof Error ? e.message : "Failed to fetch";
-  setErr(msg);
-} finally {
-  setLoading(false);
+    setErr(errorMessage(e, "Failed to fetch"));
+  } finally {
+    setLoading(false);
+  }
 }
-}
+
 async function onCreate() {
   setLoading(true);
   setErr(null);
