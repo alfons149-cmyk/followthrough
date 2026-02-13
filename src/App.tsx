@@ -264,8 +264,8 @@ async function onCreate() {
 
   try {
     const payload = {
-      workspaceId: WORKSPACE_ID,
-      ownerId: OWNER_ID,
+      workspaceId: WORKSPACE_ID, // later stap 9: server-side uit key halen
+      ownerId: OWNER_ID,         // later stap 9: server-side uit key halen
       contactName: contactName.trim(),
       companyName: companyName.trim(),
       nextStep: nextStep.trim(),
@@ -278,24 +278,7 @@ async function onCreate() {
     if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
     if (!isValidYMD(payload.dueAt)) throw new Error("Due date must be YYYY-MM-DD.");
 
-    const apiKey = getApiKey();
-
-const res = await fetch(apiUrl("/api/followups"), {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-  body: JSON.stringify(payload),
-});
-    
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
-    }
-
-    await res.json().catch(() => null);
+    await apiPost<{ ok: boolean; id?: string }>(`/api/followups`, payload);
 
     setContactName("");
     setCompanyName("");
@@ -303,7 +286,7 @@ const res = await fetch(apiUrl("/api/followups"), {
 
     await refreshAll();
   } catch (e: unknown) {
-    setErr(e instanceof Error ? e.message : "Create failed");
+    setErr(errorMessage(e, "Create failed"));
   } finally {
     setLoading(false);
   }
