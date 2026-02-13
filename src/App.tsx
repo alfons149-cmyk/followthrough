@@ -292,12 +292,12 @@ async function onCreate() {
   }
 }
 
-  async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
-    const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(body),
-    });
+  async function patchFollowup(
+  id: string,
+  body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+) {
+  await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
+}
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
