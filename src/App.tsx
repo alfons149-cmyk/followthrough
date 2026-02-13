@@ -86,6 +86,69 @@ function isValidYMD(s: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
+const API_KEY_STORAGE = "VD_API_KEY";
+
+function getApiKey(): string {
+  return localStorage.getItem(API_KEY_STORAGE) || "";
+}
+
+class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function readApiError(res: Response): Promise<string> {
+  // Try JSON first
+  try {
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      const j = (await res.json().catch(() => null)) as any;
+      if (j?.error) return String(j.error);
+      if (j?.message) return String(j.message);
+      if (j && typeof j === "object") return JSON.stringify(j);
+    }
+  } catch {}
+  // Fallback text
+  const t = await res.text().catch(() => "");
+  return t || res.statusText || `HTTP ${res.status}`;
+}
+
+async function apiFetch<T>(
+  path: string,
+  opts: RequestInit & { json?: unknown } = {}
+): Promise<T> {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new ApiError(401, "Geen API key ingesteld (VD_API_KEY in localStorage).");
+
+  const { json, headers, ...rest } = opts;
+
+  const res = await fetch(apiUrl(path), {
+    ...rest,
+    headers: {
+      Accept: "application/json",
+      ...(json ? { "Content-Type": "application/json" } : {}),
+      Authorization: `Bearer ${apiKey}`,
+      ...(headers || {}),
+    },
+    body: json !== undefined ? JSON.stringify(json) : rest.body,
+  });
+
+  if (!res.ok) {
+    const msg = await readApiError(res);
+    throw new ApiError(res.status, msg);
+  }
+
+  if (res.status === 204) return undefined as T;
+  return (await res.json().catch(() => null)) as T;
+}
+
+const apiGet = <T,>(path: string) => apiFetch<T>(path, { method: "GET" });
+const apiPost = <T,>(path: string, json?: unknown) => apiFetch<T>(path, { method: "POST", json });
+const apiPatch = <T,>(path: string, json?: unknown) => apiFetch<T>(path, { method: "PATCH", json });
+
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -184,36 +247,25 @@ async function refreshAll() {
   setErr(null);
 
   try {
-  const apiKey = getApiKey();
-
-  const fuRes = await fetch(
-    apiUrl(`/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`),
-    {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-    }
-  );
-
-    if (!fuRes.ok) throw new Error(`Followups failed (${fuRes.status})`);
-    const fuData = await fuRes.json();
-    setItems(fuData.items || []);
+    const data = await apiGet<{ items: Followup[] }>(
+      `/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`
+    );
+    setItems(data?.items || []);
   } catch (e: unknown) {
-  const msg = e instanceof Error ? e.message : "Failed to fetch";
-  setErr(msg);
-} finally {
-  setLoading(false);
+    setErr(errorMessage(e, "Failed to fetch"));
+  } finally {
+    setLoading(false);
+  }
 }
-}
+
 async function onCreate() {
   setLoading(true);
   setErr(null);
 
   try {
     const payload = {
-      workspaceId: WORKSPACE_ID,
-      ownerId: OWNER_ID,
+      workspaceId: WORKSPACE_ID, // later stap 9: server-side uit key halen
+      ownerId: OWNER_ID,         // later stap 9: server-side uit key halen
       contactName: contactName.trim(),
       companyName: companyName.trim(),
       nextStep: nextStep.trim(),
@@ -226,24 +278,7 @@ async function onCreate() {
     if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
     if (!isValidYMD(payload.dueAt)) throw new Error("Due date must be YYYY-MM-DD.");
 
-    const apiKey = getApiKey();
-
-const res = await fetch(apiUrl("/api/followups"), {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    Authorization: `Bearer ${apiKey}`,
-  },
-  body: JSON.stringify(payload),
-});
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`Create failed (${res.status}) ${text ? "— " + text : ""}`);
-    }
-
-    await res.json().catch(() => null);
+    await apiPost<{ ok: boolean; id?: string }>(`/api/followups`, payload);
 
     setContactName("");
     setCompanyName("");
@@ -251,18 +286,18 @@ const res = await fetch(apiUrl("/api/followups"), {
 
     await refreshAll();
   } catch (e: unknown) {
-    setErr(e instanceof Error ? e.message : "Create failed");
+    setErr(errorMessage(e, "Create failed"));
   } finally {
     setLoading(false);
   }
 }
 
-  async function patchFollowup(id: string, body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>) {
-    const res = await fetch(apiUrl(`/api/followups/${encodeURIComponent(id)}`), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(body),
-    });
+  async function patchFollowup(
+  id: string,
+  body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+) {
+  await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
+}
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
