@@ -5920,44 +5920,57 @@ async function getAuthContext(env, request) {
 __name(getAuthContext, "getAuthContext");
 
 // api/dev/index.ts
-var onRequestOptions2 = /* @__PURE__ */ __name(async () => {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, x-dev-guard"
-    }
-  });
+var cors2 = /* @__PURE__ */ __name((origin) => ({
+  "Access-Control-Allow-Origin": origin || "*",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization, x-dev-guard",
+  "Access-Control-Max-Age": "86400",
+  Vary: "Origin"
+}), "cors");
+var onRequestOptions2 = /* @__PURE__ */ __name(async ({ request }) => {
+  const origin = request.headers.get("Origin") ?? "*";
+  return new Response(null, { status: 204, headers: cors2(origin) });
 }, "onRequestOptions");
 var onRequestPost2 = /* @__PURE__ */ __name(async ({ env, request }) => {
-  const guard = request.headers.get("x-dev-guard") || "";
-  if (!env.DEV_GUARD || guard !== env.DEV_GUARD) {
-    return new Response("Not found", { status: 404 });
+  const origin = request.headers.get("Origin") ?? "*";
+  try {
+    const guard = request.headers.get("x-dev-guard") || "";
+    if (!env.DEV_GUARD || guard !== env.DEV_GUARD) {
+      return new Response("Not found", { status: 404, headers: cors2(origin) });
+    }
+    const db = getDb(env);
+    const body = await request.json().catch(() => ({}));
+    const workspaceId = body.workspaceId ?? "ws_1";
+    const ownerId = body.ownerId ?? "u_1";
+    const label = body.label ?? "dev";
+    const apiKeyPlain = `vd_${crypto.randomUUID().replaceAll("-", "")}`;
+    const keyHash = await sha256Hex(apiKeyPlain);
+    const id = `k_${crypto.randomUUID()}`;
+    const createdAt = (/* @__PURE__ */ new Date()).toISOString().slice(0, 19).replace("T", " ");
+    await db.insert(apiKeys).values({
+      id,
+      workspaceId,
+      ownerId,
+      label,
+      keyHash,
+      createdAt,
+      revokedAt: null
+    });
+    return Response.json(
+      { ok: true, apiKey: apiKeyPlain, id, workspaceId, ownerId, label },
+      { headers: cors2(origin) }
+    );
+  } catch (e) {
+    console.error("DEV create key failed:", e);
+    return Response.json(
+      { ok: false, error: String(e?.message || e) },
+      { status: 500, headers: cors2(origin) }
+    );
   }
-  const db = getDb(env);
-  const body = await request.json().catch(() => ({}));
-  const workspaceId = body.workspaceId ?? "ws_1";
-  const ownerId = body.ownerId ?? "u_1";
-  const label = body.label ?? "dev";
-  const apiKeyPlain = `vd_${crypto.randomUUID().replaceAll("-", "")}`;
-  const keyHash = await sha256Hex(apiKeyPlain);
-  const id = `k_${crypto.randomUUID()}`;
-  const createdAt = (/* @__PURE__ */ new Date()).toISOString().slice(0, 19).replace("T", " ");
-  await db.insert(apiKeys).values({
-    id,
-    workspaceId,
-    ownerId,
-    label,
-    keyHash,
-    createdAt,
-    revokedAt: null
-  });
-  return Response.json({ ok: true, id, apiKey: apiKeyPlain });
 }, "onRequestPost");
 
 // api/followups/index.ts
-var cors2 = /* @__PURE__ */ __name((origin) => ({
+var cors3 = /* @__PURE__ */ __name((origin) => ({
   "Access-Control-Allow-Origin": origin || "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization",
@@ -5966,7 +5979,7 @@ var cors2 = /* @__PURE__ */ __name((origin) => ({
 }), "cors");
 var onRequestOptions3 = /* @__PURE__ */ __name(async ({ request }) => {
   const origin = request.headers.get("Origin") ?? "*";
-  return new Response(null, { status: 204, headers: cors2(origin) });
+  return new Response(null, { status: 204, headers: cors3(origin) });
 }, "onRequestOptions");
 function daysOverdue(dueAt) {
   const due = (dueAt || "").slice(0, 10);
@@ -6011,7 +6024,7 @@ var onRequestGet2 = /* @__PURE__ */ __name(async ({ env, request }) => {
   const origin = request.headers.get("Origin") ?? "*";
   const ctx = await getAuthContext(env, request);
   if (ctx instanceof Response) {
-    return new Response(await ctx.text(), { status: ctx.status, headers: { ...cors2(origin), "Content-Type": "application/json" } });
+    return new Response(await ctx.text(), { status: ctx.status, headers: { ...cors3(origin), "Content-Type": "application/json" } });
   }
   const db = getDb(env);
   const url = new URL(request.url);
@@ -6024,13 +6037,13 @@ var onRequestGet2 = /* @__PURE__ */ __name(async ({ env, request }) => {
   const rows = await db.select().from(followups).where(where).orderBy(desc(followups.dueAt)).limit(200);
   const includeRisk = url.searchParams.get("includeRisk") === "1";
   const items = includeRisk ? rows.map((r) => ({ ...r, risk: riskForFollowup(r) })) : rows;
-  return Response.json({ items }, { headers: cors2(origin) });
+  return Response.json({ items }, { headers: cors3(origin) });
 }, "onRequestGet");
 var onRequestPost3 = /* @__PURE__ */ __name(async ({ env, request }) => {
   const origin = request.headers.get("Origin") ?? "*";
   const ctx = await getAuthContext(env, request);
   if (ctx instanceof Response) {
-    return new Response(await ctx.text(), { status: ctx.status, headers: { ...cors2(origin), "Content-Type": "application/json" } });
+    return new Response(await ctx.text(), { status: ctx.status, headers: { ...cors3(origin), "Content-Type": "application/json" } });
   }
   const db = getDb(env);
   const body = await request.json().catch(() => ({}));
@@ -6047,7 +6060,7 @@ var onRequestPost3 = /* @__PURE__ */ __name(async ({ env, request }) => {
     status: body.status ?? "open",
     createdAt
   });
-  return Response.json({ ok: true, id }, { headers: cors2(origin) });
+  return Response.json({ ok: true, id }, { headers: cors3(origin) });
 }, "onRequestPost");
 
 // api/health.ts
@@ -6655,7 +6668,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-gN5MiO/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-xZfpcp/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -6687,7 +6700,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-gN5MiO/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-xZfpcp/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
