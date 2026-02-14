@@ -6229,11 +6229,20 @@ async function getAuthContext(env, request) {
 __name(getAuthContext, "getAuthContext");
 __name2(getAuthContext, "getAuthContext");
 var onRequestOptions2 = /* @__PURE__ */ __name2(async () => {
-  return new Response(null, { status: 204 });
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, x-dev-guard"
+    }
+  });
 }, "onRequestOptions");
 var onRequestPost2 = /* @__PURE__ */ __name2(async ({ env, request }) => {
-  const guard = request.headers.get("x-dev-guard") ?? "";
-  if (guard !== env.DEV_GUARD) return new Response("Not found", { status: 404 });
+  const guard = request.headers.get("x-dev-guard") || "";
+  if (!env.DEV_GUARD || guard !== env.DEV_GUARD) {
+    return new Response("Not found", { status: 404 });
+  }
   const db = getDb(env);
   const body = await request.json().catch(() => ({}));
   const workspaceId = body.workspaceId ?? "ws_1";
@@ -6245,14 +6254,14 @@ var onRequestPost2 = /* @__PURE__ */ __name2(async ({ env, request }) => {
   const createdAt = (/* @__PURE__ */ new Date()).toISOString().slice(0, 19).replace("T", " ");
   await db.insert(apiKeys).values({
     id,
-    keyHash,
     workspaceId,
     ownerId,
     label,
+    keyHash,
     createdAt,
     revokedAt: null
   });
-  return Response.json({ ok: true, apiKey: apiKeyPlain, workspaceId, ownerId });
+  return Response.json({ ok: true, id, apiKey: apiKeyPlain });
 }, "onRequestPost");
 var cors2 = /* @__PURE__ */ __name2((origin) => ({
   "Access-Control-Allow-Origin": origin || "*",
