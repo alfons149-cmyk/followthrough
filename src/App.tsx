@@ -296,22 +296,6 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 ) {
   await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
 }
-}
-
-  async function patchFollowup(
-  id: string,
-  body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
-) {
-  await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
-}
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`Patch failed (${res.status}) ${text ? "— " + text : ""}`);
-    }
-
-    await res.json().catch(() => null);
-  }
 
   // ---- Actions (Move/Done/Reopen/Snooze)
   function transitionPlan(f: Followup) {
