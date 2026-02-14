@@ -262,12 +262,14 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
     try {
       // Stap 9: workspaceId/ownerId NIET meer meesturen.
       const payload = {
-        contactName: contactName.trim(),
-        companyName: companyName.trim(),
-        nextStep: nextStep.trim(),
-        dueAt: (dueAt || "").trim(),
-        status: "open" as Status,
-      };
+  workspaceId: WORKSPACE_ID,
+  ownerId: OWNER_ID,
+  contactName: contactName.trim(),
+  companyName: companyName.trim(),
+  nextStep: nextStep.trim(),
+  dueAt: (dueAt || "").trim(),
+  status: "open" as Status,
+};
 
       if (!payload.contactName) throw new Error("Please enter a contact name.");
       if (!payload.nextStep) throw new Error("Please enter a next step.");
