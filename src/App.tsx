@@ -291,11 +291,11 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
   }
 
   async function patchFollowup(
-    id: string,
-    body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
-  ) {
-    await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
-  }
+  id: string,
+  body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+) {
+  await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
+}
 }
 
   async function patchFollowup(
