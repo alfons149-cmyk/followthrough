@@ -240,20 +240,20 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
    // ---- API
 
   async function refreshAll() {
-    setLoading(true);
-    setErr(null);
+  setLoading(true);
+  setErr(null);
 
-    try {
-      // Stap 9: workspace komt server-side uit je API key.
-      // Dus: GEEN workspaceId meer in query nodig.
-      const data = await apiGet<{ items: Followup[] }>(`/api/followups?includeRisk=1`);
-      setItems(data?.items || []);
-    } catch (e: unknown) {
-      setErr(errorMessage(e, "Failed to fetch"));
-    } finally {
-      setLoading(false);
-    }
+  try {
+    const data = await apiGet<{ items: Followup[] }>(
+      `/api/followups?includeRisk=1`
+    );
+    setItems(data?.items || []);
+  } catch (e: unknown) {
+    setErr(errorMessage(e, "Failed to fetch"));
+  } finally {
+    setLoading(false);
   }
+}
 
   async function onCreate() {
     setLoading(true);
