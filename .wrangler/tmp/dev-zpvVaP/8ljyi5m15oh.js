@@ -6117,6 +6117,22 @@ function getDb(env) {
 }
 __name(getDb, "getDb");
 __name2(getDb, "getDb");
+var apiKeys = sqliteTable("api_keys", {
+  id: text("id").primaryKey(),
+  // snake_case kolommen in DB
+  keyHash: text("key_hash").notNull(),
+  workspaceId: text("workspace_id").notNull(),
+  ownerId: text("owner_id").notNull(),
+  label: text("label"),
+  createdAt: text("created_at").notNull(),
+  // DB heeft default, maar notNull is ok
+  revokedAt: text("revoked_at")
+});
+var workspaces = sqliteTable("workspaces", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  createdAt: text("created_at").notNull()
+});
 var followups = sqliteTable("followups", {
   id: text("id").primaryKey(),
   workspaceId: text("workspace_id").notNull(),
@@ -6125,25 +6141,8 @@ var followups = sqliteTable("followups", {
   companyName: text("company_name").notNull(),
   nextStep: text("next_step").notNull(),
   dueAt: text("due_at").notNull(),
-  // "YYYY-MM-DD"
   status: text("status").notNull(),
-  // open/sent/waiting/followup/done
   createdAt: text("created_at").notNull()
-  // "YYYY-MM-DD HH:MM:SS"
-});
-var workspaces = sqliteTable("workspaces", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  createdAt: text("created_at").notNull()
-});
-var apiKeys = sqliteTable("api_keys", {
-  id: text("id").primaryKey(),
-  keyHash: text("key_hash").notNull(),
-  workspaceId: text("workspace_id").notNull(),
-  ownerId: text("owner_id").notNull(),
-  label: text("label"),
-  createdAt: text("created_at").notNull(),
-  revokedAt: text("revoked_at")
 });
 var cors = /* @__PURE__ */ __name2((origin) => ({
   "Access-Control-Allow-Origin": origin || "*",
