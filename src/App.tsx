@@ -237,55 +237,62 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
     return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
   }, [items]);
 
-  // ---- API
-const fuData = await apiGet<{ items: Followup[] }>(
-  `/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`
-);
-setItems(fuData.items || []);
+   // ---- API
 
-  try {
-    const data = await apiGet<{ items: Followup[] }>(
-      `/api/followups?workspaceId=${encodeURIComponent(WORKSPACE_ID)}&includeRisk=1`
-    );
-    setItems(data?.items || []);
-  } catch (e: unknown) {
-    setErr(errorMessage(e, "Failed to fetch"));
-  } finally {
-    setLoading(false);
+  async function refreshAll() {
+    setLoading(true);
+    setErr(null);
+
+    try {
+      // Stap 9: workspace komt server-side uit je API key.
+      // Dus: GEEN workspaceId meer in query nodig.
+      const data = await apiGet<{ items: Followup[] }>(`/api/followups?includeRisk=1`);
+      setItems(data?.items || []);
+    } catch (e: unknown) {
+      setErr(errorMessage(e, "Failed to fetch"));
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
-async function onCreate() {
-  setLoading(true);
-  setErr(null);
+  async function onCreate() {
+    setLoading(true);
+    setErr(null);
 
-  try {
-    const payload = {
-      workspaceId: WORKSPACE_ID, // later stap 9: server-side uit key halen
-      ownerId: OWNER_ID,         // later stap 9: server-side uit key halen
-      contactName: contactName.trim(),
-      companyName: companyName.trim(),
-      nextStep: nextStep.trim(),
-      dueAt: (dueAt || "").trim(),
-      status: "open" as Status,
-    };
+    try {
+      // Stap 9: workspaceId/ownerId NIET meer meesturen.
+      const payload = {
+        contactName: contactName.trim(),
+        companyName: companyName.trim(),
+        nextStep: nextStep.trim(),
+        dueAt: (dueAt || "").trim(),
+        status: "open" as Status,
+      };
 
-    if (!payload.contactName) throw new Error("Please enter a contact name.");
-    if (!payload.nextStep) throw new Error("Please enter a next step.");
-    if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
-    if (!isValidYMD(payload.dueAt)) throw new Error("Due date must be YYYY-MM-DD.");
+      if (!payload.contactName) throw new Error("Please enter a contact name.");
+      if (!payload.nextStep) throw new Error("Please enter a next step.");
+      if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
+      if (!isValidYMD(payload.dueAt)) throw new Error("Due date must be YYYY-MM-DD.");
 
-    await apiPost<{ ok: boolean; id?: string }>(`/api/followups`, payload);
+      await apiPost<{ ok: boolean; id?: string }>(`/api/followups`, payload);
 
-    setContactName("");
-    setCompanyName("");
-    setNextStep("");
+      setContactName("");
+      setCompanyName("");
+      setNextStep("");
 
-    await refreshAll();
-  } catch (e: unknown) {
-    setErr(errorMessage(e, "Create failed"));
-  } finally {
-    setLoading(false);
+      await refreshAll();
+    } catch (e: unknown) {
+      setErr(errorMessage(e, "Create failed"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function patchFollowup(
+    id: string,
+    body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+  ) {
+    await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
   }
 }
 
