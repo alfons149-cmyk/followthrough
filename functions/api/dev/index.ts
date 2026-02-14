@@ -1,16 +1,24 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { getDb, type Env } from "../_db.ts";
+import { getDb, type Env } from "../_db";
 import { apiKeys } from "../db/schema";
 import { sha256Hex } from "../../_auth";
 
 export const onRequestOptions: PagesFunction<Env> = async () => {
-  return new Response(null, { status: 204 });
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, x-dev-guard",
+    },
+  });
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
-  // heel basic "dev guard": alleen toestaan als header klopt
-  const guard = request.headers.get("x-dev-guard") ?? "";
-if (guard !== env.DEV_GUARD) return new Response("Not found", { status: 404 });
+  const guard = request.headers.get("x-dev-guard") || "";
+  if (!env.DEV_GUARD || guard !== env.DEV_GUARD) {
+    return new Response("Not found", { status: 404 });
+  }
 
   const db = getDb(env);
   const body = await request.json().catch(() => ({} as any));
@@ -27,13 +35,13 @@ if (guard !== env.DEV_GUARD) return new Response("Not found", { status: 404 });
 
   await db.insert(apiKeys).values({
     id,
-    keyHash,
     workspaceId,
     ownerId,
     label,
+    keyHash,
     createdAt,
     revokedAt: null,
   });
 
-  return Response.json({ ok: true, apiKey: apiKeyPlain, workspaceId, ownerId });
+  return Response.json({ ok: true, id, apiKey: apiKeyPlain });
 };
