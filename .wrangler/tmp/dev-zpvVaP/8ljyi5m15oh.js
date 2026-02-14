@@ -6241,11 +6241,11 @@ var onRequestOptions2 = /* @__PURE__ */ __name2(async ({ request }) => {
 }, "onRequestOptions");
 var onRequestPost2 = /* @__PURE__ */ __name2(async ({ env, request }) => {
   const origin = request.headers.get("Origin") ?? "*";
+  const guard = request.headers.get("x-dev-guard") || "";
+  if (!env.DEV_GUARD || guard !== env.DEV_GUARD) {
+    return new Response("Not found", { status: 404, headers: cors2(origin) });
+  }
   try {
-    const guard = request.headers.get("x-dev-guard") || "";
-    if (!env.DEV_GUARD || guard !== env.DEV_GUARD) {
-      return new Response("Not found", { status: 404, headers: cors2(origin) });
-    }
     const db = getDb(env);
     const body = await request.json().catch(() => ({}));
     const workspaceId = body.workspaceId ?? "ws_1";
@@ -6264,15 +6264,11 @@ var onRequestPost2 = /* @__PURE__ */ __name2(async ({ env, request }) => {
       createdAt,
       revokedAt: null
     });
-    return Response.json(
-      { ok: true, apiKey: apiKeyPlain, id, workspaceId, ownerId, label },
-      { headers: cors2(origin) }
-    );
+    return Response.json({ ok: true, apiKey: apiKeyPlain, id }, { headers: cors2(origin) });
   } catch (e) {
-    console.error("DEV create key failed:", e);
     return Response.json(
-      { ok: false, error: String(e?.message || e) },
-      { status: 500, headers: cors2(origin) }
+      { ok: false, error: e?.message || String(e) },
+      { status: 500, headers: { ...cors2(origin), "Content-Type": "application/json" } }
     );
   }
 }, "onRequestPost");
