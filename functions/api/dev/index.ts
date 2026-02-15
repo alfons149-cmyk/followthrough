@@ -1,20 +1,7 @@
-import { getAuthContext } from "../../_auth";
-
-export const onRequestPost: PagesFunction = async (context) => {
-
-  // 🔐 AUTH CHECK GOES HERE
-  const auth = await getAuthContext(context.request, context.env);
-  if (!auth.ok) {
-    return new Response(auth.message, { status: auth.status });
-  }
-
-  // rest of your API logic continues here...
-
-// force deploy
 import type { PagesFunction } from "@cloudflare/workers-types";
-import { getDb, type Env } from "../_db";
-import { apiKeys } from "../db/schema";
-import { sha256Hex } from "../../_auth";
+import { getDb, type Env } from "../../_db";
+import { apiKeys } from "../../db/schema";
+import { getAuthContext, sha256Hex } from "../../_auth";
 
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
@@ -24,18 +11,19 @@ const cors = (origin?: string) => ({
   Vary: "Origin",
 });
 
-export const onRequestOptions: PagesFunction<Env & { DEV_GUARD?: string }> = async ({ request }) => {
+export const onRequestOptions: PagesFunction = async ({ request }) => {
   const origin = request.headers.get("Origin") ?? "*";
   return new Response(null, { status: 204, headers: cors(origin) });
 };
 
-export const onRequestPost: PagesFunction<Env & { DEV_GUARD?: string }> = async ({ env, request }) => {
+export const onRequestPost: PagesFunction<Env & { DEV_GUARD?: string }> = async (context) => {
+  const { request, env } = context;
   const origin = request.headers.get("Origin") ?? "*";
 
-  // ✅ Dev guard via env var
-  const guard = request.headers.get("x-dev-guard") || "";
-  if (!env.DEV_GUARD || guard !== env.DEV_GUARD) {
-    return new Response("Not found", { status: 404, headers: cors(origin) });
+  // 🔐 Guard (use helper)
+  const auth = await getAuthContext(request, env as unknown as Record<string, unknown>);
+  if (!auth.ok) {
+    return new Response(auth.message, { status: auth.status, headers: cors(origin) });
   }
 
   try {
@@ -64,7 +52,6 @@ export const onRequestPost: PagesFunction<Env & { DEV_GUARD?: string }> = async 
 
     return Response.json({ ok: true, apiKey: apiKeyPlain, id }, { headers: cors(origin) });
   } catch (e: any) {
-    // ✅ Geef echte fout terug i.p.v. “restart”
     return Response.json(
       { ok: false, error: e?.message || String(e) },
       { status: 500, headers: { ...cors(origin), "Content-Type": "application/json" } }
