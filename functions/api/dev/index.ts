@@ -1,3 +1,4 @@
+// force deploy
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { getDb, type Env } from "../_db";
 import { apiKeys } from "../db/schema";
