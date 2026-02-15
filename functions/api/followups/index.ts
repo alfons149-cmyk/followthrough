@@ -86,42 +86,31 @@ function riskForFollowup(f: any) {
 export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const origin = request.headers.get("Origin") ?? "*";
 
-  const ctx = await getAuthContext(env, request);
-  if (ctx instanceof Response) {
-    // zorg dat CORS ook op errors zit
-    return new Response(await ctx.text(), { status: ctx.status, headers: { ...cors(origin), "Content-Type": "application/json" } });
+  try {
+    const ctx = await getAuthContext(env, request);
+    if (ctx instanceof Response) {
+      return new Response(await ctx.text(), {
+        status: ctx.status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const db = getDb(env);
+
+    const rows = await db.select().from(followups).limit(20);
+
+    return Response.json({ items: rows }, {
+      headers: { "Access-Control-Allow-Origin": "*" },
+    });
+
+  } catch (e: any) {
+    return Response.json({
+      ok: false,
+      crash: true,
+      error: e?.message || String(e),
+      stack: e?.stack || null,
+    }, { status: 500 });
   }
-
-  const db = getDb(env);
-  const url = new URL(request.url);
-
-  // workspaceId uit query wordt genegeerd (mag later verwijderd)
-  const status = url.searchParams.get("status");
-
-  const baseWhere = and(
-    eq(followups.workspaceId, ctx.workspaceId),
-    eq(followups.ownerId, ctx.ownerId),
-  );
-
-  const where =
-    status && status !== "all"
-      ? and(baseWhere, eq(followups.status, status))
-      : baseWhere;
-
-  const rows = await db
-    .select()
-    .from(followups)
-    .where(where)
-    .orderBy(desc(followups.dueAt))
-    .limit(200);
-
-  const includeRisk = url.searchParams.get("includeRisk") === "1";
-
-  const items = includeRisk
-    ? rows.map((r: any) => ({ ...r, risk: riskForFollowup(r) }))
-    : rows;
-
-  return Response.json({ items }, { headers: cors(origin) });
 };
 
 /* ---------------- POST ---------------- */
