@@ -9,7 +9,7 @@ export const onRequestPost: PagesFunction = async (context) => {
 
   // rest of code...
 
-import type { PagesFunction } from "@cloudflare/workers-types";
+export const onRequestPost: PagesFunction = async (context) => {
 import { and, desc, eq } from "drizzle-orm";
 import { followups } from "../db/schema";
 import { getDb, type Env } from "../_db.ts";
