@@ -1,6 +1,6 @@
 import { getAuthContext } from "../../_auth";
 
-export const onRequestPost: PagesFunction = async (context) => {
+export const onRequestPost = async (context: any) => {
 
   const auth = await getAuthContext(context.request, context.env);
   if (!auth.ok) {
