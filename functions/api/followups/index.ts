@@ -1,8 +1,18 @@
+import { getAuthContext } from "../../_auth";
+
+export const onRequestPost: PagesFunction = async (context) => {
+
+  const auth = await getAuthContext(context.request, context.env);
+  if (!auth.ok) {
+    return new Response(auth.message, { status: auth.status });
+  }
+
+  // rest of code...
+
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { and, desc, eq } from "drizzle-orm";
 import { followups } from "../db/schema";
 import { getDb, type Env } from "../_db.ts";
-import { getAuthContext } from "../../_auth";
 
 /* ---------------- CORS ---------------- */
 
