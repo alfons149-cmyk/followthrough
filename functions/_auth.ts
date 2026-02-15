@@ -11,10 +11,6 @@ export async function sha256Hex(text: string): Promise<string> {
   return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/**
- * Very simple guard used by your /api routes.
- * Compares request header x-dev-guard to env.DEV_GUARD.
- */
 export async function getAuthContext(
   request: Request,
   env: Record<string, unknown>
