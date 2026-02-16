@@ -1,8 +1,7 @@
 import type { PagesFunction } from "@cloudflare/workers-types";
 import { getDb, type Env } from "../../_db";
 import { apiKeys } from "../db/schema";
-import { getAuthContext } from "../../_auth";
-import { getDevGuardContext } from "../../_auth";
+import { getApiKeyContext } from "../../_auth";
 
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
