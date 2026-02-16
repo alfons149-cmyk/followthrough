@@ -18,7 +18,6 @@ async function sha256Hex(text: string): Promise<string> {
   return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-
 export const onRequestOptions: PagesFunction = async ({ request }) => {
   const origin = request.headers.get("Origin") ?? "*";
   return new Response(null, { status: 204, headers: cors(origin) });
@@ -27,8 +26,11 @@ export const onRequestOptions: PagesFunction = async ({ request }) => {
 export const onRequestPost: PagesFunction<Env & { DEV_GUARD?: string }> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get("Origin") ?? "*";
+
   const guard = await getDevGuardContext(request, env);
-if (!guard.ok) return new Response(guard.message, { status: guard.status, headers: cors(origin) });
+  if (!guard.ok) {
+    return new Response(guard.message, { status: guard.status, headers: cors(origin) });
+  }
 
   // 🔐 Guard (use helper)
   const auth = await getApiKeyContext(request, env);
