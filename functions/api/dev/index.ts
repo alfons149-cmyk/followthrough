@@ -31,10 +31,10 @@ export const onRequestPost: PagesFunction<Env & { DEV_GUARD?: string }> = async 
 if (!guard.ok) return new Response(guard.message, { status: guard.status, headers: cors(origin) });
 
   // 🔐 Guard (use helper)
-  const auth = await getAuthContext(request, env as unknown as Record<string, unknown>);
-  if (!auth.ok) {
-    return new Response(auth.message, { status: auth.status, headers: cors(origin) });
-  }
+  const auth = await getApiKeyContext(request, env);
+if (!auth.ok) {
+  return new Response(auth.message, { status: auth.status, headers: cors(origin) });
+}
 
   try {
     const db = getDb(env);
