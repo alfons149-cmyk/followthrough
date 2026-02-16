@@ -1,6 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { getDb, type Env } from "./_db";
-import { apiKeys } from "./db/schema";
+import { apiKeys } from "./api/db/schema";
 
 export type ApiKeyContext =
   | { ok: true; apiKeyId: string; workspaceId: string; ownerId: string }
