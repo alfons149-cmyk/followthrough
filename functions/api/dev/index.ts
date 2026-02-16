@@ -32,12 +32,6 @@ export const onRequestPost: PagesFunction<Env & { DEV_GUARD?: string }> = async 
     return new Response(guard.message, { status: guard.status, headers: cors(origin) });
   }
 
-  // 🔐 Guard (use helper)
-  const auth = await getApiKeyContext(request, env);
-if (!auth.ok) {
-  return new Response(auth.message, { status: auth.status, headers: cors(origin) });
-}
-
   try {
     const db = getDb(env);
     const body = (await request.json().catch(() => ({}))) as any;
