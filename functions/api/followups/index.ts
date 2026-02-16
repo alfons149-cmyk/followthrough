@@ -129,8 +129,8 @@ if (!auth.ok) {
 
     await db.insert(followups).values({
       id,
-      workspaceId: body.workspaceId ?? "ws_1",
-      ownerId: body.ownerId ?? "u_1",
+      workspaceId: auth.workspaceId,
+      ownerId: auth.ownerId,
       contactName: body.contactName ?? "",
       companyName: body.companyName ?? "",
       nextStep: body.nextStep ?? "",
