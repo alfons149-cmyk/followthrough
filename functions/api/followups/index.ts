@@ -42,8 +42,51 @@ function riskForFollowup(f: any) {
   else if (overdue >= 3) score += 25;
   else if (overdue >= 1) score += 10;
 
-    if (!auth.ok) {
-      
+  if (overdue > 0) reasons.push(`Overdue ${overdue} day${overdue === 1 ? "" : "s"}`);
+
+  const s = f?.status;
+  if (s === "open") score += 5;
+  if (s === "sent") score += 15;
+  if (s === "waiting") score += 25;
+  if (s === "followup") score += 35;
+
+  if (s) reasons.push(`Status: ${s}`);
+
+  score = Math.max(0, Math.min(100, score));
+
+  const level =
+    score >= 60 ? "high" :
+    score >= 25 ? "medium" :
+    "low";
+
+  return {
+    score,
+    level,
+    reasons: reasons.slice(0, 3),
+    suggestion:
+      level === "high"
+        ? "Act today"
+        : level === "medium"
+        ? "Keep warm"
+        : "No action needed",
+  };
+}
+
+/* ---------------- OPTIONS ---------------- */
+
+export const onRequestOptions = async ({ request }: any) => {
+  const origin = request.headers.get("Origin") ?? "*";
+  return new Response(null, { status: 204, headers: cors(origin) });
+};
+
+/* ---------------- GET ---------------- */
+
+export const onRequestGet = async (context: any) => {
+  const { env, request } = context;
+  const origin = request.headers.get("Origin") ?? "*";
+
+  const auth = await getAuthContext(request, env);
+  if (!auth.ok) {
     return new Response(auth.message, { status: auth.status, headers: cors(origin) });
   }
 
@@ -71,7 +114,6 @@ export const onRequestPost = async (context: any) => {
   const { env, request } = context;
   const origin = request.headers.get("Origin") ?? "*";
 
-  // 🔐 Guard
   const auth = await getAuthContext(request, env);
   if (!auth.ok) {
     return new Response(auth.message, { status: auth.status, headers: cors(origin) });
@@ -104,4 +146,3 @@ export const onRequestPost = async (context: any) => {
     );
   }
 };
-
