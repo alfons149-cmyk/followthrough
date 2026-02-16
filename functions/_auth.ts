@@ -45,6 +45,10 @@ export async function getDevGuardContext(
  *  - x-api-key: <apiKey>
  */
 export async function getApiKeyContext(
+  const auth = await getApiKeyContext(request, env);
+if (!auth.ok) {
+  return new Response(auth.message, { status: auth.status, headers: cors(origin) });
+}
   request: Request,
   env: Env
 ): Promise<ApiKeyContext> {
