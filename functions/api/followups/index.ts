@@ -115,10 +115,10 @@ export const onRequestPost = async (context: any) => {
   const { env, request } = context;
   const origin = request.headers.get("Origin") ?? "*";
 
-  const auth = await getAuthContext(request, env);
-  if (!auth.ok) {
-    return new Response(auth.message, { status: auth.status, headers: cors(origin) });
-  }
+  const auth = await getApiKeyContext(request, env);
+if (!auth.ok) {
+  return new Response(auth.message, { status: auth.status, headers: cors(origin) });
+}
 
   try {
     const db = getDb(env);
