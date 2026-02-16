@@ -1,6 +1,6 @@
 import { getAuthContext } from "../../_auth";
 import { getDb } from "../../_db";
-import { followups } from "../../db/schema";
+import { followups } from "../db/schema";
 
 /* ---------------- CORS ---------------- */
 
