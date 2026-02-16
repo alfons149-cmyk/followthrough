@@ -1,5 +1,3 @@
-import { sha256Hex } from "../../_auth";
-
 async function sha256Hex(text: string): Promise<string> {
   const data = new TextEncoder().encode(text);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
