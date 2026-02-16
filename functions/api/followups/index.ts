@@ -1,7 +1,6 @@
-import { getAuthContext } from "../../_auth";
+import { getApiKeyContext } from "../../_auth";
 import { getDb } from "../../_db";
 import { followups } from "../db/schema";
-import { getApiKeyContext } from "../../_auth";
 
 /* ---------------- CORS ---------------- */
 
