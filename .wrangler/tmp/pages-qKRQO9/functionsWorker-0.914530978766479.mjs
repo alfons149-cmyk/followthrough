@@ -1,6 +1,27 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
+// api/debug/guard.ts
+async function sha256Hex(text2) {
+  const data = new TextEncoder().encode(text2);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const bytes = Array.from(new Uint8Array(hashBuffer));
+  return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(sha256Hex, "sha256Hex");
+var onRequestGet = /* @__PURE__ */ __name(async ({ request, env }) => {
+  const expected = String(env.DEV_GUARD ?? "");
+  const provided = request.headers.get("x-dev-guard") ?? "";
+  return Response.json({
+    hasEnv: Boolean(expected),
+    envLen: expected.length,
+    envHash: expected ? await sha256Hex(expected) : null,
+    providedLen: provided.length,
+    providedHash: provided ? await sha256Hex(provided) : null,
+    match: expected === provided
+  });
+}, "onRequestGet");
+
 // ../node_modules/drizzle-orm/entity.js
 var entityKind = /* @__PURE__ */ Symbol.for("drizzle:entityKind");
 function is(value, type) {
@@ -5864,7 +5885,7 @@ var onRequestPatch = /* @__PURE__ */ __name(async ({ env, request, params }) => 
 }, "onRequestPatch");
 
 // api/_debug.ts
-var onRequestGet = /* @__PURE__ */ __name(async () => {
+var onRequestGet2 = /* @__PURE__ */ __name(async () => {
   return Response.json({ ok: true, method: "GET", route: "/api/_debug" });
 }, "onRequestGet");
 var onRequestPost = /* @__PURE__ */ __name(async ({ request }) => {
@@ -5883,19 +5904,12 @@ function getDb2(env) {
 __name(getDb2, "getDb");
 
 // _auth.ts
-async function sha256Hex(text2) {
-  const data = new TextEncoder().encode(text2);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const bytes = Array.from(new Uint8Array(hashBuffer));
-  return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-__name(sha256Hex, "sha256Hex");
 async function getAuthContext(request, env) {
-  const expected = String(env.DEV_GUARD ?? "");
+  const expected = String(env.DEV_GUARD ?? "").trim();
   if (!expected) {
     return { ok: false, status: 500, message: "Missing DEV_GUARD secret in env." };
   }
-  const provided = request.headers.get("x-dev-guard") ?? "";
+  const provided = (request.headers.get("x-dev-guard") ?? "").trim();
   if (provided !== expected) {
     return { ok: false, status: 401, message: "Unauthorized: bad x-dev-guard." };
   }
@@ -5911,6 +5925,13 @@ var cors2 = /* @__PURE__ */ __name((origin) => ({
   "Access-Control-Max-Age": "86400",
   Vary: "Origin"
 }), "cors");
+async function sha256Hex2(text2) {
+  const data = new TextEncoder().encode(text2);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const bytes = Array.from(new Uint8Array(hashBuffer));
+  return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(sha256Hex2, "sha256Hex");
 var onRequestOptions2 = /* @__PURE__ */ __name(async ({ request }) => {
   const origin = request.headers.get("Origin") ?? "*";
   return new Response(null, { status: 204, headers: cors2(origin) });
@@ -5929,7 +5950,7 @@ var onRequestPost2 = /* @__PURE__ */ __name(async (context) => {
     const ownerId = body.ownerId ?? "u_1";
     const label = body.label ?? "dev";
     const apiKeyPlain = `vd_${crypto.randomUUID().replaceAll("-", "")}`;
-    const keyHash = await sha256Hex(apiKeyPlain);
+    const keyHash = await sha256Hex2(apiKeyPlain);
     const id = `k_${crypto.randomUUID()}`;
     const createdAt = (/* @__PURE__ */ new Date()).toISOString().slice(0, 19).replace("T", " ");
     await db.insert(apiKeys).values({
@@ -6001,7 +6022,7 @@ var onRequestOptions3 = /* @__PURE__ */ __name(async ({ request }) => {
   const origin = request.headers.get("Origin") ?? "*";
   return new Response(null, { status: 204, headers: cors3(origin) });
 }, "onRequestOptions");
-var onRequestGet2 = /* @__PURE__ */ __name(async (context) => {
+var onRequestGet3 = /* @__PURE__ */ __name(async (context) => {
   const { env, request } = context;
   const origin = request.headers.get("Origin") ?? "*";
   const auth = await getAuthContext(request, env);
@@ -6056,7 +6077,7 @@ var onRequestPost3 = /* @__PURE__ */ __name(async (context) => {
 }, "onRequestPost");
 
 // api/health.ts
-var onRequestGet3 = /* @__PURE__ */ __name(async ({ env }) => {
+var onRequestGet4 = /* @__PURE__ */ __name(async ({ env }) => {
   const row = await env.DB.prepare("SELECT 1 as ok").first();
   return Response.json({ ok: row?.ok === 1 });
 }, "onRequestGet");
@@ -6079,7 +6100,7 @@ var onRequestPost4 = /* @__PURE__ */ __name(async ({ env }) => {
 }, "onRequestPost");
 
 // api/workspaces.ts
-var onRequestGet4 = /* @__PURE__ */ __name(async ({ env }) => {
+var onRequestGet5 = /* @__PURE__ */ __name(async ({ env }) => {
   const db = getDb(env);
   const rows = await db.select().from(workspaces).limit(200);
   return Response.json({ ok: true, items: rows });
@@ -6087,6 +6108,13 @@ var onRequestGet4 = /* @__PURE__ */ __name(async ({ env }) => {
 
 // ../.wrangler/tmp/pages-qKRQO9/functionsRoutes-0.3723973356814465.mjs
 var routes = [
+  {
+    routePath: "/api/debug/guard",
+    mountPath: "/api/debug",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet]
+  },
   {
     routePath: "/api/followups/:id",
     mountPath: "/api/followups",
@@ -6106,7 +6134,7 @@ var routes = [
     mountPath: "/api",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet]
+    modules: [onRequestGet2]
   },
   {
     routePath: "/api/_debug",
@@ -6134,7 +6162,7 @@ var routes = [
     mountPath: "/api/followups",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet2]
+    modules: [onRequestGet3]
   },
   {
     routePath: "/api/followups",
@@ -6155,7 +6183,7 @@ var routes = [
     mountPath: "/api",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet3]
+    modules: [onRequestGet4]
   },
   {
     routePath: "/api/seed",
@@ -6169,7 +6197,7 @@ var routes = [
     mountPath: "/api",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet4]
+    modules: [onRequestGet5]
   }
 ];
 
@@ -6660,7 +6688,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-9I1qPI/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-LV4UuY/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -6692,7 +6720,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-9I1qPI/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-LV4UuY/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
