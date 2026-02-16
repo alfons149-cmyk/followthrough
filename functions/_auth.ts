@@ -13,6 +13,27 @@ export async function sha256Hex(text: string): Promise<string> {
   return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+export type DevGuardContext =
+  | { ok: true }
+  | { ok: false; status: number; message: string };
+
+export async function getDevGuardContext(
+  request: Request,
+  env: Record<string, unknown>
+): Promise<DevGuardContext> {
+  const expected = String(env.DEV_GUARD ?? "").trim();
+  if (!expected) {
+    return { ok: false, status: 500, message: "Missing DEV_GUARD secret in env." };
+  }
+
+  const provided = (request.headers.get("x-dev-guard") ?? "").trim();
+  if (provided !== expected) {
+    return { ok: false, status: 401, message: "Unauthorized: bad x-dev-guard." };
+  }
+
+  return { ok: true };
+}
+
 /**
  * REAL API KEY AUTH
  */
