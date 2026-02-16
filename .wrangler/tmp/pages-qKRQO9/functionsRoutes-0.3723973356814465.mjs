@@ -1,4 +1,3 @@
-import { onRequestGet as __api_debug_guard_ts_onRequestGet } from "C:\\Users\\Usuario\\followthrough-real\\followthrough\\functions\\api\\debug\\guard.ts"
 import { onRequestOptions as __api_followups__id__ts_onRequestOptions } from "C:\\Users\\Usuario\\followthrough-real\\followthrough\\functions\\api\\followups\\[id].ts"
 import { onRequestPatch as __api_followups__id__ts_onRequestPatch } from "C:\\Users\\Usuario\\followthrough-real\\followthrough\\functions\\api\\followups\\[id].ts"
 import { onRequestGet as __api__debug_ts_onRequestGet } from "C:\\Users\\Usuario\\followthrough-real\\followthrough\\functions\\api\\_debug.ts"
@@ -14,13 +13,6 @@ import { onRequestGet as __api_workspaces_ts_onRequestGet } from "C:\\Users\\Usu
 
 export const routes = [
     {
-      routePath: "/api/debug/guard",
-      mountPath: "/api/debug",
-      method: "GET",
-      middlewares: [],
-      modules: [__api_debug_guard_ts_onRequestGet],
-    },
-  {
       routePath: "/api/followups/:id",
       mountPath: "/api/followups",
       method: "OPTIONS",
