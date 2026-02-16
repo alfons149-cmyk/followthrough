@@ -28,6 +28,8 @@ export const onRequestOptions: PagesFunction = async ({ request }) => {
 export const onRequestPost: PagesFunction<Env & { DEV_GUARD?: string }> = async (context) => {
   const { request, env } = context;
   const origin = request.headers.get("Origin") ?? "*";
+  const guard = await getDevGuardContext(request, env);
+if (!guard.ok) return new Response(guard.message, { status: guard.status, headers: cors(origin) });
 
   // 🔐 Guard (use helper)
   const auth = await getAuthContext(request, env as unknown as Record<string, unknown>);
