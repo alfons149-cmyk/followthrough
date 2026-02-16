@@ -7,7 +7,6 @@ import { followups } from "../db/schema";
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization, x-dev-guard",
   "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization, x-api-key",
   "Access-Control-Max-Age": "86400",
   Vary: "Origin",
