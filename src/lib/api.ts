@@ -4,6 +4,31 @@ if (!API_KEY) {
   console.error("Missing VITE_API_KEY in .env");
 }
 
+/* ---------------- GET followups ---------------- */
+export async function fetchFollowups() {
+  const res = await fetch("/api/followups", {
+    headers: {
+      "x-api-key": API_KEY
+    }
+  });
+
+  return res.json();
+}
+
+/* ---------------- CREATE followup ---------------- */
+export async function createFollowup(data:any) {
+  const res = await fetch("/api/followups", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY
+    },
+    body: JSON.stringify(data)
+  });
+
+  return res.json();
+}
+
 export async function apiFetch(url: string, options: RequestInit = {}) {
   const headers = {
     "Content-Type": "application/json",
