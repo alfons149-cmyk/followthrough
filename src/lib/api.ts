@@ -1,30 +1,25 @@
-const API_BASE = "/api";
+const API_KEY = vd_c9faf4a015a34341abdb54a830f6ffea;
 
-function getApiKey() {
-  return localStorage.getItem("VD_API_KEY") || "";
+if (!API_KEY) {
+  console.error("Missing VITE_API_KEY in .env");
 }
 
-export async function apiGet(path: string) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      Authorization: `Bearer ${getApiKey()}`,
-    },
+export async function apiFetch(url: string, options: RequestInit = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${API_KEY}`,
+    ...(options.headers || {}),
+  };
+
+  const res = await fetch(url, {
+    ...options,
+    headers,
   });
 
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || res.statusText);
+  }
 
-export async function apiPost(path: string, body: any) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getApiKey()}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
