@@ -20,7 +20,7 @@ export async function getApiKeyContext(
   request: Request,
   env: Env
 ): Promise<ApiKeyContext> {
-  const authHeader = request.headers.get("Authorization") ?? "";
+  const authHeader = (request.headers.get("Authorization") ?? "").trim();
   const bearer = authHeader.toLowerCase().startsWith("bearer ")
     ? authHeader.slice(7).trim()
     : "";
