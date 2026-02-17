@@ -1,5 +1,9 @@
+// functions/api/followups/index.ts
+
+import type { PagesFunction } from "@cloudflare/workers-types";
+import { and, eq, desc } from "drizzle-orm";
 import { getApiKeyContext } from "../../_auth";
-import { getDb } from "../../_db";
+import { getDb, type Env } from "../../_db";
 import { followups } from "../db/schema";
 
 /* ---------------- CORS ---------------- */
@@ -13,6 +17,8 @@ const cors = (origin?: string) => ({
 });
 
 /* ---------------- Risk Logic ---------------- */
+
+type RiskLevel = "low" | "medium" | "high";
 
 function daysOverdue(dueAt?: string) {
   const due = (dueAt || "").slice(0, 10);
@@ -30,7 +36,7 @@ function daysOverdue(dueAt?: string) {
 
 function riskForFollowup(f: any) {
   if (f?.status === "done") {
-    return { score: 0, level: "low", reasons: [], suggestion: "No action needed." };
+    return { score: 0, level: "low" as RiskLevel, reasons: [], suggestion: "No action needed." };
   }
 
   const overdue = daysOverdue(f?.dueAt);
@@ -54,50 +60,44 @@ function riskForFollowup(f: any) {
 
   score = Math.max(0, Math.min(100, score));
 
-  const level =
-    score >= 60 ? "high" :
-    score >= 25 ? "medium" :
-    "low";
+  const level: RiskLevel = score >= 60 ? "high" : score >= 25 ? "medium" : "low";
 
   return {
     score,
     level,
     reasons: reasons.slice(0, 3),
-    suggestion:
-      level === "high"
-        ? "Act today"
-        : level === "medium"
-        ? "Keep warm"
-        : "No action needed",
+    suggestion: level === "high" ? "Act today" : level === "medium" ? "Keep warm" : "No action needed",
   };
 }
 
 /* ---------------- OPTIONS ---------------- */
 
-export const onRequestOptions = async ({ request }: any) => {
+export const onRequestOptions: PagesFunction = async ({ request }) => {
   const origin = request.headers.get("Origin") ?? "*";
   return new Response(null, { status: 204, headers: cors(origin) });
 };
 
 /* ---------------- GET ---------------- */
 
-export const onRequestGet = async (context: any) => {
-  const { env, request } = context;
+export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   const origin = request.headers.get("Origin") ?? "*";
 
   const auth = await getApiKeyContext(request, env);
-if (!auth.ok) {
-  return new Response(auth.message, { status: auth.status, headers: cors(origin) });
-}
+  if (!auth.ok) {
+    return new Response(auth.message, { status: auth.status, headers: cors(origin) });
+  }
 
   try {
     const db = getDb(env);
-    const rows = await db.select().from(followups).limit(20);
 
-    const items = rows.map((r: any) => ({
-      ...r,
-      risk: riskForFollowup(r),
-    }));
+    const rows = await db
+      .select()
+      .from(followups)
+      .where(and(eq(followups.workspaceId, auth.workspaceId), eq(followups.ownerId, auth.ownerId)))
+      .orderBy(desc(followups.createdAt))
+      .limit(20);
+
+    const items = rows.map((r: any) => ({ ...r, risk: riskForFollowup(r) }));
 
     return Response.json({ ok: true, items }, { headers: cors(origin) });
   } catch (e: any) {
@@ -110,14 +110,13 @@ if (!auth.ok) {
 
 /* ---------------- POST ---------------- */
 
-export const onRequestPost = async (context: any) => {
-  const { env, request } = context;
+export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
   const origin = request.headers.get("Origin") ?? "*";
 
   const auth = await getApiKeyContext(request, env);
-if (!auth.ok) {
-  return new Response(auth.message, { status: auth.status, headers: cors(origin) });
-}
+  if (!auth.ok) {
+    return new Response(auth.message, { status: auth.status, headers: cors(origin) });
+  }
 
   try {
     const db = getDb(env);
