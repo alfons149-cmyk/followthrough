@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 type Status = "open" | "sent" | "waiting" | "followup" | "done";
-
 type StatusFilter = Status | "all";
 type RiskFilter = "all" | "high" | "medium" | "low";
 type SortMode = "risk" | "due" | "created";
@@ -27,12 +26,97 @@ type Followup = {
   risk?: FollowupRisk;
 };
 
-const WORKSPACE_ID = "ws_1";
-const OWNER_ID = "u_1";
-
 const STATUS_ORDER: Status[] = ["open", "sent", "waiting", "followup", "done"];
-
 const API_BASE = ""; // same-origin on Cloudflare Pages
+const API_KEY_STORAGE = "VD_API_KEY";
+
+const UI = {
+  appName: "VolgDraad",
+  subtitle: "Betrouwbaarheid · Draden die niet wegglippen",
+
+  // actions / common
+  refreshTitle: "Vernieuwen",
+  retry: "Opnieuw",
+  loading: "Laden…",
+
+  // error copy
+  missingKey: "Geen API-key ingesteld (VD_API_KEY in localStorage).",
+
+  // KPI
+  today: "Vandaag",
+  overdue: "Achterstallig",
+  high: "Hoog",
+  medium: "Middel",
+  low: "Laag",
+
+  // create form
+  createTitle: "Nieuwe draad",
+  contactName: "Contactpersoon",
+  company: "Organisatie",
+  nextStep: "Volgende stap",
+  date: "Datum",
+  add: "Toevoegen",
+  clear: "Wissen",
+
+  placeholderContact: "Bijv. Jan Jansen",
+  placeholderCompany: "Bijv. Bedrijf BV",
+  placeholderNext: "Bijv. Belafspraak plannen",
+  placeholderDate: "YYYY-MM-DD",
+
+  // list + filters
+  threads: "Jouw actieve draden",
+  search: "Zoeken",
+  status: "Status",
+  risk: "Risico",
+  sort: "Sorteren",
+  clearFilters: "Filters wissen",
+
+  // empty states
+  noThreadsYet: "Nog geen draden.",
+  addFirst: "Maak je eerste draad",
+  noResults: "Geen resultaten voor deze filters.",
+
+  // risk banner
+  highRiskBannerTitle: "Hoog risico",
+  highRiskBannerText: "Eerst oppakken",
+  showHighRisk: "Toon hoog risico",
+
+  // card labels
+  next: "Volgende stap",
+  due: "Datum",
+  why: "Waarom",
+  advice: "Advies",
+
+  // buttons per card
+  move: "Volgende fase",
+  snooze1: "+1 dag",
+  snooze3: "+3 dagen",
+  snooze7: "+7 dagen",
+  done: "Afgerond",
+  reopen: "Heropenen",
+
+  // inline edit tooltips
+  editNextTitle: "Bewerk volgende stap",
+  editDueTitle: "Bewerk datum",
+  clickToEditDate: "Klik om de datum te wijzigen",
+
+  // status labels + filter labels
+  statusAll: "Alles",
+  statusOpen: "Open",
+  statusSent: "Verstuurd",
+  statusWaiting: "Wachten",
+  statusFollowup: "Opvolgen",
+  statusDone: "Afgerond",
+
+  riskAll: "Alles",
+  riskHigh: "Hoog",
+  riskMedium: "Middel",
+  riskLow: "Laag",
+
+  sortRisk: "Risico",
+  sortDue: "Datum",
+  sortCreated: "Nieuwste",
+};
 
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
@@ -42,7 +126,7 @@ function todayYMD() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function errorMessage(e: unknown, fallback = "Unknown error"): string {
+function errorMessage(e: unknown, fallback = "Onbekende fout"): string {
   console.error("App error:", e);
 
   if (e instanceof Error) return e.message || fallback;
@@ -70,11 +154,11 @@ function addDays(ymd: string, days: number) {
 }
 
 function statusLabel(s: Status) {
-  if (s === "open") return "Open";
-  if (s === "sent") return "Sent";
-  if (s === "waiting") return "Waiting";
-  if (s === "followup") return "Follow-up";
-  return "Done";
+  if (s === "open") return UI.statusOpen;
+  if (s === "sent") return UI.statusSent;
+  if (s === "waiting") return UI.statusWaiting;
+  if (s === "followup") return UI.statusFollowup;
+  return UI.statusDone;
 }
 
 function nextStatus(s: Status): Status {
@@ -86,10 +170,8 @@ function isValidYMD(s: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
-const API_KEY_STORAGE = "VD_API_KEY";
-
 function getApiKey(): string {
-  return localStorage.getItem(API_KEY_STORAGE) || "";
+  return (localStorage.getItem(API_KEY_STORAGE) || "").trim();
 }
 
 class ApiError extends Error {
@@ -101,7 +183,6 @@ class ApiError extends Error {
 }
 
 async function readApiError(res: Response): Promise<string> {
-  // Try JSON first
   try {
     const ct = res.headers.get("content-type") || "";
     if (ct.includes("application/json")) {
@@ -111,7 +192,6 @@ async function readApiError(res: Response): Promise<string> {
       if (j && typeof j === "object") return JSON.stringify(j);
     }
   } catch {}
-  // Fallback text
   const t = await res.text().catch(() => "");
   return t || res.statusText || `HTTP ${res.status}`;
 }
@@ -121,7 +201,7 @@ async function apiFetch<T>(
   opts: RequestInit & { json?: unknown } = {}
 ): Promise<T> {
   const apiKey = getApiKey();
-  if (!apiKey) throw new ApiError(401, "Geen API key ingesteld (VD_API_KEY in localStorage).");
+  if (!apiKey) throw new ApiError(401, UI.missingKey);
 
   const { json, headers, ...rest } = opts;
 
@@ -146,67 +226,71 @@ async function apiFetch<T>(
 }
 
 const apiGet = <T,>(path: string) => apiFetch<T>(path, { method: "GET" });
-const apiPost = <T,>(path: string, json?: unknown) => apiFetch<T>(path, { method: "POST", json });
-const apiPatch = <T,>(path: string, json?: unknown) => apiFetch<T>(path, { method: "PATCH", json });
+const apiPost = <T,>(path: string, json?: unknown) =>
+  apiFetch<T>(path, { method: "POST", json });
+const apiPatch = <T,>(path: string, json?: unknown) =>
+  apiFetch<T>(path, { method: "PATCH", json });
 
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const [items, setItems] = useState<Followup[]>([]);
-const [q, setQ] = useState("");
-const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
-const [sortMode, setSortMode] = useState<SortMode>("risk");
 
-const dashboardList = useMemo(() => {
-  let list = [...items];
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
+  const [sortMode, setSortMode] = useState<SortMode>("risk");
 
-  // status
-  if (statusFilter !== "all") {
-    list = list.filter((f) => f.status === statusFilter);
-  }
+  const dashboardList = useMemo(() => {
+    let list = [...items];
 
-  // search
-  const needle = q.trim().toLowerCase();
-  if (needle) {
-    list = list.filter((f) => {
-      const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
-      return hay.includes(needle);
+    // status filter
+    if (statusFilter !== "all") {
+      list = list.filter((f) => f.status === statusFilter);
+    }
+
+    // search
+    const needle = q.trim().toLowerCase();
+    if (needle) {
+      list = list.filter((f) => {
+        const hay = `${f.contactName ?? ""} ${f.companyName ?? ""} ${f.nextStep ?? ""}`.toLowerCase();
+        return hay.includes(needle);
+      });
+    }
+
+    // risk filter
+    if (riskFilter !== "all") {
+      list = list.filter((f) => f.risk?.level === riskFilter);
+    }
+
+    // risk group: high(0) → medium(1) → low(2) → none(3)
+    const riskGroup = (f: Followup) => {
+      const lvl = f.risk?.level;
+      if (lvl === "high") return 0;
+      if (lvl === "medium") return 1;
+      if (lvl === "low") return 2;
+      return 3;
+    };
+
+    const riskScore = (f: Followup) =>
+      typeof f.risk?.score === "number" ? f.risk.score : -1;
+    const dueKey = (f: Followup) =>
+      (f.dueAt || "").slice(0, 10) || "9999-99-99";
+    const createdKey = (f: Followup) => f.createdAt || "";
+
+    // “Intelligent” sort: risk-groep eerst, daarna gekozen sort
+    list.sort((a, b) => {
+      const g = riskGroup(a) - riskGroup(b);
+      if (g !== 0) return g;
+
+      if (sortMode === "risk") return riskScore(b) - riskScore(a); // hoog→laag
+      if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b)); // vroeg→laat
+      return createdKey(b).localeCompare(createdKey(a)); // nieuw→oud
     });
-  }
 
-  // risk
-  if (riskFilter !== "all") {
-    list = list.filter((f) => f.risk?.level === riskFilter);
-  }
-  
-  // risk-group: high(0) → medium(1) → low(2) → none(3)
-const riskGroup = (f: Followup) => {
-  const lvl = f.risk?.level;
-  if (lvl === "high") return 0;
-  if (lvl === "medium") return 1;
-  if (lvl === "low") return 2;
-  return 3;
-};
-
-const riskScore = (f: Followup) => (typeof f.risk?.score === "number" ? f.risk.score : -1);
-const dueKey = (f: Followup) => (f.dueAt || "").slice(0, 10) || "9999-99-99";
-const createdKey = (f: Followup) => f.createdAt || "";
-
-// ✅ “Intelligent” sort: risk-groep eerst, daarna jouw gekozen sortMode
-list.sort((a, b) => {
-  const g = riskGroup(a) - riskGroup(b);
-  if (g !== 0) return g;
-
-  if (sortMode === "risk") return riskScore(b) - riskScore(a);        // hoog→laag binnen groep
-  if (sortMode === "due") return dueKey(a).localeCompare(dueKey(b));  // vroeg→laat
-  return createdKey(b).localeCompare(createdKey(a));                  // nieuw→oud
-});
-
-  return list;
-}, [items, q, statusFilter, riskFilter, sortMode]);
-
+    return list;
+  }, [items, q, statusFilter, riskFilter, sortMode]);
 
   // Form state (create)
   const [contactName, setContactName] = useState("");
@@ -214,90 +298,86 @@ list.sort((a, b) => {
   const [nextStep, setNextStep] = useState("");
   const [dueAt, setDueAt] = useState(todayYMD());
 
-  // =========================
-  // Step 7: inline edit state (draft per item-id)
-  // =========================
- // Inline edit state
-const [editNextId, setEditNextId] = useState<string | null>(null);
-const [editDueId, setEditDueId] = useState<string | null>(null);
-const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
-const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
+  // Inline edit state
+  const [editNextId, setEditNextId] = useState<string | null>(null);
+  const [editDueId, setEditDueId] = useState<string | null>(null);
+  const [draftNextById, setDraftNextById] = useState<Record<string, string>>({});
+  const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 
   const draftNext = (id: string) => draftNextById[id] ?? "";
   const draftDue = (id: string) => draftDueById[id] ?? "";
 
-  // ---- KPIs
+  // KPIs
   const needsTodayCount = useMemo(() => {
-  const today = todayYMD();
-  return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) === today).length;
-}, [items]);
+    const today = todayYMD();
+    return items.filter(
+      (f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) === today
+    ).length;
+  }, [items]);
 
   const overdueCount = useMemo(() => {
     const today = todayYMD();
-    return items.filter((f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today).length;
+    return items.filter(
+      (f) => f.status !== "done" && (f.dueAt || "").slice(0, 10) < today
+    ).length;
   }, [items]);
 
-   // ---- API
-
   async function refreshAll() {
-  setLoading(true);
-  setErr(null);
+    setLoading(true);
+    setErr(null);
 
-  try {
-    const data = await apiGet<{ items: Followup[] }>(
-      `/api/followups?includeRisk=1`
-    );
-    setItems(data?.items || []);
-  } catch (e: unknown) {
-    setErr(errorMessage(e, "Failed to fetch"));
-  } finally {
-    setLoading(false);
+    try {
+      const data = await apiGet<{ items: Followup[] }>(`/api/followups?includeRisk=1`);
+      setItems(data?.items || []);
+    } catch (e: unknown) {
+      setErr(errorMessage(e, "Ophalen mislukt"));
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   async function onCreate() {
     setLoading(true);
     setErr(null);
 
     try {
-      // Stap 9: workspaceId/ownerId NIET meer meesturen.
+      // ✅ workspaceId/ownerId NIET meer vanaf client bepalen (komt uit API key context)
       const payload = {
-  workspaceId: WORKSPACE_ID,
-  ownerId: OWNER_ID,
-  contactName: contactName.trim(),
-  companyName: companyName.trim(),
-  nextStep: nextStep.trim(),
-  dueAt: (dueAt || "").trim(),
-  status: "open" as Status,
-};
+        contactName: contactName.trim(),
+        companyName: companyName.trim(),
+        nextStep: nextStep.trim(),
+        dueAt: (dueAt || "").trim(),
+        status: "open" as Status,
+      };
 
-      if (!payload.contactName) throw new Error("Please enter a contact name.");
-      if (!payload.nextStep) throw new Error("Please enter a next step.");
-      if (!payload.dueAt) throw new Error("Please enter a due date (YYYY-MM-DD).");
-      if (!isValidYMD(payload.dueAt)) throw new Error("Due date must be YYYY-MM-DD.");
+      if (!payload.contactName) throw new Error("Vul een contactpersoon in.");
+      if (!payload.nextStep) throw new Error("Vul een volgende stap in.");
+      if (!payload.dueAt) throw new Error("Vul een datum in (YYYY-MM-DD).");
+      if (!isValidYMD(payload.dueAt)) throw new Error("Datum moet YYYY-MM-DD zijn.");
 
       await apiPost<{ ok: boolean; id?: string }>(`/api/followups`, payload);
 
       setContactName("");
       setCompanyName("");
       setNextStep("");
+      setDueAt(todayYMD());
 
       await refreshAll();
     } catch (e: unknown) {
-      setErr(errorMessage(e, "Create failed"));
+      setErr(errorMessage(e, "Toevoegen mislukt"));
     } finally {
       setLoading(false);
     }
   }
 
   async function patchFollowup(
-  id: string,
-  body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
-) {
-  await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
-}
+    id: string,
+    body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
+  ) {
+    await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
+  }
 
-  // ---- Actions (Move/Done/Reopen/Snooze)
+  // Actions (Move/Done/Reopen/Snooze)
   function transitionPlan(f: Followup) {
     const ns = nextStatus(f.status);
     const today = todayYMD();
@@ -317,24 +397,24 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
       await patchFollowup(f.id, plan);
       await refreshAll();
     } catch (e: unknown) {
-      setErr(errorMessage(e) || "Move failed");
+      setErr(errorMessage(e, "Actie mislukt"));
     } finally {
       setLoading(false);
     }
   }
 
   async function onDone(f: Followup) {
-  setLoading(true);
-  setErr(null);
-  try {
-    await patchFollowup(f.id, { status: "done" });
-    await refreshAll();
-  } catch (e: unknown) {
-    setErr(e instanceof Error ? e.message : "Done failed");
-  } finally {
-    setLoading(false);
+    setLoading(true);
+    setErr(null);
+    try {
+      await patchFollowup(f.id, { status: "done" });
+      await refreshAll();
+    } catch (e: unknown) {
+      setErr(errorMessage(e, "Afronden mislukt"));
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   async function onReopen(f: Followup) {
     setLoading(true);
@@ -343,7 +423,7 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
       await patchFollowup(f.id, { status: "open" });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Reopen failed");
+      setErr(errorMessage(e, "Heropenen mislukt"));
     } finally {
       setLoading(false);
     }
@@ -357,16 +437,13 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
       await patchFollowup(f.id, { dueAt: addDays(base, days) });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(errorMessage(e) || "Snooze failed");
-
+      setErr(errorMessage(e, "Uitstellen mislukt"));
     } finally {
       setLoading(false);
     }
   }
 
-  // =========================
-  // Step 7: inline edit handlers
-  // =========================
+  // Inline edit handlers
   function startEditNext(f: Followup) {
     setEditDueId(null);
     setEditNextId(f.id);
@@ -375,7 +452,6 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
 
   function cancelEditNext(id: string) {
     setEditNextId((cur) => (cur === id ? null : cur));
-    // draft laten we staan, is ok voor "draft-variant"
   }
 
   async function saveEditNext(id: string) {
@@ -389,8 +465,7 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
       await patchFollowup(id, { nextStep: v });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(errorMessage(e) ||  "Save next step failed");
-
+      setErr(errorMessage(e, "Opslaan mislukt"));
     } finally {
       setLoading(false);
     }
@@ -417,7 +492,7 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
       await patchFollowup(id, { dueAt: v });
       await refreshAll();
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Save due date failed");
+      setErr(errorMessage(e, "Opslaan mislukt"));
     } finally {
       setLoading(false);
     }
@@ -436,392 +511,432 @@ const [draftDueById, setDraftDueById] = useState<Record<string, string>>({});
   }, []);
 
   const riskCounts = useMemo(() => {
-  const counts = { high: 0, medium: 0, low: 0, none: 0 };
-  for (const f of items) {
-    const level = f.risk?.level;
-    if (level === "high") counts.high++;
-    else if (level === "medium") counts.medium++;
-    else if (level === "low") counts.low++;
-    else counts.none++;
-  }
-  return counts;
-}, [items]);
+    const counts = { high: 0, medium: 0, low: 0, none: 0 };
+    for (const f of items) {
+      const level = f.risk?.level;
+      if (level === "high") counts.high++;
+      else if (level === "medium") counts.medium++;
+      else if (level === "low") counts.low++;
+      else counts.none++;
+    }
+    return counts;
+  }, [items]);
 
   return (
-  <div className="page">
-    <header className="appTopbar">
-      <div className="appTopbarLeft">
-        <h1 className="appTitle">FollowThrough</h1>
-        <div className="appSubtitle">Risk Dashboard · Inline edit Next + Due</div>
-      </div>
-
-      <div className="appTopbarRight">
-        <div className="appMeta">
-          WS: <b>{WORKSPACE_ID}</b> · Items: <b>{items.length}</b>
+    <div className="page">
+      <header className="appTopbar">
+        <div className="appTopbarLeft">
+          <h1 className="appTitle">{UI.appName}</h1>
+          <div className="appSubtitle">{UI.subtitle}</div>
         </div>
-        <button className="iconBtn" onClick={refreshAll} disabled={loading} title="Refresh">
-          {loading ? "…" : "↻"}
-        </button>
+
+        <div className="appTopbarRight">
+          <div className="appMeta">
+            Draden: <b>{items.length}</b>
+          </div>
+          <button
+            className="iconBtn"
+            onClick={refreshAll}
+            disabled={loading}
+            title={UI.refreshTitle}
+          >
+            {loading ? "…" : "↻"}
+          </button>
+        </div>
+      </header>
+
+      {err ? (
+        <div className="error">
+          Fout: {err}{" "}
+          <button
+            className="btn"
+            onClick={refreshAll}
+            disabled={loading}
+            style={{ marginLeft: 8 }}
+          >
+            {UI.retry}
+          </button>
+        </div>
+      ) : null}
+
+      <div className="kpiBar">
+        <span className="kpiChip kpiSoon">
+          {UI.today}: {needsTodayCount}
+        </span>
+        <span className="kpiChip kpiOverdue">
+          {UI.overdue}: {overdueCount}
+        </span>
+
+        <span className="kpiChip kpiRiskHigh">
+          {UI.high}: {riskCounts.high}
+        </span>
+        <span className="kpiChip kpiRiskMed">
+          {UI.medium}: {riskCounts.medium}
+        </span>
+        <span className="kpiChip kpiRiskLow">
+          {UI.low}: {riskCounts.low}
+        </span>
       </div>
-    </header>
 
-{err ? (
-      <div className="error">
-        Error: {err}{" "}
-        <button className="btn" onClick={refreshAll} disabled={loading} style={{ marginLeft: 8 }}>
-          Retry
-        </button>
-      </div>
-    ) : null}
+      {/* Create */}
+      <section className="panel" style={{ marginBottom: 12 }}>
+        <h3 style={{ marginTop: 0 }}>{UI.createTitle}</h3>
 
-    <div className="kpiBar">
-      <span className="kpiChip kpiSoon">Need today: {needsTodayCount}</span>
-      <span className="kpiChip kpiOverdue">Overdue: {overdueCount}</span>
-
-      <span className="kpiChip kpiRiskHigh">High: {riskCounts.high}</span>
-      <span className="kpiChip kpiRiskMed">Med: {riskCounts.medium}</span>
-      <span className="kpiChip kpiRiskLow">Low: {riskCounts.low}</span>
-    </div>
-
-    {/* Create */}
-    <section className="panel" style={{ marginBottom: 12 }}>
-      <h3 style={{ marginTop: 0 }}>Create follow-up</h3>
         <div className="grid">
           <div className="field">
-            <label>Contact name</label>
+            <label>{UI.contactName}</label>
             <input
               id="contactName"
               className="input"
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               disabled={loading}
-              placeholder="Alice Example"
+              placeholder={UI.placeholderContact}
             />
           </div>
 
           <div className="field">
-            <label>Company</label>
+            <label>{UI.company}</label>
             <input
               className="input"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               disabled={loading}
-              placeholder="Example GmbH"
+              placeholder={UI.placeholderCompany}
             />
           </div>
 
           <div className="field">
-            <label>Next step</label>
+            <label>{UI.nextStep}</label>
             <input
               className="input"
               value={nextStep}
               onChange={(e) => setNextStep(e.target.value)}
               disabled={loading}
-              placeholder="Send intro email"
+              placeholder={UI.placeholderNext}
             />
           </div>
 
           <div className="field">
-            <label>Due at (YYYY-MM-DD)</label>
+            <label>{UI.date}</label>
             <input
               className="input"
               value={dueAt}
               onChange={(e) => setDueAt(e.target.value)}
               disabled={loading}
-              placeholder="2026-01-31"
+              placeholder={UI.placeholderDate}
             />
           </div>
         </div>
 
         <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
-            Add follow-up
+            {UI.add}
           </button>
 
           <button className="btn" onClick={clearForm} disabled={loading}>
-            Clear
+            {UI.clear}
           </button>
         </div>
       </section>
 
-     {/* List */}
-<section className="panel">
-  <h3 style={{ marginTop: 0 }}>Follow-ups ({dashboardList.length})</h3>
+      {/* List */}
+      <section className="panel">
+        <h3 style={{ marginTop: 0 }}>
+          {UI.threads} ({dashboardList.length})
+        </h3>
 
-  {/* Risk KPI chips (1x) */}
-  <div className="kpis" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-    <span className="chip chipRisk chipRisk-high">High: {riskCounts.high}</span>
-    <span className="chip chipRisk chipRisk-medium">Medium: {riskCounts.medium}</span>
-    <span className="chip chipRisk chipRisk-low">Low: {riskCounts.low}</span>
-  </div>
-
-  {/* Filters (1x) */}
-  <div className="toolbarRow">
-    <div className="field" style={{ minWidth: 240 }}>
-      <label>Search</label>
-      <input
-        className="input"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        disabled={loading}
-        placeholder="Search…"
-      />
-    </div>
-
-    <div className="field" style={{ minWidth: 170 }}>
-      <label>Status</label>
-      <select
-        className="select"
-        value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-        disabled={loading}
-      >
-        <option value="all">All</option>
-        <option value="open">Open</option>
-        <option value="sent">Sent</option>
-        <option value="waiting">Waiting</option>
-        <option value="followup">Follow-up</option>
-        <option value="done">Done</option>
-      </select>
-    </div>
-
-    <div className="field" style={{ minWidth: 140 }}>
-      <label>Risk</label>
-      <select
-        className="select"
-        value={riskFilter}
-        onChange={(e) => setRiskFilter(e.target.value as RiskFilter)}
-        disabled={loading}
-      >
-        <option value="all">All</option>
-        <option value="high">High</option>
-        <option value="medium">Medium</option>
-        <option value="low">Low</option>
-      </select>
-    </div>
-
-    <div className="field" style={{ minWidth: 140 }}>
-      <label>Sort</label>
-      <select
-        className="select"
-        value={sortMode}
-        onChange={(e) => setSortMode(e.target.value as SortMode)}
-        disabled={loading}
-      >
-        <option value="risk">Risk</option>
-        <option value="due">Due</option>
-        <option value="created">Created</option>
-      </select>
-    </div>
-
-    <div className="toolbarRight">
-      <button
-        className="btn"
-        onClick={() => {
-          setQ("");
-          setStatusFilter("all");
-          setRiskFilter("all");
-          setSortMode("risk");
-        }}
-        disabled={loading}
-      >
-        Clear filters
-      </button>
-    </div>
-  </div>
-
-  {/* 🔥 High-risk banner */}
-  {riskCounts.high > 0 && riskFilter !== "high" ? (
-    <div className="highRiskBanner">
-      <span className="chip chipRisk chipRisk-high">High risk: {riskCounts.high}</span>
-      <span style={{ opacity: 0.8 }}>Needs attention first</span>
-      <button
-        className="btn"
-        onClick={() => {
-          setRiskFilter("high");
-          setSortMode("risk");
-        }}
-        disabled={loading}
-        style={{ marginLeft: "auto" }}
-      >
-        Show high risk
-      </button>
-    </div>
-  ) : null}
-
-  {/* Empty / list states */}
-  {loading && items.length === 0 ? (
-    <div className="empty">
-      <p>Loading…</p>
-    </div>
-  ) : items.length === 0 ? (
-    <div className="empty">
-      <p>No follow-ups yet.</p>
-      <button
-        className="btn"
-        onClick={() => document.getElementById("contactName")?.focus()}
-        disabled={loading}
-      >
-        Add your first follow-up
-      </button>
-    </div>
-  ) : dashboardList.length === 0 ? (
-    <div className="empty">
-      <p>No results for these filters.</p>
-      <button
-        className="btn"
-        onClick={() => {
-          setQ("");
-          setStatusFilter("all");
-          setRiskFilter("all");
-          setSortMode("risk");
-        }}
-        disabled={loading}
-      >
-        Clear filters
-      </button>
-    </div>
-  ) : (
-    <div className="list">
-      {dashboardList.map((f) => {
-        const today = todayYMD();
-        const due = (f.dueAt || "").slice(0, 10);
-        const overdue = f.status !== "done" && due && due < today;
-        const cardClass = overdue ? "card cardOverdue" : "card";
-
-        return (
-          <div key={f.id} className={cardClass}>
-            <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
-            <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
-
-            {/* NEXT step inline edit */}
-            <div style={{ marginTop: 10 }}>
-              <b>Next:</b>{" "}
-              {editNextId === f.id ? (
-                <input
-                  className="input"
-                  value={draftNext(f.id)}
-                  autoFocus
-                  disabled={loading}
-                  onChange={(e) =>
-                    setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                  }
-                  onBlur={() => saveEditNext(f.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveEditNext(f.id);
-                    if (e.key === "Escape") cancelEditNext(f.id);
-                  }}
-                  style={{ maxWidth: 520 }}
-                />
-              ) : (
-                <>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => startEditNext(f)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {f.nextStep || "—"}
-                  </span>
-                  <button
-                    className="btn"
-                    title="Edit next step"
-                    disabled={loading}
-                    style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                    onClick={() => startEditNext(f)}
-                  >
-                    ✎
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* META + DUE inline edit */}
-            <div className="cardMeta" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <span className="chip chipOpen">{statusLabel(f.status)}</span>
-
-              <span className="chip chipDue">
-                Due:{" "}
-                {editDueId === f.id ? (
-                  <input
-                    className="input"
-                    value={draftDue(f.id)}
-                    autoFocus
-                    disabled={loading}
-                    onChange={(e) =>
-                      setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                    }
-                    onBlur={() => saveEditDue(f.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveEditDue(f.id);
-                      if (e.key === "Escape") cancelEditDue(f.id);
-                    }}
-                    style={{ width: 140 }}
-                    placeholder="YYYY-MM-DD"
-                  />
-                ) : (
-                  <>
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => startEditDue(f)}
-                      style={{ cursor: "pointer", fontWeight: 700 }}
-                      title="Click to edit due date"
-                    >
-                      {due || "—"}
-                    </span>
-                    <button
-                      className="btn"
-                      title="Edit due date"
-                      disabled={loading}
-                      style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                      onClick={() => startEditDue(f)}
-                    >
-                      ✎
-                    </button>
-                  </>
-                )}
-              </span>
-
-              {overdue ? <span className="chip chipOverdue">Overdue</span> : null}
-            </div>
-
-            {f.risk ? (
-              <>
-                <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
-                  Risk: {f.risk.level} ({f.risk.score})
-                </span>
-
-                <div style={{ marginTop: 8, opacity: 0.8, fontSize: 12 }}>
-                  <div><b>Why:</b> {f.risk.reasons.join(" · ")}</div>
-                  <div><b>Next:</b> {f.risk.suggestion}</div>
-                </div>
-              </>
-            ) : null}
-
-            {/* ACTIONS */}
-            <div className="cardActions" style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button className="btn" onClick={() => onMove(f)} disabled={loading}>Move</button>
-              <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>+1d</button>
-              <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>+3d</button>
-              <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>+7d</button>
-
-              {f.status !== "done" ? (
-                <button className="btn" onClick={() => onDone(f)} disabled={loading}>Done</button>
-              ) : (
-                <button className="btn" onClick={() => onReopen(f)} disabled={loading}>Reopen</button>
-              )}
-            </div>
-
-            <div style={{ marginTop: 8, opacity: 0.7, fontSize: 12 }}>
-              Id: <code>{f.id}</code>
-            </div>
+        {/* Filters */}
+        <div className="toolbarRow">
+          <div className="field" style={{ minWidth: 240 }}>
+            <label>{UI.search}</label>
+            <input
+              className="input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              disabled={loading}
+              placeholder="Zoek…"
+            />
           </div>
-        );
-      })}
-    </div>
-  )}
-</section>
+
+          <div className="field" style={{ minWidth: 170 }}>
+            <label>{UI.status}</label>
+            <select
+              className="select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              disabled={loading}
+            >
+              <option value="all">{UI.statusAll}</option>
+              <option value="open">{UI.statusOpen}</option>
+              <option value="sent">{UI.statusSent}</option>
+              <option value="waiting">{UI.statusWaiting}</option>
+              <option value="followup">{UI.statusFollowup}</option>
+              <option value="done">{UI.statusDone}</option>
+            </select>
+          </div>
+
+          <div className="field" style={{ minWidth: 140 }}>
+            <label>{UI.risk}</label>
+            <select
+              className="select"
+              value={riskFilter}
+              onChange={(e) => setRiskFilter(e.target.value as RiskFilter)}
+              disabled={loading}
+            >
+              <option value="all">{UI.riskAll}</option>
+              <option value="high">{UI.riskHigh}</option>
+              <option value="medium">{UI.riskMedium}</option>
+              <option value="low">{UI.riskLow}</option>
+            </select>
+          </div>
+
+          <div className="field" style={{ minWidth: 140 }}>
+            <label>{UI.sort}</label>
+            <select
+              className="select"
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+              disabled={loading}
+            >
+              <option value="risk">{UI.sortRisk}</option>
+              <option value="due">{UI.sortDue}</option>
+              <option value="created">{UI.sortCreated}</option>
+            </select>
+          </div>
+
+          <div className="toolbarRight">
+            <button
+              className="btn"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+                setRiskFilter("all");
+                setSortMode("risk");
+              }}
+              disabled={loading}
+            >
+              {UI.clearFilters}
+            </button>
+          </div>
+        </div>
+
+        {/* High-risk banner */}
+        {riskCounts.high > 0 && riskFilter !== "high" ? (
+          <div className="highRiskBanner">
+            <span className="chip chipRisk chipRisk-high">
+              {UI.highRiskBannerTitle}: {riskCounts.high}
+            </span>
+            <span style={{ opacity: 0.8 }}>{UI.highRiskBannerText}</span>
+            <button
+              className="btn"
+              onClick={() => {
+                setRiskFilter("high");
+                setSortMode("risk");
+              }}
+              disabled={loading}
+              style={{ marginLeft: "auto" }}
+            >
+              {UI.showHighRisk}
+            </button>
+          </div>
+        ) : null}
+
+        {/* Empty / list states */}
+        {loading && items.length === 0 ? (
+          <div className="empty">
+            <p>{UI.loading}</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="empty">
+            <p>{UI.noThreadsYet}</p>
+            <button
+              className="btn"
+              onClick={() => document.getElementById("contactName")?.focus()}
+              disabled={loading}
+            >
+              {UI.addFirst}
+            </button>
+          </div>
+        ) : dashboardList.length === 0 ? (
+          <div className="empty">
+            <p>{UI.noResults}</p>
+            <button
+              className="btn"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+                setRiskFilter("all");
+                setSortMode("risk");
+              }}
+              disabled={loading}
+            >
+              {UI.clearFilters}
+            </button>
+          </div>
+        ) : (
+          <div className="list">
+            {dashboardList.map((f) => {
+              const today = todayYMD();
+              const due = (f.dueAt || "").slice(0, 10);
+              const overdue = f.status !== "done" && due && due < today;
+              const cardClass = overdue ? "card cardOverdue" : "card";
+
+              return (
+                <div key={f.id} className={cardClass}>
+                  <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
+                  <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
+
+                  {/* Next step inline edit */}
+                  <div style={{ marginTop: 10 }}>
+                    <b>{UI.next}:</b>{" "}
+                    {editNextId === f.id ? (
+                      <input
+                        className="input"
+                        value={draftNext(f.id)}
+                        autoFocus
+                        disabled={loading}
+                        onChange={(e) =>
+                          setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                        }
+                        onBlur={() => saveEditNext(f.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveEditNext(f.id);
+                          if (e.key === "Escape") cancelEditNext(f.id);
+                        }}
+                        style={{ maxWidth: 520 }}
+                      />
+                    ) : (
+                      <>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => startEditNext(f)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {f.nextStep || "—"}
+                        </span>
+                        <button
+                          className="btn"
+                          title={UI.editNextTitle}
+                          disabled={loading}
+                          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                          onClick={() => startEditNext(f)}
+                        >
+                          ✎
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Meta + due inline edit */}
+                  <div
+                    className="cardMeta"
+                    style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}
+                  >
+                    <span className="chip chipOpen">{statusLabel(f.status)}</span>
+
+                    <span className="chip chipDue">
+                      {UI.due}:{" "}
+                      {editDueId === f.id ? (
+                        <input
+                          className="input"
+                          value={draftDue(f.id)}
+                          autoFocus
+                          disabled={loading}
+                          onChange={(e) =>
+                            setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
+                          }
+                          onBlur={() => saveEditDue(f.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEditDue(f.id);
+                            if (e.key === "Escape") cancelEditDue(f.id);
+                          }}
+                          style={{ width: 140 }}
+                          placeholder={UI.placeholderDate}
+                        />
+                      ) : (
+                        <>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => startEditDue(f)}
+                            style={{ cursor: "pointer", fontWeight: 700 }}
+                            title={UI.clickToEditDate}
+                          >
+                            {due || "—"}
+                          </span>
+                          <button
+                            className="btn"
+                            title={UI.editDueTitle}
+                            disabled={loading}
+                            style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+                            onClick={() => startEditDue(f)}
+                          >
+                            ✎
+                          </button>
+                        </>
+                      )}
+                    </span>
+
+                    {overdue ? <span className="chip chipOverdue">{UI.overdue}</span> : null}
+                  </div>
+
+                  {f.risk ? (
+                    <>
+                      <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
+                        {UI.risk}: {f.risk.level} ({f.risk.score})
+                      </span>
+
+                      <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12 }}>
+                        <div>
+                          <b>{UI.why}:</b> {(f.risk.reasons || []).join(" · ")}
+                        </div>
+                        <div>
+                          <b>{UI.advice}:</b> {f.risk.suggestion}
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {/* Actions */}
+                  <div
+                    className="cardActions"
+                    style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}
+                  >
+                    <button className="btn" onClick={() => onMove(f)} disabled={loading}>
+                      {UI.move}
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
+                      {UI.snooze1}
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
+                      {UI.snooze3}
+                    </button>
+                    <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
+                      {UI.snooze7}
+                    </button>
+
+                    {f.status !== "done" ? (
+                      <button className="btn" onClick={() => onDone(f)} disabled={loading}>
+                        {UI.done}
+                      </button>
+                    ) : (
+                      <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
+                        {UI.reopen}
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: 8, opacity: 0.6, fontSize: 12 }}>
+                    Id: <code>{f.id}</code>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
