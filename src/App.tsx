@@ -252,8 +252,39 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const [items, setItems] = useState<Followup[]>([]);
+  const [apiKey, setApiKey] = useState(() => getApiKey());
+  const [keyInput, setKeyInput] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
 
+  function showToast(msg: string) {
+    setToast(msg);
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 2200);
+  }
+
+  function saveApiKey(value: string) {
+    const v = (value || "").trim();
+    if (!v) return;
+    localStorage.setItem(API_KEY_STORAGE, v);
+    setApiKey(v);
+    setKeyInput("");
+    showToast("API-key opgeslagen ✅");
+  }
+
+  function clearApiKey() {
+    localStorage.removeItem(API_KEY_STORAGE);
+    setApiKey("");
+    showToast("API-key verwijderd");
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    };
+  }, []);
+
+  const [items, setItems] = useState<Followup[]>([]);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
