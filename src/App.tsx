@@ -913,9 +913,9 @@ export default function App() {
                         <div>
                           <b>{UI.why}:</b> {(f.risk.reasons || []).join(" · ")}
                         </div>
-                        <div>
-                          <b>{UI.advice}:</b> {f.risk.suggestion}
-                        </div>
+                       <div>
+                       <b>{UI.advice}:</b> {suggestionNL(f.risk?.suggestion)}
+                       </div>
                       </div>
                     </>
                   ) : null}
