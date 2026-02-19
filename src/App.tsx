@@ -161,20 +161,6 @@ function statusLabel(s: Status) {
   return UI.statusDone;
 }
 
-function suggestionNL(s?: string) {
-  const t = (s || "").trim();
-
-  // Vang de huidige Engelse suggesties op (zoals je riskForFollowup teruggeeft)
-  if (!t) return "—";
-  if (t === "Act today") return "Vandaag opvolgen";
-  if (t === "Keep warm") return "Warm houden";
-  if (t === "No action needed.") return "Geen actie nodig";
-  if (t === "No action needed") return "Geen actie nodig";
-
-  // fallback: laat originele tekst zien (voor het geval je later andere suggesties hebt)
-  return t;
-}
-
 function riskLabel(level?: "low" | "medium" | "high") {
   if (level === "high") return "Hoog";
   if (level === "medium") return "Middel";
