@@ -891,9 +891,9 @@ export default function App() {
 
                   {f.risk ? (
                     <>
-                      <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
-                        {UI.risk}: {f.risk.level} ({f.risk.score})
-                      </span>
+                     <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
+  {UI.risk}: {riskLabel(f.risk.level)} ({f.risk.score})
+</span>
 
                       <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12 }}>
                         <div>
