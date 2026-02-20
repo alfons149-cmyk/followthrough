@@ -664,6 +664,18 @@ export default function App() {
           >
             {loading ? "…" : "↻"}
           </button>
+          <button className="btn" onClick={clearApiKey} disabled={loading} title="API-key verwijderen">
+  Uitloggen
+</button>
+
+<a
+  className="btn"
+  href={`mailto:jou@email.nl?subject=${encodeURIComponent("VolgDraad feedback (tester)")}
+&body=${encodeURIComponent("Feedback:\n\nContext:\n- items: " + items.length + "\n- device: " + navigator.userAgent + "\n- url: " + location.href + "\n")}`}
+  style={{ textDecoration: "none" }}
+>
+  Feedback
+</a>
         </div>
       </header>
 
