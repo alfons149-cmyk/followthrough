@@ -568,7 +568,81 @@ export default function App() {
       else counts.none++;
     }
     return counts;
-  }, [items]);
+  }, [items
+
+    if (!apiKey) {
+  return (
+    <div className="page" style={{ maxWidth: 720, margin: "0 auto" }}>
+      <header className="appTopbar">
+        <div className="appTopbarLeft">
+          <h1 className="appTitle">{UI.appName}</h1>
+          <div className="appSubtitle">Start voor testers · sleutel erin, klaar.</div>
+        </div>
+      </header>
+
+      {toast ? (
+        <div className="panel" style={{ marginTop: 12, opacity: 0.9 }}>
+          {toast}
+        </div>
+      ) : null}
+
+      <section className="panel" style={{ marginTop: 12 }}>
+        <h3 style={{ marginTop: 0 }}>Toegang instellen</h3>
+        <p style={{ marginTop: 6, opacity: 0.85 }}>
+          Plak je <b>VolgDraad API-key</b> hieronder. Daarna kun je direct aan de slag.
+        </p>
+
+        <div className="field" style={{ marginTop: 10 }}>
+          <label>API-key</label>
+          <input
+            className="input"
+            value={keyInput}
+            onChange={(e) => setKeyInput(e.target.value)}
+            placeholder="vd_..."
+            autoFocus
+          />
+        </div>
+
+        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button className="btn btnPrimary" onClick={() => saveApiKey(keyInput)}>
+            Opslaan
+          </button>
+          <button
+            className="btn"
+            onClick={() => {
+              // handig voor mobiel: testers kunnen key ook via ?key=... binnenkrijgen
+              const p = new URLSearchParams(window.location.search);
+              const k = (p.get("key") || "").trim();
+              if (k) saveApiKey(k);
+              else setToast("Geen key gevonden in de URL (?key=...)");
+              setTimeout(() => setToast(null), 2200);
+            }}
+          >
+            Pak key uit URL
+          </button>
+        </div>
+
+        <div style={{ marginTop: 14, fontSize: 12, opacity: 0.8 }}>
+          Tip: op mobiel kun je een link delen als: <code>?key=vd_...</code>
+        </div>
+      </section>
+
+      <section className="panel" style={{ marginTop: 12 }}>
+        <h3 style={{ marginTop: 0 }}>Feedback</h3>
+        <p style={{ marginTop: 6, opacity: 0.85 }}>
+          Iets onduidelijk of stuk? Stuur het direct door.
+        </p>
+        <a
+          className="btn"
+          href={`mailto:jou@email.nl?subject=${encodeURIComponent("VolgDraad feedback (tester)")}
+&body=${encodeURIComponent("Wat ging er goed/mis?\n\nContext:\n- device: " + navigator.userAgent + "\n- url: " + location.href + "\n")}`}
+        >
+          Feedback mailen
+        </a>
+      </section>
+    </div>
+  );
+}
 
   return (
     <div className="page">
