@@ -602,7 +602,7 @@ export default function App() {
   return counts;
 }, [items]);
 
-    if (!apiKey) {
+  if (!apiKey) {
   return (
     <div className="page" style={{ maxWidth: 720, margin: "0 auto" }}>
       <header className="appTopbar">
