@@ -585,9 +585,10 @@ export default function App() {
   }
 
   useEffect(() => {
-    refreshAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  if (!apiKey) return;
+  refreshAll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [apiKey]);
 
   const riskCounts = useMemo(() => {
   const counts = { high: 0, medium: 0, low: 0, none: 0 };
