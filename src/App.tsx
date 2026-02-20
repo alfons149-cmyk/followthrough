@@ -612,10 +612,11 @@ export default function App() {
       </header>
 
       {toast ? (
-        <div className="panel" style={{ marginTop: 12, opacity: 0.9 }}>
-          {toast}
-        </div>
-      ) : null}
+  <div className="panel" style={{ marginTop: 10, opacity: 0.9 }}>
+    {toast}
+  </div>
+) : null}
+
 
       <section className="panel" style={{ marginTop: 12 }}>
         <h3 style={{ marginTop: 0 }}>Toegang instellen</h3>
