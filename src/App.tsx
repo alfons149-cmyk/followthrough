@@ -418,6 +418,33 @@ export default function App() {
     }
   }
 
+    async function seedExamples() {
+  setLoading(true);
+  setErr(null);
+  try {
+    const examples = [
+      { contactName: "Jan Jansen", companyName: "Bedrijf BV", nextStep: "Belafspraak plannen", dueAt: addDays(todayYMD(), 0), status: "followup" as Status },
+      { contactName: "Sanne de Vries", companyName: "Studio Noord", nextStep: "Voorstel sturen", dueAt: addDays(todayYMD(), 2), status: "sent" as Status },
+      { contactName: "Murat Kaya", companyName: "Kaya Logistics", nextStep: "Reactie checken", dueAt: addDays(todayYMD(), -2), status: "waiting" as Status },
+      { contactName: "Eva Smit", companyName: "Smit & Co", nextStep: "Demo plannen", dueAt: addDays(todayYMD(), 7), status: "open" as Status },
+      { contactName: "Noor Bakker", companyName: "Bakker Agency", nextStep: "Follow-up mail sturen", dueAt: addDays(todayYMD(), 1), status: "followup" as Status },
+      { contactName: "Tom Peters", companyName: "Peters IT", nextStep: "Offerte aanpassen", dueAt: addDays(todayYMD(), 3), status: "sent" as Status },
+    ];
+
+    for (const ex of examples) {
+      await apiPost(`/api/followups`, ex);
+    }
+
+    setToast("Voorbeelden toegevoegd ✨");
+    setTimeout(() => setToast(null), 2200);
+    await refreshAll();
+  } catch (e: unknown) {
+    setErr(errorMessage(e, "Voorbeelden toevoegen mislukt"));
+  } finally {
+    setLoading(false);
+  }
+}
+
   async function patchFollowup(
     id: string,
     body: Partial<Pick<Followup, "status" | "dueAt" | "nextStep">>
