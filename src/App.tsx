@@ -75,6 +75,7 @@ const UI = {
   noThreadsYet: "Nog geen draden.",
   addFirst: "Maak je eerste draad",
   noResults: "Geen resultaten voor deze filters.",
+  seedExamples: "Vul met voorbeelden",
 
   // risk banner
   highRiskBannerTitle: "Hoog risico",
