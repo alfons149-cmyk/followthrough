@@ -921,6 +921,11 @@ export default function App() {
             >
               {UI.addFirst}
             </button>
+            <button className="btn" onClick={seedExamples} disabled={loading} style={{ marginLeft: 8 }}>
+      {UI.seedExamples}
+    </button>
+  </div>
+) : null}
           </div>
         ) : dashboardList.length === 0 ? (
           <div className="empty">
