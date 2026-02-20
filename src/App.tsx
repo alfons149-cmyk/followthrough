@@ -907,52 +907,59 @@ export default function App() {
         ) : null}
 
         {/* Empty / list states */}
-        {loading && items.length === 0 ? (
-          <div className="empty">
-            <p>{UI.loading}</p>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="empty">
-            <p>{UI.noThreadsYet}</p>
-            <button
-              className="btn"
-              onClick={() => document.getElementById("contactName")?.focus()}
-              disabled={loading}
-            >
-              {UI.addFirst}
-            </button>
-            <button className="btn" onClick={seedExamples} disabled={loading} style={{ marginLeft: 8 }}>
-      {UI.seedExamples}
+{loading && items.length === 0 ? (
+  <div className="empty">
+    <p>{UI.loading}</p>
+  </div>
+) : items.length === 0 ? (
+  <div className="empty">
+    <p>{UI.noThreadsYet}</p>
+
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <button
+        className="btn"
+        onClick={() => document.getElementById("contactName")?.focus()}
+        disabled={loading}
+      >
+        {UI.addFirst}
+      </button>
+
+      <button
+        className="btn"
+        onClick={seedExamples}
+        disabled={loading}
+        style={{ marginLeft: 0 }}
+      >
+        {UI.seedExamples}
+      </button>
+    </div>
+  </div>
+) : dashboardList.length === 0 ? (
+  <div className="empty">
+    <p>{UI.noResults}</p>
+    <button
+      className="btn"
+      onClick={() => {
+        setQ("");
+        setStatusFilter("all");
+        setRiskFilter("all");
+        setSortMode("risk");
+      }}
+      disabled={loading}
+    >
+      {UI.clearFilters}
     </button>
   </div>
-) : null}
-          </div>
-        ) : dashboardList.length === 0 ? (
-          <div className="empty">
-            <p>{UI.noResults}</p>
-            <button
-              className="btn"
-              onClick={() => {
-                setQ("");
-                setStatusFilter("all");
-                setRiskFilter("all");
-                setSortMode("risk");
-              }}
-              disabled={loading}
-            >
-              {UI.clearFilters}
-            </button>
-          </div>
-        ) : (
-          <div className="list">
-            {dashboardList.map((f) => {
-              const today = todayYMD();
-              const due = (f.dueAt || "").slice(0, 10);
-              const overdue = f.status !== "done" && due && due < today;
-              const cardClass = overdue ? "card cardOverdue" : "card";
+) : (
+  <div className="list">
+    {dashboardList.map((f) => {
+      const today = todayYMD();
+      const due = (f.dueAt || "").slice(0, 10);
+      const overdue = f.status !== "done" && due && due < today;
+      const cardClass = overdue ? "card cardOverdue" : "card";
 
-              return (
-                <div key={f.id} className={cardClass}>
+      return (
+        <div key={f.id} className={cardClass}>
                   <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
                   <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
