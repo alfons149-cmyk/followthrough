@@ -590,16 +590,16 @@ export default function App() {
   }, []);
 
   const riskCounts = useMemo(() => {
-    const counts = { high: 0, medium: 0, low: 0, none: 0 };
-    for (const f of items) {
-      const level = f.risk?.level;
-      if (level === "high") counts.high++;
-      else if (level === "medium") counts.medium++;
-      else if (level === "low") counts.low++;
-      else counts.none++;
-    }
-    return counts;
-  }, [items
+  const counts = { high: 0, medium: 0, low: 0, none: 0 };
+  for (const f of items) {
+    const level = f.risk?.level;
+    if (level === "high") counts.high++;
+    else if (level === "medium") counts.medium++;
+    else if (level === "low") counts.low++;
+    else counts.none++;
+  }
+  return counts;
+}, [items]);
 
     if (!apiKey) {
   return (
