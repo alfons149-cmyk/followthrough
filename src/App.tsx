@@ -76,6 +76,10 @@ const UI = {
   addFirst: "Maak je eerste draad",
   noResults: "Geen resultaten voor deze filters.",
 
+  <button className="btn" onClick={seedExamples} disabled={loading} style={{ marginLeft: 8 }}>
+  Vul met voorbeelden
+  </button>
+
   // risk banner
   highRiskBannerTitle: "Hoog risico",
   highRiskBannerText: "Eerst oppakken",
