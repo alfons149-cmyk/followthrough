@@ -439,7 +439,7 @@ export default function App() {
       await apiPost(`/api/followups`, ex);
     }
 
-    setToast("Voorbeelden toegevoegd ✨");
+    showToast("Voorbeelden toegevoegd ✨");
     setTimeout(() => setToast(null), 2200);
     await refreshAll();
   } catch (e: unknown) {
