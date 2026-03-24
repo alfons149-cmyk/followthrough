@@ -405,39 +405,39 @@ export default function App() {
   }
 
   async function onCreate() {
-    setLoading(true);
-    setErr(null);
+  setLoading(true);
+  setErr(null);
 
-    try {
-      // ✅ workspaceId/ownerId NIET meer vanaf client bepalen (komt uit API key context)
-      const payload = {
+  try {
+    const payload = {
       contactName: contactName.trim(),
       contactEmail: contactEmail.trim(),
       companyName: companyName.trim(),
       nextStep: nextStep.trim(),
       dueAt: (dueAt || "").trim(),
       status: "open" as Status,
-      };
+    };
 
-      if (!payload.contactName) throw new Error("Vul een contactpersoon in.");
-      if (!payload.nextStep) throw new Error("Vul een volgende stap in.");
-      if (!payload.dueAt) throw new Error("Vul een datum in (YYYY-MM-DD).");
-      if (!isValidYMD(payload.dueAt)) throw new Error("Datum moet YYYY-MM-DD zijn.");
+    if (!payload.contactName) throw new Error("Vul een contactpersoon in.");
+    if (!payload.nextStep) throw new Error("Vul een volgende stap in.");
+    if (!payload.dueAt) throw new Error("Vul een datum in (YYYY-MM-DD).");
+    if (!isValidYMD(payload.dueAt)) throw new Error("Datum moet YYYY-MM-DD zijn.");
 
-      await apiPost<{ ok: boolean; id?: string }>(`/api/followups`, payload);
+    await apiPost<{ ok: boolean; id?: string }>(`/api/followups`, payload);
 
-      setContactName("");
-      setCompanyName("");
-      setNextStep("");
-      setDueAt(todayYMD());
+    setContactName("");
+    setContactEmail("");
+    setCompanyName("");
+    setNextStep("");
+    setDueAt(todayYMD());
 
-      await refreshAll();
-    } catch (e: unknown) {
-      setErr(errorMessage(e, "Toevoegen mislukt"));
-    } finally {
-      setLoading(false);
-    }
+    await refreshAll();
+  } catch (e: unknown) {
+    setErr(errorMessage(e, "Toevoegen mislukt"));
+  } finally {
+    setLoading(false);
   }
+}
 
     async function seedExamples() {
   setLoading(true);
