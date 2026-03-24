@@ -762,67 +762,83 @@ export default function App() {
         </span>
       </div>
 
-      {/* Create */}
-      <section className="panel" style={{ marginBottom: 12 }}>
-        <h3 style={{ marginTop: 0 }}>{UI.createTitle}</h3>
+     {/* Create */}
+<section className="panel" style={{ marginBottom: 12 }}>
+  <h3 style={{ marginTop: 0 }}>{UI.createTitle}</h3>
 
-        <div className="grid">
-          <div className="field">
-            <label>{UI.contactName}</label>
-            <input
-              id="contactName"
-              className="input"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              disabled={loading}
-              placeholder={UI.placeholderContact}
-            />
-          </div>
+  <div className="grid">
+    {/* Contactpersoon */}
+    <div className="field">
+      <label>{UI.contactName}</label>
+      <input
+        id="contactName"
+        className="input"
+        value={contactName}
+        onChange={(e) => setContactName(e.target.value)}
+        disabled={loading}
+        placeholder={UI.placeholderContact}
+      />
+    </div>
 
-          <div className="field">
-            <label>{UI.company}</label>
-            <input
-              className="input"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              disabled={loading}
-              placeholder={UI.placeholderCompany}
-            />
-          </div>
+    {/* E-mail (NIEUW) */}
+    <div className="field">
+      <label>{UI.email}</label>
+      <input
+        className="input"
+        value={contactEmail}
+        onChange={(e) => setContactEmail(e.target.value)}
+        disabled={loading}
+        placeholder={UI.placeholderEmail}
+      />
+    </div>
 
-          <div className="field">
-            <label>{UI.nextStep}</label>
-            <input
-              className="input"
-              value={nextStep}
-              onChange={(e) => setNextStep(e.target.value)}
-              disabled={loading}
-              placeholder={UI.placeholderNext}
-            />
-          </div>
+    {/* Organisatie */}
+    <div className="field">
+      <label>{UI.company}</label>
+      <input
+        className="input"
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
+        disabled={loading}
+        placeholder={UI.placeholderCompany}
+      />
+    </div>
 
-          <div className="field">
-            <label>{UI.date}</label>
-            <input
-              className="input"
-              value={dueAt}
-              onChange={(e) => setDueAt(e.target.value)}
-              disabled={loading}
-              placeholder={UI.placeholderDate}
-            />
-          </div>
-        </div>
+    {/* Volgende stap */}
+    <div className="field">
+      <label>{UI.nextStep}</label>
+      <input
+        className="input"
+        value={nextStep}
+        onChange={(e) => setNextStep(e.target.value)}
+        disabled={loading}
+        placeholder={UI.placeholderNext}
+      />
+    </div>
 
-        <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
-            {UI.add}
-          </button>
+    {/* Datum */}
+    <div className="field">
+      <label>{UI.date}</label>
+      <input
+        className="input"
+        value={dueAt}
+        onChange={(e) => setDueAt(e.target.value)}
+        disabled={loading}
+        placeholder={UI.placeholderDate}
+      />
+    </div>
+  </div>
 
-          <button className="btn" onClick={clearForm} disabled={loading}>
-            {UI.clear}
-          </button>
-        </div>
-      </section>
+  <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+    <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
+      {UI.add}
+    </button>
+
+    <button className="btn" onClick={clearForm} disabled={loading}>
+      {UI.clear}
+    </button>
+  </div>
+</section>
 
       {/* List */}
       <section className="panel">
