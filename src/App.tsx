@@ -33,6 +33,12 @@ const API_KEY_STORAGE = "VD_API_KEY";
 const UI = {
   appName: "VolgDraad",
   subtitle: "Betrouwbaarheid · Draden die niet wegglippen",
+  email: "E-mail",
+  placeholderEmail: "Bijv. jan@bedrijf.nl",
+  sendInitial: "Stuur eerste mail",
+  emailStatus: "Mailstatus",
+  lastEmail: "Laatste mail",
+  nextEmail: "Volgende mail",
 
   // actions / common
   refreshTitle: "Vernieuwen",
