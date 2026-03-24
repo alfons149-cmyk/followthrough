@@ -498,7 +498,7 @@ export default function App() {
     simulated?: boolean;
     preview?: { to: string; subject: string; body: string };
   }>(`/api/followups/send-initial-email`, { id });
-} 
+}
 
   // Actions (Move/Done/Reopen/Snooze)
   function transitionPlan(f: Followup) {
