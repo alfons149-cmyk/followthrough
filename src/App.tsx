@@ -283,6 +283,25 @@ export default function App() {
     toastTimerRef.current = window.setTimeout(() => setToast(null), 2200);
   }
 
+  async function onSendInitialEmail(f: Followup) {
+  setLoading(true);
+  setErr(null);
+
+  try {
+    if (!f.contactEmail?.trim()) {
+      throw new Error("Geen e-mailadres ingesteld.");
+    }
+
+    const res = await sendInitialEmail(f.id);
+    showToast(res?.simulated ? "Eerste mail gesimuleerd ✉️" : "Eerste mail verstuurd ✉️");
+    await refreshAll();
+  } catch (e: unknown) {
+    setErr(errorMessage(e, "Versturen mislukt"));
+  } finally {
+    setLoading(false);
+  }
+}  
+
   function saveApiKey(value: string) {
     const v = (value || "").trim();
     if (!v) return;
