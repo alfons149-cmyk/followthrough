@@ -1140,6 +1140,18 @@ export default function App() {
                     </>
                   ) : null}
 
+          <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12 }}>
+  <div>
+    <b>{UI.emailStatus}:</b> {f.emailStatus || "off"}
+  </div>
+  <div>
+    <b>{UI.lastEmail}:</b> {f.lastEmailSentAt ? String(f.lastEmailSentAt).slice(0, 16) : "—"}
+  </div>
+  <div>
+    <b>{UI.nextEmail}:</b> {f.nextEmailAt ? String(f.nextEmailAt).slice(0, 16) : "—"}
+  </div>
+</div>
+
                   {/* Actions */}
                   <div
                     className="cardActions"
