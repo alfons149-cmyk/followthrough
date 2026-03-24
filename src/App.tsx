@@ -472,6 +472,14 @@ export default function App() {
   ) {
     await apiPatch<{ ok?: boolean }>(`/api/followups/${encodeURIComponent(id)}`, body);
   }
+    
+  async function sendInitialEmail(id: string) {
+  return apiPost<{
+    ok: boolean;
+    simulated?: boolean;
+    preview?: { to: string; subject: string; body: string };
+  }>(`/api/followups/send-initial-email`, { id });
+} 
 
   // Actions (Move/Done/Reopen/Snooze)
   function transitionPlan(f: Followup) {
