@@ -1169,7 +1169,11 @@ export default function App() {
                     <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
                       {UI.snooze7}
                     </button>
-
+                    {f.contactEmail ? (
+                    <button className="btn" onClick={() => onSendInitialEmail(f)} disabled={loading}>
+                    {UI.sendInitial}
+                    </button>
+                    ) : null}
                     {f.status !== "done" ? (
                       <button className="btn" onClick={() => onDone(f)} disabled={loading}>
                         {UI.done}
