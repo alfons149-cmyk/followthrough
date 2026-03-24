@@ -18,12 +18,23 @@ type Followup = {
   workspaceId: string;
   ownerId: string;
   contactName: string;
+  contactEmail?: string;
   companyName: string;
   nextStep: string;
   dueAt: string;
   status: Status;
   createdAt?: string;
   risk?: FollowupRisk;
+
+  emailEnabled?: boolean;
+  emailStatus?: string;
+  emailSequenceStep?: number;
+  lastEmailSentAt?: string | null;
+  nextEmailAt?: string | null;
+  lastEmailSubject?: string | null;
+  lastEmailPreview?: string | null;
+  replyDetectedAt?: string | null;
+  emailFailureReason?: string | null;
 };
 
 const STATUS_ORDER: Status[] = ["open", "sent", "waiting", "followup", "done"];
