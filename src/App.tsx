@@ -411,11 +411,12 @@ export default function App() {
     try {
       // ✅ workspaceId/ownerId NIET meer vanaf client bepalen (komt uit API key context)
       const payload = {
-        contactName: contactName.trim(),
-        companyName: companyName.trim(),
-        nextStep: nextStep.trim(),
-        dueAt: (dueAt || "").trim(),
-        status: "open" as Status,
+      contactName: contactName.trim(),
+      contactEmail: contactEmail.trim(),
+      companyName: companyName.trim(),
+      nextStep: nextStep.trim(),
+      dueAt: (dueAt || "").trim(),
+      status: "open" as Status,
       };
 
       if (!payload.contactName) throw new Error("Vul een contactpersoon in.");
