@@ -622,11 +622,12 @@ export default function App() {
   }
 
   function clearForm() {
-    setContactName("");
-    setCompanyName("");
-    setNextStep("");
-    setDueAt(todayYMD());
-  }
+  setContactName("");
+  setContactEmail("");
+  setCompanyName("");
+  setNextStep("");
+  setDueAt(todayYMD());
+}
 
   useEffect(() => {
   if (!apiKey) return;
