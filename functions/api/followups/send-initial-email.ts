@@ -90,6 +90,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     console.log("SUBJECT:", subject);
     console.log("BODY:", message);
 
+    await db.insert(emailEvents).values({
+  id: `em_${crypto.randomUUID()}`,
+  followupId: row.id,
+  workspaceId: auth.workspaceId,
+  ownerId: auth.ownerId,
+  kind: "initial",
+  sequenceStep: 1,
+  toEmail: row.contactEmail,
+  subject,
+  bodyText: message,
+  status: "sent",
+  provider: "simulated",
+});
+
     await db
       .update(followups)
       .set({
