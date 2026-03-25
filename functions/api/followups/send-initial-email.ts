@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { getApiKeyContext } from "../../_auth";
 import { getDb, type Env } from "../../_db";
 import { followups } from "../db/schema";
+import { emailEvents } from "../db/schema";
 
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
