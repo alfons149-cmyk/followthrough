@@ -1,10 +1,32 @@
-type Env = {
-  DB: D1Database;
+import type { PagesFunction } from "@cloudflare/workers-types";
+import { and, eq } from "drizzle-orm";
+import { getApiKeyContext } from "../../_auth";
+import { getDb, type Env } from "../../_db";
+import { followups } from "../db/schema";
+
+const cors = (origin?: string) => ({
+  "Access-Control-Allow-Origin": origin || "*",
+  "Access-Control-Allow-Methods": "POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization, x-api-key",
+  "Access-Control-Max-Age": "86400",
+  Vary: "Origin",
+});
+
+export const onRequestOptions: PagesFunction<Env> = async ({ request }) => {
+  const origin = request.headers.get("Origin") ?? "*";
+  return new Response(null, { status: 204, headers: cors(origin) });
 };
 
-import type { PagesFunction } from "@cloudflare/workers-types";
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  const origin = request.headers.get("Origin") ?? "*";
+
+  const auth = await getApiKeyContext(request, env);
+  if (!auth.ok) {
+    return new Response(auth.message, {
+      status: auth.status,
+      headers: cors(origin),
+    });
+  }
 
   try {
     const body = (await request.json().catch(() => null)) as { id?: string } | null;
@@ -13,56 +35,42 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (!id) {
       return new Response(JSON.stringify({ error: "Missing follow-up id" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...cors(origin), "Content-Type": "application/json" },
       });
     }
 
-    const row = await env.DB
-      .prepare(
-        `
-        SELECT
-          id,
-          contact_name,
-          company_name,
-          next_step,
-          status,
-          contact_email
-        FROM followups
-        WHERE id = ?
-        `
-      )
-      .bind(id)
-      .first<{
-        id: string;
-        contact_name: string;
-        company_name: string;
-        next_step: string;
-        status: string;
-        contact_email: string | null;
-      }>();
+    const db = getDb(env);
+
+    const row = await db.query.followups.findFirst({
+      where: and(
+        eq(followups.id, id),
+        eq(followups.workspaceId, auth.workspaceId),
+        eq(followups.ownerId, auth.ownerId)
+      ),
+    });
 
     if (!row) {
       return new Response(JSON.stringify({ error: "Follow-up not found" }), {
         status: 404,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...cors(origin), "Content-Type": "application/json" },
       });
     }
 
-    if (!row.contact_email) {
+    if (!row.contactEmail) {
       return new Response(JSON.stringify({ error: "Geen e-mailadres ingesteld" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...cors(origin), "Content-Type": "application/json" },
       });
     }
 
-    const subject = `Even opvolgen over ${row.company_name || "jullie aanvraag"}`;
+    const subject = `Even opvolgen over ${row.companyName || "jullie aanvraag"}`;
     const message = [
-      `Hoi ${row.contact_name || "daar"},`,
+      `Hoi ${row.contactName || "daar"},`,
       "",
-      `Leuk dat we contact hadden over ${row.company_name || "jullie organisatie"}.`,
+      `Leuk dat we contact hadden over ${row.companyName || "jullie organisatie"}.`,
       "",
       "Ik wilde even opvolgen rondom:",
-      `${row.next_step || "de volgende stap"}`,
+      `${row.nextStep || "de volgende stap"}`,
       "",
       "Laat gerust weten wat voor jullie handig is.",
       "",
@@ -71,41 +79,42 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     ].join("\n");
 
     console.log("=== EMAIL PREVIEW ===");
-    console.log("TO:", row.contact_email);
+    console.log("TO:", row.contactEmail);
     console.log("SUBJECT:", subject);
     console.log("BODY:", message);
 
-    await env.DB
-      .prepare(
-        `
-        UPDATE followups
-        SET
-          email_status = 'sent',
-          email_sequence_step = 1,
-          last_email_sent_at = datetime('now'),
-          next_email_at = datetime('now', '+3 days'),
-          last_email_subject = ?,
-          last_email_preview = ?,
-          status = 'sent'
-        WHERE id = ?
-        `
-      )
-      .bind(subject, message, id)
-      .run();
+    await db
+      .update(followups)
+      .set({
+        emailStatus: "sent",
+        emailSequenceStep: 1,
+        lastEmailSentAt: new Date().toISOString(),
+        nextEmailAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        lastEmailSubject: subject,
+        lastEmailPreview: message,
+        status: "sent",
+      })
+      .where(
+        and(
+          eq(followups.id, id),
+          eq(followups.workspaceId, auth.workspaceId),
+          eq(followups.ownerId, auth.ownerId)
+        )
+      );
 
     return new Response(
       JSON.stringify({
         ok: true,
         simulated: true,
         preview: {
-          to: row.contact_email,
+          to: row.contactEmail,
           subject,
           body: message,
         },
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...cors(origin), "Content-Type": "application/json" },
       }
     );
   } catch (error) {
@@ -118,7 +127,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...cors(origin), "Content-Type": "application/json" },
       }
     );
   }
