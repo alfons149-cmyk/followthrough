@@ -1,4 +1,4 @@
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 /* ================================
@@ -11,11 +11,25 @@ export const followups = sqliteTable("followups", {
   ownerId: text("owner_id").notNull(),
 
   contactName: text("contact_name"),
+  contactEmail: text("contact_email"),
   companyName: text("company_name"),
   nextStep: text("next_step"),
 
   dueAt: text("due_at"),
   status: text("status").notNull().default("open"),
+
+  emailEnabled: integer("email_enabled", { mode: "boolean" }).notNull().default(false),
+  emailStatus: text("email_status").notNull().default("off"),
+  emailSequenceStep: integer("email_sequence_step").notNull().default(0),
+
+  lastEmailSentAt: text("last_email_sent_at"),
+  nextEmailAt: text("next_email_at"),
+
+  lastEmailSubject: text("last_email_subject"),
+  lastEmailPreview: text("last_email_preview"),
+
+  replyDetectedAt: text("reply_detected_at"),
+  emailFailureReason: text("email_failure_reason"),
 
   createdAt: text("created_at")
     .notNull()
