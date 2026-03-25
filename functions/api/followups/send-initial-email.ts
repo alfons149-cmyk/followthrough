@@ -2,6 +2,7 @@ type Env = {
   DB: D1Database;
 };
 
+import type { PagesFunction } from "@cloudflare/workers-types";
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
