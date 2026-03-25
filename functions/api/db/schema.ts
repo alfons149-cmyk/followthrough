@@ -37,6 +37,33 @@ export const followups = sqliteTable("followups", {
 });
 
 /* ================================
+   EMAIL EVENTS
+================================ */
+export const emailEvents = sqliteTable("email_events", {
+  id: text("id").primaryKey(),
+
+  followupId: text("followup_id").notNull(),
+  workspaceId: text("workspace_id").notNull(),
+  ownerId: text("owner_id").notNull(),
+
+  kind: text("kind").notNull(),
+  sequenceStep: integer("sequence_step").notNull().default(0),
+
+  toEmail: text("to_email").notNull(),
+  subject: text("subject").notNull(),
+  bodyText: text("body_text"),
+
+  status: text("status").notNull().default("sent"),
+  provider: text("provider"),
+  providerMessageId: text("provider_message_id"),
+  errorMessage: text("error_message"),
+
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+/* ================================
    API KEYS
 ================================ */
 export const apiKeys = sqliteTable("api_keys", {
