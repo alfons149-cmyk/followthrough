@@ -50,6 +50,7 @@ const UI = {
   emailStatus: "Mailstatus",
   lastEmail: "Laatste mail",
   nextEmail: "Volgende mail",
+  sendFollowup: "Stuur follow-up",
 
   // actions / common
   refreshTitle: "Vernieuwen",
