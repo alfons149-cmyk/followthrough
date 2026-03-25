@@ -500,6 +500,14 @@ export default function App() {
   }>(`/api/followups/send-initial-email`, { id });
 }
 
+    async function sendFollowupEmail(id: string) {
+  return apiPost<{
+    ok: boolean;
+    simulated?: boolean;
+    preview?: { to: string; subject: string; body: string };
+  }>(`/api/followups/send-followup-email`, { id });
+}
+
   // Actions (Move/Done/Reopen/Snooze)
   function transitionPlan(f: Followup) {
     const ns = nextStatus(f.status);
