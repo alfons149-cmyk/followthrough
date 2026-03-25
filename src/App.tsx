@@ -1211,7 +1211,11 @@ export default function App() {
                       <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
                         {UI.reopen}
                       </button>
-                    )}
+                    )}{f.contactEmail ? (
+                      <button className="btn" onClick={() => onSendFollowupEmail(f)} disabled={loading}>
+                      {UI.sendFollowup}
+                       </button>
+                       ) : null}
                   </div>
 
                   <div style={{ marginTop: 8, opacity: 0.6, fontSize: 12 }}>
