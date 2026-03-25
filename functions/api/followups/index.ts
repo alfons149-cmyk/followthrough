@@ -6,8 +6,6 @@ import { getApiKeyContext } from "../../_auth";
 import { getDb, type Env } from "../../_db";
 import { followups } from "../db/schema";
 
-/* ---------------- CORS ---------------- */
-
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -15,8 +13,6 @@ const cors = (origin?: string) => ({
   "Access-Control-Max-Age": "86400",
   Vary: "Origin",
 });
-
-/* ---------------- Risk Logic ---------------- */
 
 type RiskLevel = "low" | "medium" | "high";
 
@@ -59,7 +55,6 @@ function riskForFollowup(f: any) {
   if (s) reasons.push(`Status: ${s}`);
 
   score = Math.max(0, Math.min(100, score));
-
   const level: RiskLevel = score >= 60 ? "high" : score >= 25 ? "medium" : "low";
 
   return {
@@ -70,17 +65,12 @@ function riskForFollowup(f: any) {
   };
 }
 
-/* ---------------- OPTIONS ---------------- */
-
-export const onRequestOptions: PagesFunction = async ({ request }) => {
+export const onRequest: PagesFunction<Env> = async ({ env, request }) => {
   const origin = request.headers.get("Origin") ?? "*";
-  return new Response(null, { status: 204, headers: cors(origin) });
-};
 
-/* ---------------- GET ---------------- */
-
-export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
-  const origin = request.headers.get("Origin") ?? "*";
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: cors(origin) });
+  }
 
   const auth = await getApiKeyContext(request, env);
   if (!auth.ok) {
@@ -90,54 +80,48 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, request }) => {
   try {
     const db = getDb(env);
 
-    const rows = await db
-      .select()
-      .from(followups)
-      .where(and(eq(followups.workspaceId, auth.workspaceId), eq(followups.ownerId, auth.ownerId)))
-      .orderBy(desc(followups.createdAt))
-      .limit(20);
+    if (request.method === "GET") {
+      const rows = await db
+        .select()
+        .from(followups)
+        .where(and(eq(followups.workspaceId, auth.workspaceId), eq(followups.ownerId, auth.ownerId)))
+        .orderBy(desc(followups.createdAt))
+        .limit(20);
 
-    const items = rows.map((r: any) => ({ ...r, risk: riskForFollowup(r) }));
+      const items = rows.map((r: any) => ({ ...r, risk: riskForFollowup(r) }));
 
-    return Response.json({ ok: true, items }, { headers: cors(origin) });
-  } catch (e: any) {
-    return Response.json(
-      { ok: false, error: e?.message || String(e), stack: e?.stack || null },
-      { status: 500, headers: cors(origin) }
-    );
-  }
-};
+      return Response.json({ ok: true, items }, { headers: cors(origin) });
+    }
 
-/* ---------------- POST ---------------- */
+    if (request.method === "POST") {
+      const body = (await request.json().catch(() => ({}))) as any;
 
-export const onRequestPost: PagesFunction<Env> = async ({ env, request }) => {
-  const origin = request.headers.get("Origin") ?? "*";
+      const id = `f_${crypto.randomUUID()}`;
+      const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-  const auth = await getApiKeyContext(request, env);
-  if (!auth.ok) {
-    return new Response(auth.message, { status: auth.status, headers: cors(origin) });
-  }
+      await db.insert(followups).values({
+        id,
+        workspaceId: auth.workspaceId,
+        ownerId: auth.ownerId,
+        contactName: body.contactName ?? "",
+        contactEmail: body.contactEmail ?? "",
+        companyName: body.companyName ?? "",
+        nextStep: body.nextStep ?? "",
+        dueAt: body.dueAt ?? "",
+        status: body.status ?? "open",
+        createdAt,
+      });
 
-  try {
-    const db = getDb(env);
-    const body = (await request.json().catch(() => ({}))) as any;
+      return Response.json({ ok: true, id }, { headers: cors(origin) });
+    }
 
-    const id = `f_${crypto.randomUUID()}`;
-    const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
-
-    await db.insert(followups).values({
-      id,
-      workspaceId: auth.workspaceId,
-      ownerId: auth.ownerId,
-      contactName: body.contactName ?? "",
-      companyName: body.companyName ?? "",
-      nextStep: body.nextStep ?? "",
-      dueAt: body.dueAt ?? "",
-      status: body.status ?? "open",
-      createdAt,
+    return new Response("Method Not Allowed", {
+      status: 405,
+      headers: {
+        ...cors(origin),
+        Allow: "GET,POST,OPTIONS",
+      },
     });
-
-    return Response.json({ ok: true, id }, { headers: cors(origin) });
   } catch (e: any) {
     return Response.json(
       { ok: false, error: e?.message || String(e), stack: e?.stack || null },
