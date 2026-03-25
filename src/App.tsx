@@ -602,6 +602,25 @@ export default function App() {
     }
   }
 
+    async function onSendFollowupEmail(f: Followup) {
+  setLoading(true);
+  setErr(null);
+
+  try {
+    if (!f.contactEmail?.trim()) {
+      throw new Error("Geen e-mailadres ingesteld.");
+    }
+
+    const res = await sendFollowupEmail(f.id);
+    showToast(res?.simulated ? "Follow-up gesimuleerd ✉️" : "Follow-up verstuurd ✉️");
+    await refreshAll();
+  } catch (e: unknown) {
+    setErr(errorMessage(e, "Versturen mislukt"));
+  } finally {
+    setLoading(false);
+  }
+}
+
   function startEditDue(f: Followup) {
     setEditNextId(null);
     setEditDueId(f.id);
