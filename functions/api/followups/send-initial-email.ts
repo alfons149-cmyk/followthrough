@@ -42,18 +42,18 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const db = getDb(env);
 
     const rows = await db
-  .select()
-  .from(followups)
-  .where(
-    and(
-      eq(followups.id, id),
-      eq(followups.workspaceId, auth.workspaceId),
-      eq(followups.ownerId, auth.ownerId)
-    )
-  )
-  .limit(1);
+      .select()
+      .from(followups)
+      .where(
+        and(
+          eq(followups.id, id),
+          eq(followups.workspaceId, auth.workspaceId),
+          eq(followups.ownerId, auth.ownerId)
+        )
+      )
+      .limit(1);
 
-const row = rows[0];
+    const row = rows[0];
 
     if (!row) {
       return new Response(JSON.stringify({ error: "Follow-up not found" }), {
