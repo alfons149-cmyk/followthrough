@@ -100,17 +100,20 @@ export const onRequest: PagesFunction<Env> = async ({ env, request }) => {
       const createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
 
       await db.insert(followups).values({
-        id,
-        workspaceId: auth.workspaceId,
-        ownerId: auth.ownerId,
-        contactName: body.contactName ?? "",
-        contactEmail: body.contactEmail ?? "",
-        companyName: body.companyName ?? "",
-        nextStep: body.nextStep ?? "",
-        dueAt: body.dueAt ?? "",
-        status: body.status ?? "open",
-        createdAt,
-      });
+  id,
+  workspaceId: auth.workspaceId,
+  ownerId: auth.ownerId,
+  contactName: body.contactName ?? "",
+  contactEmail: body.contactEmail ?? "",
+  companyName: body.companyName ?? "",
+  nextStep: body.nextStep ?? "",
+  dueAt: body.dueAt ?? "",
+  status: body.status ?? "open",
+
+  emailEnabled: body.emailEnabled ?? false, // 👈 HIER
+
+  createdAt,
+});
 
       return Response.json({ ok: true, id }, { headers: cors(origin) });
     }
