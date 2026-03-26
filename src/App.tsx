@@ -429,14 +429,16 @@ export default function App() {
   setErr(null);
 
   try {
-    const payload = {
-      contactName: contactName.trim(),
-      contactEmail: contactEmail.trim(),
-      companyName: companyName.trim(),
-      nextStep: nextStep.trim(),
-      dueAt: (dueAt || "").trim(),
-      status: "open" as Status,
-    };
+  const payload = {
+  contactName: contactName.trim(),
+  contactEmail: contactEmail.trim(),
+  companyName: companyName.trim(),
+  nextStep: nextStep.trim(),
+  dueAt: (dueAt || "").trim(),
+  status: "open" as Status,
+
+  emailEnabled: !!contactEmail.trim(), // 👈 TOEVOEGEN
+};
 
     if (!payload.contactName) throw new Error("Vul een contactpersoon in.");
     if (!payload.nextStep) throw new Error("Vul een volgende stap in.");
