@@ -529,3 +529,14 @@ code{
     width: auto;
   }
 }
+
+.btnPrimary {
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+}
+
+.btnGhost {
+  opacity: 0.7;
+  font-size: 13px;
+}
