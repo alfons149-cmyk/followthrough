@@ -1138,6 +1138,16 @@ export default function App() {
           {due || "—"}
         </span>
 
+        <button
+          className="btn"
+          title={UI.editDueTitle}
+          disabled={loading}
+          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+          onClick={() => startEditDue(f)}
+        >
+          ✎
+        </button>
+
         {overdue ? (
           <span style={{ marginLeft: 6, color: "#ef4444", fontWeight: 600 }}>
             • Achterstallig
@@ -1147,21 +1157,6 @@ export default function App() {
     )}
   </span>
 </div>
-                            <button
-                              className="btn"
-                              title={UI.editDueTitle}
-                              disabled={loading}
-                              style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                              onClick={() => startEditDue(f)}
-                            >
-                              ✎
-                            </button>
-                          </>
-                        )}
-                      </span>
-
-                      {overdue ? <span className="chip chipOverdue">{UI.overdue}</span> : null}
-                    </div>
 
                     {f.risk ? (
                       <>
