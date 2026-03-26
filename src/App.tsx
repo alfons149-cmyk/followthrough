@@ -1052,8 +1052,16 @@ export default function App() {
 
       return (
         <div key={f.id} className={cardClass}>
-        <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
-        <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
+
+  {/* LINKS */}
+  <div className="cardContent">
+
+    <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
+    <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
+
+    <div style={{ marginTop: 6, opacity: 0.85 }}>
+      <b>{UI.email}:</b> {f.contactEmail || "—"}
+    </div>
 
         <div style={{ marginTop: 6, opacity: 0.85 }}>
         <b>{UI.email}:</b> {f.contactEmail || "—"}
