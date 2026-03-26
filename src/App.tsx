@@ -1149,10 +1149,10 @@ export default function App() {
         </button>
 
         {overdue ? (
-          <span style={{ marginLeft: 6, color: "#ef4444", fontWeight: 600 }}>
-            • Achterstallig
-          </span>
-        ) : null}
+        <span style={{ marginLeft: 8, color: "#dc2626", fontWeight: 600 }}>
+        • Achterstallig
+        </span>
+       ) : null}
       </>
     )}
   </span>
