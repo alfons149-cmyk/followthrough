@@ -513,3 +513,21 @@ code{
   display:flex;
   align-items:flex-end;
 }
+
+.card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cardContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 140px;
+}
