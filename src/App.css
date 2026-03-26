@@ -610,3 +610,38 @@ code{
     width: auto;
   }
 }
+
+.appTopbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.appTopbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.appMeta {
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+.appTopbarRight .btn,
+.appTopbarRight .iconBtn {
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.iconBtn {
+  min-width: 44px;
+  padding: 0;
+}
