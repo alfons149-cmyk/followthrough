@@ -1102,50 +1102,51 @@ export default function App() {
                     </div>
 
                     <div
-                      className="cardMeta"
-                      style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}
-                    >
-                      <span className="chip chipOpen">{statusLabel(f.status)}</span>
+  className="cardMeta"
+  style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}
+>
+  <span className="chip chipOpen">{statusLabel(f.status)}</span>
 
-                     <span className="chip chipDue">
-  {UI.due}:{" "}
-  {editDueId === f.id ? (
-    <input
-      className="input"
-      value={draftDue(f.id)}
-      autoFocus
-      disabled={loading}
-      onChange={(e) =>
-        setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
-      }
-      onBlur={() => saveEditDue(f.id)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") saveEditDue(f.id);
-        if (e.key === "Escape") cancelEditDue(f.id);
-      }}
-      style={{ width: 140 }}
-      placeholder={UI.placeholderDate}
-    />
-  ) : (
-    <>
-      <span
-        role="button"
-        tabIndex={0}
-        onClick={() => startEditDue(f)}
-        style={{ cursor: "pointer", fontWeight: 700 }}
-        title={UI.clickToEditDate}
-      >
-        {due || "—"}
-      </span>
-
-      {overdue && (
-        <span style={{ marginLeft: 6, color: "#ef4444", fontWeight: 600 }}>
-          • Achterstallig
+  <span className="chip chipDue">
+    {UI.due}:{" "}
+    {editDueId === f.id ? (
+      <input
+        className="input"
+        value={draftDue(f.id)}
+        autoFocus
+        disabled={loading}
+        onChange={(e) =>
+          setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
+        }
+        onBlur={() => saveEditDue(f.id)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") saveEditDue(f.id);
+          if (e.key === "Escape") cancelEditDue(f.id);
+        }}
+        style={{ width: 140 }}
+        placeholder={UI.placeholderDate}
+      />
+    ) : (
+      <>
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={() => startEditDue(f)}
+          style={{ cursor: "pointer", fontWeight: 700 }}
+          title={UI.clickToEditDate}
+        >
+          {due || "—"}
         </span>
-      )}
-    </>
-  )}
-</span>
+
+        {overdue ? (
+          <span style={{ marginLeft: 6, color: "#ef4444", fontWeight: 600 }}>
+            • Achterstallig
+          </span>
+        ) : null}
+      </>
+    )}
+  </span>
+</div>
                             <button
                               className="btn"
                               title={UI.editDueTitle}
