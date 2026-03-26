@@ -654,3 +654,8 @@ code{
   justify-content: center;
   box-sizing: border-box;
 }
+
+.appMeta {
+  font-size: 14px;
+  color: #64748b;
+}
