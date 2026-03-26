@@ -645,3 +645,12 @@ code{
   min-width: 44px;
   padding: 0;
 }
+
+.btn {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
