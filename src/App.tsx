@@ -1195,44 +1195,44 @@ export default function App() {
                   </div>
 
                   <div className="cardActions">
-                    <button className="btn btnPrimary" onClick={() => onMove(f)} disabled={loading}>
-                       {UI.move}
-                    </button>
+  <button className="btn btnPrimary" onClick={() => onMove(f)} disabled={loading}>
+    {UI.move}
+  </button>
 
-                    <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
-                      {UI.snooze1}
-                    </button>
+  <button className="btn btnSecondary" onClick={() => onSnooze(f, 1)} disabled={loading}>
+    {UI.snooze1}
+  </button>
 
-                    <button className="btn" onClick={() => onSnooze(f, 3)} disabled={loading}>
-                      {UI.snooze3}
-                    </button>
+  <button className="btn btnSecondary" onClick={() => onSnooze(f, 3)} disabled={loading}>
+    {UI.snooze3}
+  </button>
 
-                    <button className="btn" onClick={() => onSnooze(f, 7)} disabled={loading}>
-                      {UI.snooze7}
-                    </button>
+  <button className="btn btnSecondary" onClick={() => onSnooze(f, 7)} disabled={loading}>
+    {UI.snooze7}
+  </button>
 
-                    {f.contactEmail ? (
-                      <button className="btn" onClick={() => onSendInitialEmail(f)} disabled={loading}>
-                        {UI.sendInitial}
-                      </button>
-                    ) : null}
+  {f.contactEmail ? (
+    <button className="btn btnGhost" onClick={() => onSendInitialEmail(f)} disabled={loading}>
+      {UI.sendInitial}
+    </button>
+  ) : null}
 
-                    {f.contactEmail ? (
-                      <button className="btn" onClick={() => onSendFollowupEmail(f)} disabled={loading}>
-                        {UI.sendFollowup}
-                      </button>
-                    ) : null}
+  {f.contactEmail ? (
+    <button className="btn btnGhost" onClick={() => onSendFollowupEmail(f)} disabled={loading}>
+      {UI.sendFollowup}
+    </button>
+  ) : null}
 
-                    {f.status !== "done" ? (
-                      <button className="btn" onClick={() => onDone(f)} disabled={loading}>
-                        {UI.done}
-                      </button>
-                    ) : (
-                      <button className="btn" onClick={() => onReopen(f)} disabled={loading}>
-                        {UI.reopen}
-                      </button>
-                    )}
-                  </div>
+  {f.status !== "done" ? (
+    <button className="btn btnGhost" onClick={() => onDone(f)} disabled={loading}>
+      {UI.done}
+    </button>
+  ) : (
+    <button className="btn btnGhost" onClick={() => onReopen(f)} disabled={loading}>
+      {UI.reopen}
+    </button>
+  )}
+</div>
                 </div>
               );
             })}
