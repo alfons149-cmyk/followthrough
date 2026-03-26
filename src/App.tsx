@@ -1195,8 +1195,8 @@ export default function App() {
                   </div>
 
                   <div className="cardActions">
-                    <button className="btn" onClick={() => onMove(f)} disabled={loading}>
-                      {UI.move}
+                    <button className="btn btnPrimary" onClick={() => onMove(f)} disabled={loading}>
+                       {UI.move}
                     </button>
 
                     <button className="btn" onClick={() => onSnooze(f, 1)} disabled={loading}>
