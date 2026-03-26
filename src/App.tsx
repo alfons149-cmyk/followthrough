@@ -1211,10 +1211,6 @@ export default function App() {
                       {UI.snooze7}
                     </button>
 
-                    <button className="btn btnPrimary">
-                      Volgende fase
-                    </button>
-
                     {f.contactEmail ? (
                       <button className="btn" onClick={() => onSendInitialEmail(f)} disabled={loading}>
                         {UI.sendInitial}
