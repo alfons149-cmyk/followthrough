@@ -659,3 +659,13 @@ code{
   font-size: 14px;
   color: #64748b;
 }
+
+.kpiChip {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.input {
+  border-radius: 10px;
+}
