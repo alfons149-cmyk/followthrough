@@ -1065,6 +1065,10 @@ export default function App() {
                       <b>Auto-mail:</b> {f.emailEnabled ? "Aan" : "Uit"}
                     </div>
 
+                    <div style={{ marginTop: 6, fontSize: 13, opacity: 0.7 }}>
+                      <b>Auto-mail:</b> {f.emailEnabled ? "Aan" : "Uit"}
+                    </div>
+
                     <div style={{ marginTop: 10 }}>
                       <b>{UI.next}:</b>{" "}
                       {editNextId === f.id ? (
