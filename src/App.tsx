@@ -51,6 +51,8 @@ const UI = {
   lastEmail: "Laatste mail",
   nextEmail: "Volgende mail",
   sendFollowup: "Stuur follow-up",
+  enableAutoEmail: "Auto-mail aan",
+  disableAutoEmail: "Auto-mail uit",
 
   // actions / common
   refreshTitle: "Vernieuwen",
