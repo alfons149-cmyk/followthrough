@@ -749,3 +749,8 @@ code{
 .toggleTrack.on .toggleThumb {
   left: 21px;
 }
+
+.cardReady {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.15);
+}
