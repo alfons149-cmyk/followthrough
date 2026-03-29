@@ -1081,7 +1081,7 @@ export default function App() {
               const cardClass = overdue ? "card cardOverdue" : "card";
 
               return (
-               <div key={f.id} className={cardClass}>
+              <div key={f.id} className={cardClass}>
   {/* LINKS */}
   <div className="cardContent">
 
@@ -1089,43 +1089,55 @@ export default function App() {
     <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
     <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-   {/* Email */}
-<div style={{ marginTop: 6, opacity: 0.85 }}>
-  <b>{UI.email}:</b> {f.contactEmail || "—"}
-</div>
-
-{/* Auto-mail + toggle */}
-<div
-  style={{
-    marginTop: 4,
-    fontSize: 13,
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  }}
->
-  <span style={{ opacity: 0.6 }}>{UI.autoEmail}:</span>
-
-  <div
-    className={`toggle ${!f.contactEmail ? "disabled" : ""}`}
-    onClick={() => {
-      if (!f.contactEmail) return;
-      onToggleEmailEnabled(f);
-    }}
-    title={!f.contactEmail ? "Voeg eerst een e-mailadres toe" : ""}
-    role="button"
-    aria-disabled={!f.contactEmail}
-  >
-    <div className={`toggleTrack ${f.emailEnabled ? "on" : ""} ${!f.contactEmail ? "disabled" : ""}`}>
-      <div className="toggleThumb" />
+    {/* Email */}
+    <div style={{ marginTop: 6, opacity: 0.85 }}>
+      <b>{UI.email}:</b> {f.contactEmail || "—"}
     </div>
-  </div>
 
-  <span style={{ fontWeight: 600, opacity: !f.contactEmail ? 0.5 : 1 }}>
-    {!f.contactEmail ? "Niet beschikbaar" : f.emailEnabled ? "Aan" : "Uit"}
-  </span>
-</div>
+    {/* Auto-mail + toggle */}
+    <div
+      style={{
+        marginTop: 4,
+        fontSize: 13,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        flexWrap: "wrap",
+      }}
+    >
+      <span style={{ opacity: 0.6 }}>{UI.autoEmail}:</span>
+
+      <div
+        className={`toggle ${!f.contactEmail ? "disabled" : ""}`}
+        onClick={() => {
+          if (!f.contactEmail) return;
+          onToggleEmailEnabled(f);
+        }}
+        title={!f.contactEmail ? "Voeg eerst een e-mailadres toe" : ""}
+      >
+        <div className={`toggleTrack ${f.emailEnabled ? "on" : ""} ${!f.contactEmail ? "disabled" : ""}`}>
+          <div className="toggleThumb" />
+        </div>
+      </div>
+
+      <span style={{ fontWeight: 600, opacity: !f.contactEmail ? 0.5 : 1 }}>
+        {!f.contactEmail ? "Niet beschikbaar" : f.emailEnabled ? "Aan" : "Uit"}
+      </span>
+    </div>
+
+    {/* 🔥 Slimme detectie */}
+    {isReadyForFollowup(f.nextEmailAt) ? (
+      <div
+        style={{
+          marginTop: 6,
+          color: "#b45309",
+          fontWeight: 600,
+          fontSize: 13,
+        }}
+      >
+        ⚠️ Klaar voor opvolging
+      </div>
+    ) : null}
 
     {/* Next step */}
     <div style={{ marginTop: 10 }}>
@@ -1202,10 +1214,11 @@ export default function App() {
               onClick={() => startEditDue(f)}
               style={{ cursor: "pointer", fontWeight: 700 }}
             >
-              {due || "—"}
+              {(f.dueAt || "").slice(0, 10) || "—"}
             </span>
 
-            {overdue ? (
+            {f.status !== "done" &&
+            (f.dueAt || "").slice(0, 10) < todayYMD() ? (
               <span style={{ marginLeft: 8, color: "#dc2626", fontWeight: 600 }}>
                 • Achterstallig
               </span>
@@ -1214,24 +1227,6 @@ export default function App() {
         )}
       </span>
     </div>
-
-    {/* Risk */}
-    {f.risk ? (
-      <>
-        <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
-          {UI.risk}: {riskLabel(f.risk.level)} ({f.risk.score})
-        </span>
-
-        <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12 }}>
-          <div>
-            <b>{UI.why}:</b> {(f.risk.reasons || []).join(" · ")}
-          </div>
-          <div>
-            <b>{UI.advice}:</b> {suggestionNL(f.risk)}
-          </div>
-        </div>
-      </>
-    ) : null}
 
     {/* Email info */}
     <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12 }}>
@@ -1245,6 +1240,7 @@ export default function App() {
       <div>
         <b>{UI.nextEmail}:</b>{" "}
         {f.nextEmailAt ? String(f.nextEmailAt).slice(0, 16) : "—"}
+        {isReadyForFollowup(f.nextEmailAt) ? " • klaar" : ""}
       </div>
     </div>
 
@@ -1276,8 +1272,13 @@ export default function App() {
     ) : null}
 
     {f.contactEmail ? (
-      <button className="btn btnGhost" onClick={() => onSendFollowupEmail(f)} disabled={loading}>
-        {UI.sendFollowup}
+      <button
+        className={`btn ${isReadyForFollowup(f.nextEmailAt) ? "btnPrimary" : "btnGhost"}`}
+        onClick={() => onSendFollowupEmail(f)}
+        disabled={loading || !f.emailEnabled}
+        title={!f.emailEnabled ? "Zet Auto-mail eerst aan" : ""}
+      >
+        {isReadyForFollowup(f.nextEmailAt) ? "Nu opvolgen" : UI.sendFollowup}
       </button>
     ) : null}
 
