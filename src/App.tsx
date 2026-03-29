@@ -1117,9 +1117,9 @@ export default function App() {
   </div>
 
   <span style={{ fontWeight: 600 }}>
-    {f.emailEnabled ? "Aan" : "Uit"}
+  {f.emailEnabled ? "Actief" : "Uit"}
   </span>
-</div>
+  </div>
 
     {/* Next step */}
     <div style={{ marginTop: 10 }}>
