@@ -764,6 +764,10 @@ export default function App() {
         <div style={{ marginTop: 14, fontSize: 12, opacity: 0.8 }}>
           Tip: op mobiel kun je een link delen als: <code>?key=vd_...</code>
         </div>
+
+        <div style={{ marginTop: 4 }}>
+         <b>{UI.autoEmail}:</b> {f.emailEnabled ? "Aan" : "Uit"}
+        </div>
       </section>
 
       <section className="panel" style={{ marginTop: 12 }}>
