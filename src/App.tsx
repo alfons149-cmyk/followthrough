@@ -46,20 +46,17 @@ const UI = {
   subtitle: "Betrouwbaarheid · Draden die niet wegglippen",
 
   email: "E-mail",
-  autoEmail: "Auto-mail",   // 👈 ALLEEN TEKST!
-
+  autoEmail: "Auto-mail",
   placeholderEmail: "Bijv. jan@bedrijf.nl",
 
   sendInitial: "Stuur eerste mail",
   sendFollowup: "Stuur follow-up",
-
   enableAutoEmail: "Auto-mail aan",
   disableAutoEmail: "Auto-mail uit",
 
   emailStatus: "Mailstatus",
   lastEmail: "Laatste mail",
   nextEmail: "Volgende mail",
-};
 
   // actions / common
   refreshTitle: "Vernieuwen",
