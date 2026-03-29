@@ -1089,43 +1089,37 @@ export default function App() {
     <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
     <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-    {/* Email */}
-    <div style={{ marginTop: 6, opacity: 0.85 }}>
-      <b>{UI.email}:</b> {f.contactEmail || "—"}
-    </div>
+   {/* Email */}
+<div style={{ marginTop: 6, opacity: 0.85 }}>
+  <b>{UI.email}:</b> {f.contactEmail || "—"}
+</div>
 
-    <div style={{ marginTop: 4 }}>
-      <b>{UI.autoEmail}:</b> {f.emailEnabled ? "Aan" : "Uit"}
-    </div>
+{/* Auto-mail + toggle */}
+<div
+  style={{
+    marginTop: 4,
+    fontSize: 13,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  }}
+>
+  <span style={{ opacity: 0.6 }}>{UI.autoEmail}:</span>
 
-    {/* Auto-mail + toggle */}
-    <div
-      style={{
-        marginTop: 4,
-        fontSize: 13,
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        flexWrap: "wrap",
-      }}
-    >
-      <span style={{ opacity: 0.6 }}>Auto-mail:</span>
-      <span style={{ fontWeight: 600 }}>
-        {f.emailEnabled ? "Aan" : "Uit"}
-      </span>
-
-      {f.contactEmail ? (
-        <div
-         className="toggle"
-         onClick={() => onToggleEmailEnabled(f)}
-         role="button"
-     >
-        <div className={`toggleTrack ${f.emailEnabled ? "on" : ""}`}>
-        <div className="toggleThumb" />
-       </div>
-      </div>
-      ) : null}
+  <div
+    className="toggle"
+    onClick={() => onToggleEmailEnabled(f)}
+  >
+    <div className={`toggleTrack ${f.emailEnabled ? "on" : ""}`}>
+      <div className="toggleThumb" />
     </div>
+  </div>
+
+  <span style={{ fontWeight: 600 }}>
+    {f.emailEnabled ? "Aan" : "Uit"}
+  </span>
+</div>
 
     {/* Next step */}
     <div style={{ marginTop: 10 }}>
