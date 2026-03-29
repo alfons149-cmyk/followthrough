@@ -1113,7 +1113,7 @@ export default function App() {
           disabled={loading}
           style={{ padding: "4px 8px", fontSize: 12 }}
         >
-          {f.emailEnabled ? "Uitzetten" : "Aanzetten"}
+          {f.emailEnabled ? UI.disableAutoEmail : UI.enableAutoEmail}
         </button>
       ) : null}
     </div>
