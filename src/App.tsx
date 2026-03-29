@@ -1108,18 +1108,24 @@ export default function App() {
   <span style={{ opacity: 0.6 }}>{UI.autoEmail}:</span>
 
   <div
-    className="toggle"
-    onClick={() => onToggleEmailEnabled(f)}
+    className={`toggle ${!f.contactEmail ? "disabled" : ""}`}
+    onClick={() => {
+      if (!f.contactEmail) return;
+      onToggleEmailEnabled(f);
+    }}
+    title={!f.contactEmail ? "Voeg eerst een e-mailadres toe" : ""}
+    role="button"
+    aria-disabled={!f.contactEmail}
   >
-    <div className={`toggleTrack ${f.emailEnabled ? "on" : ""}`}>
+    <div className={`toggleTrack ${f.emailEnabled ? "on" : ""} ${!f.contactEmail ? "disabled" : ""}`}>
       <div className="toggleThumb" />
     </div>
   </div>
 
-  <span style={{ fontWeight: 600 }}>
-  {f.emailEnabled ? "Actief" : "Uit"}
+  <span style={{ fontWeight: 600, opacity: !f.contactEmail ? 0.5 : 1 }}>
+    {!f.contactEmail ? "Niet beschikbaar" : f.emailEnabled ? "Aan" : "Uit"}
   </span>
-  </div>
+</div>
 
     {/* Next step */}
     <div style={{ marginTop: 10 }}>
