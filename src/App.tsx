@@ -1085,7 +1085,11 @@ export default function App() {
               const today = todayYMD();
               const due = (f.dueAt || "").slice(0, 10);
               const overdue = f.status !== "done" && due && due < today;
-              const cardClass = overdue ? "card cardOverdue" : "card";
+             const cardClass = overdue
+             ? "card cardOverdue"
+             : readyForFollowup
+             ? "card cardReady"
+             : "card";
 
               return (
               <div key={f.id} className={cardClass}>
