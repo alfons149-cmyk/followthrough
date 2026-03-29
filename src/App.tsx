@@ -1115,14 +1115,15 @@ export default function App() {
       </span>
 
       {f.contactEmail ? (
-        <button
-          className="btn btnGhost"
-          onClick={() => onToggleEmailEnabled(f)}
-          disabled={loading}
-          style={{ padding: "4px 8px", fontSize: 12 }}
-        >
-          {f.emailEnabled ? UI.disableAutoEmail : UI.enableAutoEmail}
-        </button>
+        <div
+         className="toggle"
+         onClick={() => onToggleEmailEnabled(f)}
+         role="button"
+     >
+        <div className={`toggleTrack ${f.emailEnabled ? "on" : ""}`}>
+        <div className="toggleThumb" />
+       </div>
+      </div>
       ) : null}
     </div>
 
