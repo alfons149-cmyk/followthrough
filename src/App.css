@@ -669,3 +669,40 @@ code{
 .input {
   border-radius: 10px;
 }
+
+/* TOGGLE SWITCH */
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.toggleTrack {
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: #d1d5db;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.toggleTrack.on {
+  background: #10b981; /* groen */
+}
+
+.toggleThumb {
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggleTrack.on .toggleThumb {
+  left: 21px;
+}
