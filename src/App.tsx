@@ -273,6 +273,13 @@ const apiPost = <T,>(path: string, json?: unknown) =>
 const apiPatch = <T,>(path: string, json?: unknown) =>
   apiFetch<T>(path, { method: "PATCH", json });
 
+  function isReadyForFollowup(nextEmailAt?: string | null) {
+  if (!nextEmailAt) return false;
+  const t = Date.parse(nextEmailAt);
+  if (Number.isNaN(t)) return false;
+  return t <= Date.now();
+}
+
 export default function App() {
   
   const [loading, setLoading] = useState(false);
