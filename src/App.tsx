@@ -503,6 +503,28 @@ export default function App() {
   }>(`/api/followups/send-initial-email`, { id });
 }
 
+    async function patchEmailSettings(id: string, emailEnabled: boolean) {
+  return apiFetch<{ ok: boolean }>(`/api/followups/email-settings`, {
+    method: "PATCH",
+    json: { id, emailEnabled },
+  });
+}
+
+    async function onToggleEmailEnabled(f: Followup) {
+  setLoading(true);
+  setErr(null);
+
+  try {
+    await patchEmailSettings(f.id, !f.emailEnabled);
+    showToast(!f.emailEnabled ? "Auto-mail ingeschakeld" : "Auto-mail uitgeschakeld");
+    await refreshAll();
+  } catch (e: unknown) {
+    setErr(errorMessage(e, "Bijwerken mislukt"));
+  } finally {
+    setLoading(false);
+  }
+}
+
     async function sendFollowupEmail(id: string) {
   return apiPost<{
     ok: boolean;
