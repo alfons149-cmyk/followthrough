@@ -1053,192 +1053,213 @@ export default function App() {
               const cardClass = overdue ? "card cardOverdue" : "card";
 
               return (
-                <div key={f.id} className={cardClass}>
-                  <div className="cardContent">
-                    <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
-                    <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
+               <div key={f.id} className={cardClass}>
+  {/* LINKS */}
+  <div className="cardContent">
 
-                    <div style={{ marginTop: 4, fontSize: 13 }}>
-                     <span style={{ opacity: 0.6 }}>Auto-mail:</span>{" "}
-                     <span style={{ fontWeight: 600 }}>
-                      {f.emailEnabled ? "Aan" : "Uit"}
-                      </span>
-                    </div>
+    {/* Naam + bedrijf */}
+    <div style={{ fontWeight: 700 }}>{f.contactName || "—"}</div>
+    <div style={{ opacity: 0.8 }}>{f.companyName || "—"}</div>
 
-                    <div style={{ marginTop: 10 }}>
-                      <b>{UI.next}:</b>{" "}
-                      {editNextId === f.id ? (
-                        <input
-                          className="input"
-                          value={draftNext(f.id)}
-                          autoFocus
-                          disabled={loading}
-                          onChange={(e) =>
-                            setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
-                          }
-                          onBlur={() => saveEditNext(f.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") saveEditNext(f.id);
-                            if (e.key === "Escape") cancelEditNext(f.id);
-                          }}
-                          style={{ maxWidth: 520 }}
-                        />
-                      ) : (
-                        <>
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => startEditNext(f)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            {f.nextStep || "—"}
-                          </span>
-                          <button
-                            className="btn"
-                            title={UI.editNextTitle}
-                            disabled={loading}
-                            style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-                            onClick={() => startEditNext(f)}
-                          >
-                            ✎
-                          </button>
-                        </>
-                      )}
-                    </div>
+    {/* Email */}
+    <div style={{ marginTop: 6, opacity: 0.85 }}>
+      <b>{UI.email}:</b> {f.contactEmail || "—"}
+    </div>
 
-                    <div
-  className="cardMeta"
-  style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}
->
-  <span className="chip chipOpen">{statusLabel(f.status)}</span>
+    {/* Auto-mail + toggle */}
+    <div
+      style={{
+        marginTop: 4,
+        fontSize: 13,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        flexWrap: "wrap",
+      }}
+    >
+      <span style={{ opacity: 0.6 }}>Auto-mail:</span>
+      <span style={{ fontWeight: 600 }}>
+        {f.emailEnabled ? "Aan" : "Uit"}
+      </span>
 
-  <span className="chip chipDue">
-    {UI.due}:{" "}
-    {editDueId === f.id ? (
-      <input
-        className="input"
-        value={draftDue(f.id)}
-        autoFocus
-        disabled={loading}
-        onChange={(e) =>
-          setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
-        }
-        onBlur={() => saveEditDue(f.id)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") saveEditDue(f.id);
-          if (e.key === "Escape") cancelEditDue(f.id);
-        }}
-        style={{ width: 140 }}
-        placeholder={UI.placeholderDate}
-      />
-    ) : (
-      <>
-        <span
-          role="button"
-          tabIndex={0}
-          onClick={() => startEditDue(f)}
-          style={{ cursor: "pointer", fontWeight: 700 }}
-          title={UI.clickToEditDate}
-        >
-          {due || "—"}
-        </span>
-
+      {f.contactEmail ? (
         <button
-          className="btn"
-          title={UI.editDueTitle}
+          className="btn btnGhost"
+          onClick={() => onToggleEmailEnabled(f)}
           disabled={loading}
-          style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
-          onClick={() => startEditDue(f)}
+          style={{ padding: "4px 8px", fontSize: 12 }}
         >
-          ✎
+          {f.emailEnabled ? "Uitzetten" : "Aanzetten"}
         </button>
+      ) : null}
+    </div>
 
-        {overdue ? (
-        <span style={{ marginLeft: 8, color: "#dc2626", fontWeight: 600 }}>
-        • Achterstallig
+    {/* Next step */}
+    <div style={{ marginTop: 10 }}>
+      <b>{UI.next}:</b>{" "}
+      {editNextId === f.id ? (
+        <input
+          className="input"
+          value={draftNext(f.id)}
+          autoFocus
+          disabled={loading}
+          onChange={(e) =>
+            setDraftNextById((prev) => ({ ...prev, [f.id]: e.target.value }))
+          }
+          onBlur={() => saveEditNext(f.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") saveEditNext(f.id);
+            if (e.key === "Escape") cancelEditNext(f.id);
+          }}
+          style={{ maxWidth: 520 }}
+        />
+      ) : (
+        <>
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={() => startEditNext(f)}
+            style={{ cursor: "pointer" }}
+          >
+            {f.nextStep || "—"}
+          </span>
+          <button
+            className="btn"
+            disabled={loading}
+            style={{ marginLeft: 6, padding: "2px 6px", fontSize: 12 }}
+            onClick={() => startEditNext(f)}
+          >
+            ✎
+          </button>
+        </>
+      )}
+    </div>
+
+    {/* Status + datum */}
+    <div
+      className="cardMeta"
+      style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}
+    >
+      <span className="chip chipOpen">{statusLabel(f.status)}</span>
+
+      <span className="chip chipDue">
+        {UI.due}:{" "}
+        {editDueId === f.id ? (
+          <input
+            className="input"
+            value={draftDue(f.id)}
+            autoFocus
+            disabled={loading}
+            onChange={(e) =>
+              setDraftDueById((prev) => ({ ...prev, [f.id]: e.target.value }))
+            }
+            onBlur={() => saveEditDue(f.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveEditDue(f.id);
+              if (e.key === "Escape") cancelEditDue(f.id);
+            }}
+            style={{ width: 140 }}
+            placeholder={UI.placeholderDate}
+          />
+        ) : (
+          <>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={() => startEditDue(f)}
+              style={{ cursor: "pointer", fontWeight: 700 }}
+            >
+              {due || "—"}
+            </span>
+
+            {overdue ? (
+              <span style={{ marginLeft: 8, color: "#dc2626", fontWeight: 600 }}>
+                • Achterstallig
+              </span>
+            ) : null}
+          </>
+        )}
+      </span>
+    </div>
+
+    {/* Risk */}
+    {f.risk ? (
+      <>
+        <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
+          {UI.risk}: {riskLabel(f.risk.level)} ({f.risk.score})
         </span>
-       ) : null}
+
+        <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12 }}>
+          <div>
+            <b>{UI.why}:</b> {(f.risk.reasons || []).join(" · ")}
+          </div>
+          <div>
+            <b>{UI.advice}:</b> {suggestionNL(f.risk)}
+          </div>
+        </div>
       </>
+    ) : null}
+
+    {/* Email info */}
+    <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12 }}>
+      <div>
+        <b>{UI.emailStatus}:</b> {f.emailStatus || "off"}
+      </div>
+      <div>
+        <b>{UI.lastEmail}:</b>{" "}
+        {f.lastEmailSentAt ? String(f.lastEmailSentAt).slice(0, 16) : "—"}
+      </div>
+      <div>
+        <b>{UI.nextEmail}:</b>{" "}
+        {f.nextEmailAt ? String(f.nextEmailAt).slice(0, 16) : "—"}
+      </div>
+    </div>
+
+  </div>
+
+  {/* RECHTS */}
+  <div className="cardActions">
+
+    <button className="btn btnPrimary" onClick={() => onMove(f)} disabled={loading}>
+      {UI.move}
+    </button>
+
+    <button className="btn btnSecondary" onClick={() => onSnooze(f, 1)} disabled={loading}>
+      {UI.snooze1}
+    </button>
+
+    <button className="btn btnSecondary" onClick={() => onSnooze(f, 3)} disabled={loading}>
+      {UI.snooze3}
+    </button>
+
+    <button className="btn btnSecondary" onClick={() => onSnooze(f, 7)} disabled={loading}>
+      {UI.snooze7}
+    </button>
+
+    {f.contactEmail ? (
+      <button className="btn btnGhost" onClick={() => onSendInitialEmail(f)} disabled={loading}>
+        {UI.sendInitial}
+      </button>
+    ) : null}
+
+    {f.contactEmail ? (
+      <button className="btn btnGhost" onClick={() => onSendFollowupEmail(f)} disabled={loading}>
+        {UI.sendFollowup}
+      </button>
+    ) : null}
+
+    {f.status !== "done" ? (
+      <button className="btn btnGhost" onClick={() => onDone(f)} disabled={loading}>
+        {UI.done}
+      </button>
+    ) : (
+      <button className="btn btnGhost" onClick={() => onReopen(f)} disabled={loading}>
+        {UI.reopen}
+      </button>
     )}
-  </span>
+
+  </div>
 </div>
-
-                    {f.risk ? (
-                      <>
-                        <span className={`chip chipRisk chipRisk-${f.risk.level}`}>
-                          {UI.risk}: {riskLabel(f.risk.level)} ({f.risk.score})
-                        </span>
-
-                        <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12 }}>
-                          <div>
-                            <b>{UI.why}:</b> {(f.risk.reasons || []).join(" · ")}
-                          </div>
-                          <div>
-                            <b>{UI.advice}:</b> {suggestionNL(f.risk)}
-                          </div>
-                        </div>
-                      </>
-                    ) : null}
-
-                    <div style={{ marginTop: 8, opacity: 0.85, fontSize: 12, lineHeight: 1.5 }}>
-                      <div>
-                        <b>{UI.emailStatus}:</b> {f.emailStatus || "off"}
-                      </div>
-                      <div>
-                        <b>{UI.lastEmail}:</b>{" "}
-                        {f.lastEmailSentAt ? String(f.lastEmailSentAt).slice(0, 16) : "—"}
-                      </div>
-                      <div>
-                        <b>{UI.nextEmail}:</b>{" "}
-                        {f.nextEmailAt ? String(f.nextEmailAt).slice(0, 16) : "—"}
-                      </div>
-                    </div>
-
-                    <div style={{ marginTop: 8, opacity: 0.6, fontSize: 12 }}>
-                      Id: <code>{f.id}</code>
-                    </div>
-                  </div>
-
-                  <div className="cardActions">
-  <button className="btn btnPrimary" onClick={() => onMove(f)} disabled={loading}>
-    {UI.move}
-  </button>
-
-  <button className="btn btnSecondary" onClick={() => onSnooze(f, 1)} disabled={loading}>
-    {UI.snooze1}
-  </button>
-
-  <button className="btn btnSecondary" onClick={() => onSnooze(f, 3)} disabled={loading}>
-    {UI.snooze3}
-  </button>
-
-  <button className="btn btnSecondary" onClick={() => onSnooze(f, 7)} disabled={loading}>
-    {UI.snooze7}
-  </button>
-
-  {f.contactEmail ? (
-    <button className="btn btnGhost" onClick={() => onSendInitialEmail(f)} disabled={loading}>
-      {UI.sendInitial}
-    </button>
-  ) : null}
-
-  {f.contactEmail ? (
-    <button className="btn btnGhost" onClick={() => onSendFollowupEmail(f)} disabled={loading}>
-      {UI.sendFollowup}
-    </button>
-  ) : null}
-
-  {f.status !== "done" ? (
-    <button className="btn btnGhost" onClick={() => onDone(f)} disabled={loading}>
-      {UI.done}
-    </button>
-  ) : (
-    <button className="btn btnGhost" onClick={() => onReopen(f)} disabled={loading}>
-      {UI.reopen}
-    </button>
-  )}
-</div>
-                </div>
               );
             })}
           </div>
