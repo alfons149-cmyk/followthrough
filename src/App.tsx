@@ -44,16 +44,22 @@ const API_KEY_STORAGE = "VD_API_KEY";
 const UI = {
   appName: "VolgDraad",
   subtitle: "Betrouwbaarheid · Draden die niet wegglippen",
+
   email: "E-mail",
-  <b>{UI.autoEmail}:</b> {f.emailEnabled ? "Aan" : "Uit"}
+  autoEmail: "Auto-mail",   // 👈 ALLEEN TEKST!
+
   placeholderEmail: "Bijv. jan@bedrijf.nl",
+
   sendInitial: "Stuur eerste mail",
+  sendFollowup: "Stuur follow-up",
+
+  enableAutoEmail: "Auto-mail aan",
+  disableAutoEmail: "Auto-mail uit",
+
   emailStatus: "Mailstatus",
   lastEmail: "Laatste mail",
   nextEmail: "Volgende mail",
-  sendFollowup: "Stuur follow-up",
-  enableAutoEmail: "Auto-mail aan",
-  disableAutoEmail: "Auto-mail uit",
+};
 
   // actions / common
   refreshTitle: "Vernieuwen",
