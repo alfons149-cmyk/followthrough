@@ -45,6 +45,7 @@ const UI = {
   appName: "VolgDraad",
   subtitle: "Betrouwbaarheid · Draden die niet wegglippen",
   email: "E-mail",
+  <b>{UI.autoEmail}:</b> {f.emailEnabled ? "Aan" : "Uit"}
   placeholderEmail: "Bijv. jan@bedrijf.nl",
   sendInitial: "Stuur eerste mail",
   emailStatus: "Mailstatus",
