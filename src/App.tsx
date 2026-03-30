@@ -732,6 +732,17 @@ export default function App() {
           />
         </div>
 
+        <div style={{ marginTop: 10 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input
+        type="checkbox"
+        checked={emailEnabled}
+        onChange={(e) => setEmailEnabled(e.target.checked)}
+        />
+        Auto-mail inschakelen
+        </label>
+        </div>
+
         <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button className="btn btnPrimary" onClick={() => saveApiKey(keyInput)}>
             Opslaan
