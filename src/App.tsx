@@ -869,6 +869,7 @@ export default function App() {
         placeholder={UI.placeholderContact}
       />
     </div>
+  </div>
 
     {/* E-mail (NIEUW) */}
     <div className="field">
