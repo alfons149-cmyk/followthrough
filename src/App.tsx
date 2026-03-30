@@ -188,23 +188,6 @@ function statusLabel(s: Status) {
   return UI.statusDone;
 }
 
-function riskLabel(level?: "low" | "medium" | "high") {
-  if (level === "high") return "Hoog";
-  if (level === "medium") return "Middel";
-  if (level === "low") return "Laag";
-  return "—";
-}
-
-function suggestionNL(risk?: { level?: "high" | "medium" | "low" }) {
-  const level = risk?.level;
-
-  if (level === "high") return "Vandaag opvolgen";
-  if (level === "medium") return "Warm houden";
-  if (level === "low") return "Geen directe actie nodig";
-
-  return "—";
-}
-
 function nextStatus(s: Status): Status {
   const i = STATUS_ORDER.indexOf(s);
   return STATUS_ORDER[Math.min(i + 1, STATUS_ORDER.length - 1)];
