@@ -1193,6 +1193,19 @@ export default function App() {
       )}
     </div>
 
+    {readyForFollowup ? (
+  <div
+    style={{
+      marginTop: 6,
+      color: "#b45309",
+      fontWeight: 600,
+      fontSize: 13,
+    }}
+  >
+    ⚠️ Klaar voor opvolging
+  </div>
+) : null}
+
     {/* Status + datum */}
     <div
       className="cardMeta"
