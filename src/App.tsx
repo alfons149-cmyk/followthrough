@@ -111,6 +111,8 @@ const UI = {
   due: "Datum",
   why: "Waarom",
   advice: "Advies",
+  readyForFollowup: "Klaar voor opvolging",
+  followupNow: "Nu opvolgen",
 
   // buttons per card
   move: "Volgende fase",
