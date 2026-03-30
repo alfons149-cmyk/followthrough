@@ -678,6 +678,7 @@ export default function App() {
   setCompanyName("");
   setNextStep("");
   setDueAt(todayYMD());
+  setEmailEnabled(false);
 }
     
   useEffect(() => {
