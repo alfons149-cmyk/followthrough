@@ -269,15 +269,15 @@ async function apiFetch<T>(
 
 const apiGet = <T,>(path: string) => apiFetch<T>(path, { method: "GET" });
 const apiPost = <T,>(path: string, json?: unknown) =>
-  apiFetch<T>(path, { method: "POST", json });
+apiFetch<T>(path, { method: "POST", json });
 const apiPatch = <T,>(path: string, json?: unknown) =>
-  apiFetch<T>(path, { method: "PATCH", json });
+apiFetch<T>(path, { method: "PATCH", json });
 
-  function isReadyForFollowup(nextEmailAt?: string | null) {
-  if (!nextEmailAt) return false;
-  const t = Date.parse(nextEmailAt);
-  if (Number.isNaN(t)) return false;
-  return t <= Date.now();
+ function isReadyForFollowup(nextEmailAt?: string | null) {
+ if (!nextEmailAt) return false;
+ const t = Date.parse(nextEmailAt);
+ if (Number.isNaN(t)) return false;
+ return t <= Date.now();
 }
 
 export default function App() {
