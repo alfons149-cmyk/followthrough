@@ -40,6 +40,7 @@ type Followup = {
 const STATUS_ORDER: Status[] = ["open", "sent", "waiting", "followup", "done"];
 const API_BASE = ""; // same-origin on Cloudflare Pages
 const API_KEY_STORAGE = "VD_API_KEY";
+const [emailEnabled, setEmailEnabled] = useState(false);
 
 const UI = {
   appName: "VolgDraad",
