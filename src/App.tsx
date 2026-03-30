@@ -273,6 +273,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState(() => getApiKey());
   const [keyInput, setKeyInput] = useState("");
   const [contactEmail, setContactEmail] = useState("");  
+  const [emailEnabled, setEmailEnabled] = useState(false); 
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
 
