@@ -6,10 +6,21 @@ import { followups, emailEvents } from "../db/schema";
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
   "Access-Control-Allow-Methods": "POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization, x-api-key",
+  "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization, x-cron-secret",
   "Access-Control-Max-Age": "86400",
   Vary: "Origin",
 });
+
+function isAuthorizedCronRequest(request: Request, env: Env) {
+  const secret = env.FOLLOWUP_CRON_SECRET;
+  if (!secret) return false;
+
+  const provided =
+    request.headers.get("x-cron-secret") ||
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
+
+  return provided === secret;
+}
 
 function nextFollowupSubject(companyName?: string | null) {
   return `Korte follow-up over ${companyName || "jullie aanvraag"}`;
@@ -37,6 +48,16 @@ export const onRequestOptions: PagesFunction<Env> = async ({ request }) => {
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const origin = request.headers.get("Origin") ?? "*";
+
+  if (!isAuthorizedCronRequest(request, env)) {
+    return new Response(
+      JSON.stringify({ ok: false, error: "Unauthorized" }),
+      {
+        status: 401,
+        headers: { ...cors(origin), "Content-Type": "application/json" },
+      }
+    );
+  }
 
   try {
     const db = getDb(env);
@@ -80,7 +101,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         const subject = nextFollowupSubject(row.companyName);
         const message = nextFollowupMessage(row.contactName, row.nextStep);
 
-        // Voor nu: simulatie
         console.log("=== AUTO FOLLOW-UP PREVIEW ===");
         console.log("TO:", row.contactEmail);
         console.log("SUBJECT:", subject);
