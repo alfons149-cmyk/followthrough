@@ -435,8 +435,7 @@ export default function App() {
   nextStep: nextStep.trim(),
   dueAt: (dueAt || "").trim(),
   status: "open" as Status,
-
-  emailEnabled: !!contactEmail.trim(), // 👈 TOEVOEGEN
+  emailEnabled, // 👈 HIER
 };
 
     if (!payload.contactName) throw new Error("Vul een contactpersoon in.");
