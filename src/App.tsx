@@ -450,6 +450,7 @@ export default function App() {
     setCompanyName("");
     setNextStep("");
     setDueAt(todayYMD());
+    setEmailEnabled(false);
 
     await refreshAll();
   } catch (e: unknown) {
