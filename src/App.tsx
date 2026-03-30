@@ -1084,9 +1084,10 @@ export default function App() {
         ) : (
           <div className="list">
             {dashboardList.map((f) => {
-              const today = todayYMD();
-              const due = (f.dueAt || "").slice(0, 10);
-              const overdue = f.status !== "done" && due && due < today;
+             const today = todayYMD();
+             const due = (f.dueAt || "").slice(0, 10);
+             const overdue = f.status !== "done" && due && due < today;
+             const readyForFollowup = isReadyForFollowup(f.nextEmailAt);
              const cardClass = overdue
              ? "card cardOverdue"
              : readyForFollowup
