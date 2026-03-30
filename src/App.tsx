@@ -907,27 +907,38 @@ export default function App() {
     </div>
 
     {/* Datum */}
-    <div className="field">
-      <label>{UI.date}</label>
-      <input
-        className="input"
-        value={dueAt}
-        onChange={(e) => setDueAt(e.target.value)}
-        disabled={loading}
-        placeholder={UI.placeholderDate}
-      />
-    </div>
-  </div>
+<div className="field">
+  <label>{UI.date}</label>
+  <input
+    className="input"
+    value={dueAt}
+    onChange={(e) => setDueAt(e.target.value)}
+    disabled={loading}
+    placeholder={UI.placeholderDate}
+  />
+</div>
+</div>
 
-  <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-    <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
-      {UI.add}
-    </button>
+<div style={{ marginTop: 10 }}>
+  <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <input
+      type="checkbox"
+      checked={emailEnabled}
+      onChange={(e) => setEmailEnabled(e.target.checked)}
+    />
+    Auto-mail inschakelen
+  </label>
+</div>
 
-    <button className="btn" onClick={clearForm} disabled={loading}>
-      {UI.clear}
-    </button>
-  </div>
+<div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+  <button className="btn btnPrimary" onClick={onCreate} disabled={loading}>
+    {UI.add}
+  </button>
+
+  <button className="btn" onClick={clearForm} disabled={loading}>
+    {UI.clear}
+  </button>
+</div>
 </section>
 
       {/* List */}
