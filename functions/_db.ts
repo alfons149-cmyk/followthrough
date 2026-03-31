@@ -10,3 +10,11 @@ export type Env = {
 export function getDb(env: Env): DrizzleD1Database {
   return drizzle(env.DB);
 }
+
+export type Env = {
+  DB: D1Database;
+  API_KEY?: string;
+  FOLLOWUP_CRON_SECRET?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM_EMAIL?: string;
+};
