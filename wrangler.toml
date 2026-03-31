@@ -9,5 +9,5 @@ database_id = "50b3612a-3e32-4190-acd4-f8a6dbbecfa3"
 migrations_dir = "migrations"
 
 [vars]
-FOLLOWUP_CRON_SECRET = "vd_00000893ed8e4000000accdf21000000"
+FOLLOWUP_CRON_SECRET = "vd_2bd7b893ed8e458db8aaccdf214e9d14"
 RESEND_FROM_EMAIL = "VolgDraad <noreply@jouwdomein.com>"
