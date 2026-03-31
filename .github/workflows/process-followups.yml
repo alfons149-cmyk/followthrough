@@ -11,7 +11,8 @@ jobs:
 
     steps:
       - name: Call process-followups endpoint
-        run: |
-          curl -X POST "${{ secrets.FOLLOWUP_PROCESS_URL }}" \
-            -H "x-cron-secret: ${{ secrets.FOLLOWUP_CRON_SECRET }}" \
-            -H "Content-Type: application/json"
+       run: |
+  echo "Calling endpoint..."
+  curl -i -X POST "${{ secrets.FOLLOWUP_PROCESS_URL }}" \
+    -H "x-cron-secret: ${{ secrets.FOLLOWUP_CRON_SECRET }}" \
+    -H "Content-Type: application/json"
