@@ -2,8 +2,8 @@ import type { PagesFunction } from "@cloudflare/workers-types";
 import { and, eq } from "drizzle-orm";
 import { getApiKeyContext } from "../../_auth";
 import { getDb, type Env } from "../../_db";
-import { followups } from "../db/schema";
-import { emailEvents } from "../db/schema";
+import { sendViaResend } from "../../_email";
+import { followups, emailEvents } from "../db/schema";
 
 const cors = (origin?: string) => ({
   "Access-Control-Allow-Origin": origin || "*",
@@ -85,24 +85,44 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       "VolgDraad",
     ].join("\n");
 
-    console.log("=== EMAIL PREVIEW ===");
-    console.log("TO:", row.contactEmail);
-    console.log("SUBJECT:", subject);
-    console.log("BODY:", message);
+    const resendKey = env.RESEND_API_KEY;
+    const fromEmail = env.RESEND_FROM_EMAIL || "VolgDraad <onboarding@resend.dev>";
+
+    let provider = "simulated";
+    let providerMessageId: string | null = null;
+
+    if (resendKey) {
+      const result = await sendViaResend({
+        apiKey: resendKey,
+        from: fromEmail,
+        to: row.contactEmail,
+        subject,
+        text: message,
+      });
+
+      provider = "resend";
+      providerMessageId = result?.id ?? null;
+    } else {
+      console.log("=== EMAIL PREVIEW ===");
+      console.log("TO:", row.contactEmail);
+      console.log("SUBJECT:", subject);
+      console.log("BODY:", message);
+    }
 
     await db.insert(emailEvents).values({
-  id: `em_${crypto.randomUUID()}`,
-  followupId: row.id,
-  workspaceId: auth.workspaceId,
-  ownerId: auth.ownerId,
-  kind: "initial",
-  sequenceStep: 1,
-  toEmail: row.contactEmail,
-  subject,
-  bodyText: message,
-  status: "sent",
-  provider: "simulated",
-});
+      id: `em_${crypto.randomUUID()}`,
+      followupId: row.id,
+      workspaceId: auth.workspaceId,
+      ownerId: auth.ownerId,
+      kind: "initial",
+      sequenceStep: 1,
+      toEmail: row.contactEmail,
+      subject,
+      bodyText: message,
+      status: "sent",
+      provider,
+      providerMessageId,
+    });
 
     await db
       .update(followups)
@@ -126,7 +146,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return new Response(
       JSON.stringify({
         ok: true,
-        simulated: true,
+        simulated: !resendKey,
+        provider,
         preview: {
           to: row.contactEmail,
           subject,
@@ -139,8 +160,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       }
     );
   } catch (error) {
-    console.error("send-initial-email error", error);
-
     return new Response(
       JSON.stringify({
         error: "Versturen mislukt",
