@@ -10,5 +10,5 @@ migrations_dir = "migrations"
 [vars]
 FOLLOWUP_CRON_SECRET = "vd_2bd7b893ed8e458db8aaccdf214e9d1"
 [vars]
-FOLLOWUP_CRON_SECRET = "jouw_secret"
+FOLLOWUP_CRON_SECRET = "vd_2bd7b893ed8e458db8aaccdf214e9d14"
 RESEND_FROM_EMAIL = "VolgDraad <noreply@jouwdomein.com>"
