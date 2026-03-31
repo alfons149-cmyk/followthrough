@@ -1,0 +1,17 @@
+name: Process Followups
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  call-endpoint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call process-followups endpoint
+        run: |
+          curl -X POST "${{ secrets.FOLLOWUP_PROCESS_URL }}" \
+            -H "x-cron-secret: ${{ secrets.FOLLOWUP_CRON_SECRET }}" \
+            -H "Content-Type: application/json"
