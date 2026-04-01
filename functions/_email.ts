@@ -23,12 +23,8 @@ export async function sendViaResend(args: {
 
   const json = await res.json().catch(() => ({}));
 
-  if (!res.ok) {
-    throw new Error(
-      typeof json?.message === "string"
-        ? json.message
-        : `Resend error ${res.status}`
-    );
+  if (!res.ok) { 
+    throw new Error(`Resend error ${res.status}: ${JSON.stringify(json)}`); 
   }
 
   return json as { id?: string };
